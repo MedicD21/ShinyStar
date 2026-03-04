@@ -80,7 +80,6 @@
     <canvas id="frameCanvas" style="display: none"></canvas>
 
     <script>
-      let templateImg;
       let roi = null;
       let drawing = false;
       let startX, startY;
@@ -90,6 +89,8 @@
 
       let detections = [];
       let detectionLocked = false;
+
+      let tplMat = null;
 
       const video = document.getElementById("video");
       const canvas = document.getElementById("overlay");
@@ -144,12 +145,9 @@
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        const w = e.offsetX - startX;
-        const h = e.offsetY - startY;
-
         ctx.strokeStyle = "yellow";
         ctx.lineWidth = 3;
-        ctx.strokeRect(startX, startY, w, h);
+        ctx.strokeRect(startX, startY, e.offsetX - startX, e.offsetY - startY);
       }
 
       function endDraw(e) {
@@ -211,107 +209,93 @@
       }
 
       function startDetection() {
-        templateImg = new Image();
+        statusDiv.innerText = "Status: Loading Template";
 
-        templateImg.onload = () => {
+        const img = new Image();
+
+        img.onload = () => {
+          let tmp = cv.imread(img);
+          tplMat = new cv.Mat();
+
+          cv.cvtColor(tmp, tplMat, cv.COLOR_RGBA2GRAY);
+
+          tmp.delete();
+
           statusDiv.innerText = "Status: Detection Running";
 
           detectLoop();
         };
 
-        templateImg.src = "star.png";
+        img.src = "star.png";
       }
 
       function detectLoop() {
         setInterval(() => {
-          frameCtx.drawImage(
-            video,
-            0,
-            0,
-            frameCanvas.width,
-            frameCanvas.height,
-          );
+          try {
+            frameCtx.drawImage(
+              video,
+              0,
+              0,
+              frameCanvas.width,
+              frameCanvas.height,
+            );
 
-          let src = cv.imread(frameCanvas);
+            let src = cv.imread(frameCanvas);
+            let gray = new cv.Mat();
 
-          let gray = new cv.Mat();
-          cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+            cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
 
-          cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 0);
+            cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 0);
 
-          if (!roi) {
-            src.delete();
-            gray.delete();
-            return;
-          }
+            if (!roi) {
+              src.delete();
+              gray.delete();
+              return;
+            }
 
-          let hsv = new cv.Mat();
-          cv.cvtColor(src, hsv, cv.COLOR_RGBA2RGB);
-          cv.cvtColor(hsv, hsv, cv.COLOR_RGB2HSV);
+            let roiMat = gray.roi(new cv.Rect(roi.x, roi.y, roi.w, roi.h));
 
-          let lower = new cv.Mat(
-            hsv.rows,
-            hsv.cols,
-            hsv.type(),
-            [20, 100, 100, 0],
-          );
-          let upper = new cv.Mat(
-            hsv.rows,
-            hsv.cols,
-            hsv.type(),
-            [35, 255, 255, 255],
-          );
+            let result = new cv.Mat();
 
-          let mask = new cv.Mat();
+            cv.matchTemplate(roiMat, tplMat, result, cv.TM_CCOEFF_NORMED);
 
-          cv.inRange(hsv, lower, upper, mask);
+            const { maxVal, maxLoc } = cv.minMaxLoc(result);
 
-          let tpl = cv.imread(templateImg);
-          cv.cvtColor(tpl, tpl, cv.COLOR_RGBA2GRAY);
+            frameCount++;
 
-          const roiMat = gray.roi(new cv.Rect(roi.x, roi.y, roi.w, roi.h));
+            statsDiv.innerText =
+              "Frames scanned: " +
+              frameCount +
+              " | Match score: " +
+              maxVal.toFixed(3);
 
-          const result = new cv.Mat();
+            if (maxVal > threshold && !detectionLocked) {
+              detections.push({
+                x: roi.x + maxLoc.x,
+                y: roi.y + maxLoc.y,
+                w: tplMat.cols,
+                h: tplMat.rows,
+              });
 
-          cv.matchTemplate(roiMat, tpl, result, cv.TM_CCOEFF_NORMED);
+              detectionLocked = true;
 
-          const { maxVal, maxLoc } = cv.minMaxLoc(result);
+              alertUser();
+            }
 
-          frameCount++;
-
-          statsDiv.innerText =
-            "Frames scanned: " +
-            frameCount +
-            " | Match score: " +
-            maxVal.toFixed(3);
-
-          if (maxVal > threshold && !detectionLocked) {
-            detections.push({
-              x: roi.x + maxLoc.x,
-              y: roi.y + maxLoc.y,
-              w: tpl.cols,
-              h: tpl.rows,
+            detections.forEach((d) => {
+              ctx.strokeStyle = "lime";
+              ctx.lineWidth = 4;
+              ctx.strokeRect(d.x, d.y, d.w, d.h);
             });
 
-            detectionLocked = true;
-
-            alertUser();
+            src.delete();
+            gray.delete();
+            roiMat.delete();
+            result.delete();
+          } catch (err) {
+            console.log(err);
           }
-
-          detections.forEach((d) => {
-            ctx.strokeStyle = "lime";
-            ctx.lineWidth = 4;
-            ctx.strokeRect(d.x, d.y, d.w, d.h);
-          });
-
-          src.delete();
-          gray.delete();
-          hsv.delete();
-          mask.delete();
-          tpl.delete();
-          roiMat.delete();
-          result.delete();
-        }, 100);
+        }, 120);
       }
 
       function alertUser() {
