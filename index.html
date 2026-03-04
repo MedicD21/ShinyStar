@@ -82,15 +82,23 @@
     <script>
       let roi = null;
       let drawing = false;
-      let startX, startY;
+      let startX = 0;
+      let startY = 0;
 
       let frameCount = 0;
       let threshold = 0.72;
 
       let detections = [];
       let detectionLocked = false;
+      let detectionTimer = null;
+      let scanInProgress = false;
+      let openCvReadyPromise = null;
 
-      let tplMat = null;
+      let templateVariants = [];
+
+      const TEMPLATE_SCALES = [0.8, 0.9, 1, 1.1, 1.2];
+      const MIN_ROI_SIZE = 20;
+      const SCAN_INTERVAL_MS = 150;
 
       const video = document.getElementById("video");
       const canvas = document.getElementById("overlay");
@@ -110,20 +118,300 @@
         sliderValue.innerText = threshold.toFixed(2);
       };
 
-      async function startCamera() {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
+      function waitForOpenCv(timeoutMs = 10000) {
+        if (window.cv && typeof cv.Mat === "function") {
+          return Promise.resolve();
+        }
+
+        if (!openCvReadyPromise) {
+          openCvReadyPromise = new Promise((resolve, reject) => {
+            const startedAt = Date.now();
+
+            const check = () => {
+              if (window.cv && typeof cv.Mat === "function") {
+                resolve();
+                return;
+              }
+
+              if (Date.now() - startedAt > timeoutMs) {
+                reject(new Error("OpenCV failed to load."));
+                return;
+              }
+
+              window.setTimeout(check, 50);
+            };
+
+            check();
+          }).catch((error) => {
+            openCvReadyPromise = null;
+            throw error;
+          });
+        }
+
+        return openCvReadyPromise;
+      }
+
+      function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+
+      function getCanvasPoint(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+
+        return {
+          x: clamp(Math.round((clientX - rect.left) * scaleX), 0, canvas.width),
+          y: clamp(
+            Math.round((clientY - rect.top) * scaleY),
+            0,
+            canvas.height,
+          ),
+        };
+      }
+
+      function normalizeRect(x1, y1, x2, y2) {
+        const left = clamp(Math.min(x1, x2), 0, canvas.width);
+        const top = clamp(Math.min(y1, y2), 0, canvas.height);
+        const right = clamp(Math.max(x1, x2), 0, canvas.width);
+        const bottom = clamp(Math.max(y1, y2), 0, canvas.height);
+
+        return {
+          x: Math.round(left),
+          y: Math.round(top),
+          w: Math.round(right - left),
+          h: Math.round(bottom - top),
+        };
+      }
+
+      function redrawOverlay() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (roi) {
+          ctx.strokeStyle = "yellow";
+          ctx.lineWidth = 3;
+          ctx.strokeRect(roi.x, roi.y, roi.w, roi.h);
+        }
+
+        detections.forEach((detection) => {
+          ctx.strokeStyle = "lime";
+          ctx.lineWidth = 4;
+          ctx.strokeRect(detection.x, detection.y, detection.w, detection.h);
+        });
+      }
+
+      function drawSelectionPreview(x1, y1, x2, y2) {
+        const preview = normalizeRect(x1, y1, x2, y2);
+
+        redrawOverlay();
+
+        ctx.strokeStyle = "yellow";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(preview.x, preview.y, preview.w, preview.h);
+      }
+
+      function setRoiFromPoints(x1, y1, x2, y2) {
+        const nextRoi = normalizeRect(x1, y1, x2, y2);
+
+        if (nextRoi.w < MIN_ROI_SIZE || nextRoi.h < MIN_ROI_SIZE) {
+          roi = null;
+          detections = [];
+          detectionLocked = false;
+          statusDiv.innerText = "Status: Select a larger search area";
+          redrawOverlay();
+          return;
+        }
+
+        roi = nextRoi;
+        detections = [];
+        detectionLocked = false;
+        statusDiv.innerText = "Status: Search area selected";
+        redrawOverlay();
+      }
+
+      function getDefaultStatus() {
+        if (detectionTimer !== null) {
+          return detectionLocked
+            ? "Status: Match Locked"
+            : "Status: Detection Running";
+        }
+
+        if (roi) {
+          return "Status: Search area selected";
+        }
+
+        return "Status: Idle";
+      }
+
+      function updateStats(score) {
+        statsDiv.innerText =
+          "Frames scanned: " +
+          frameCount +
+          " | Match score: " +
+          score.toFixed(3);
+      }
+
+      function clearTemplateVariants() {
+        templateVariants.forEach((variant) => {
+          variant.mat.delete();
         });
 
-        video.srcObject = stream;
+        templateVariants = [];
+      }
 
-        video.onloadedmetadata = () => {
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
+      function clearDetectionLoop() {
+        if (detectionTimer !== null) {
+          window.clearInterval(detectionTimer);
+          detectionTimer = null;
+        }
+      }
 
-          frameCanvas.width = video.videoWidth;
-          frameCanvas.height = video.videoHeight;
-        };
+      function preprocessToGray(sourceMat, targetMat) {
+        cv.cvtColor(sourceMat, targetMat, cv.COLOR_RGBA2GRAY);
+        cv.equalizeHist(targetMat, targetMat);
+        cv.GaussianBlur(targetMat, targetMat, new cv.Size(5, 5), 0);
+      }
+
+      function clampRoiToMat(sourceRoi, mat) {
+        if (!sourceRoi || mat.cols === 0 || mat.rows === 0) {
+          return null;
+        }
+
+        const x = clamp(sourceRoi.x, 0, Math.max(0, mat.cols - 1));
+        const y = clamp(sourceRoi.y, 0, Math.max(0, mat.rows - 1));
+        const w = Math.min(sourceRoi.w, mat.cols - x);
+        const h = Math.min(sourceRoi.h, mat.rows - y);
+
+        if (w < MIN_ROI_SIZE || h < MIN_ROI_SIZE) {
+          return null;
+        }
+
+        return { x, y, w, h };
+      }
+
+      function createTemplateVariant(baseMat, scale) {
+        const width = Math.max(1, Math.round(baseMat.cols * scale));
+        const height = Math.max(1, Math.round(baseMat.rows * scale));
+
+        if (width < MIN_ROI_SIZE || height < MIN_ROI_SIZE) {
+          return null;
+        }
+
+        const variantMat = new cv.Mat();
+        const interpolation = scale < 1 ? cv.INTER_AREA : cv.INTER_LINEAR;
+
+        cv.resize(
+          baseMat,
+          variantMat,
+          new cv.Size(width, height),
+          0,
+          0,
+          interpolation,
+        );
+
+        return { scale, mat: variantMat };
+      }
+
+      function loadImage(src) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = () =>
+            reject(new Error("Template image could not be loaded."));
+          img.src = src;
+        });
+      }
+
+      async function loadTemplateVariants(src) {
+        clearTemplateVariants();
+
+        const img = await loadImage(src);
+        const rawTemplate = cv.imread(img);
+        const processedTemplate = new cv.Mat();
+
+        try {
+          preprocessToGray(rawTemplate, processedTemplate);
+
+          TEMPLATE_SCALES.forEach((scale) => {
+            const variant = createTemplateVariant(processedTemplate, scale);
+
+            if (variant) {
+              templateVariants.push(variant);
+            }
+          });
+        } finally {
+          rawTemplate.delete();
+          processedTemplate.delete();
+        }
+
+        if (templateVariants.length === 0) {
+          throw new Error("Template sizes are invalid for matching.");
+        }
+      }
+
+      function findBestMatch(searchMat) {
+        let bestMatch = null;
+
+        templateVariants.forEach((variant) => {
+          if (
+            searchMat.cols < variant.mat.cols ||
+            searchMat.rows < variant.mat.rows
+          ) {
+            return;
+          }
+
+          const result = new cv.Mat();
+
+          try {
+            cv.matchTemplate(searchMat, variant.mat, result, cv.TM_CCOEFF_NORMED);
+
+            const { maxVal, maxLoc } = cv.minMaxLoc(result);
+
+            if (!bestMatch || maxVal > bestMatch.score) {
+              bestMatch = {
+                score: maxVal,
+                x: maxLoc.x,
+                y: maxLoc.y,
+                w: variant.mat.cols,
+                h: variant.mat.rows,
+                scale: variant.scale,
+              };
+            }
+          } finally {
+            result.delete();
+          }
+        });
+
+        return bestMatch;
+      }
+
+      async function startCamera() {
+        try {
+          if (video.srcObject) {
+            video.srcObject.getTracks().forEach((track) => track.stop());
+          }
+
+          statusDiv.innerText = "Status: Starting camera";
+
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment" },
+          });
+
+          video.srcObject = stream;
+
+          video.onloadedmetadata = () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            frameCanvas.width = video.videoWidth;
+            frameCanvas.height = video.videoHeight;
+
+            statusDiv.innerText = "Status: Camera ready";
+            redrawOverlay();
+          };
+        } catch (error) {
+          statusDiv.innerText = "Status: Camera access failed";
+          console.error(error);
+        }
       }
 
       canvas.addEventListener("mousedown", startDraw);
@@ -135,40 +423,43 @@
       canvas.addEventListener("touchend", endTouch);
 
       function startDraw(e) {
+        if (!canvas.width || !canvas.height) return;
+
+        const point = getCanvasPoint(e.clientX, e.clientY);
+
         drawing = true;
-        startX = e.offsetX;
-        startY = e.offsetY;
+        startX = point.x;
+        startY = point.y;
       }
 
       function drawBox(e) {
         if (!drawing) return;
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        ctx.strokeStyle = "yellow";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(startX, startY, e.offsetX - startX, e.offsetY - startY);
+        const point = getCanvasPoint(e.clientX, e.clientY);
+        drawSelectionPreview(startX, startY, point.x, point.y);
       }
 
       function endDraw(e) {
-        drawing = false;
+        if (!drawing) return;
 
-        roi = {
-          x: startX,
-          y: startY,
-          w: e.offsetX - startX,
-          h: e.offsetY - startY,
-        };
+        const point = getCanvasPoint(e.clientX, e.clientY);
+
+        drawing = false;
+        setRoiFromPoints(startX, startY, point.x, point.y);
       }
 
       function startTouch(e) {
         e.preventDefault();
 
-        const rect = canvas.getBoundingClientRect();
-        const touch = e.touches[0];
+        if (!canvas.width || !canvas.height) return;
 
-        startX = touch.clientX - rect.left;
-        startY = touch.clientY - rect.top;
+        const point = getCanvasPoint(
+          e.touches[0].clientX,
+          e.touches[0].clientY,
+        );
+
+        startX = point.x;
+        startY = point.y;
 
         drawing = true;
       }
@@ -178,124 +469,152 @@
 
         e.preventDefault();
 
-        const rect = canvas.getBoundingClientRect();
-        const touch = e.touches[0];
+        const point = getCanvasPoint(
+          e.touches[0].clientX,
+          e.touches[0].clientY,
+        );
 
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        ctx.strokeStyle = "yellow";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(startX, startY, x - startX, y - startY);
+        drawSelectionPreview(startX, startY, point.x, point.y);
       }
 
       function endTouch(e) {
+        if (!drawing) return;
+
+        const point = getCanvasPoint(
+          e.changedTouches[0].clientX,
+          e.changedTouches[0].clientY,
+        );
+
         drawing = false;
-
-        const rect = canvas.getBoundingClientRect();
-        const touch = e.changedTouches[0];
-
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
-
-        roi = {
-          x: startX,
-          y: startY,
-          w: x - startX,
-          h: y - startY,
-        };
+        setRoiFromPoints(startX, startY, point.x, point.y);
       }
 
-      function startDetection() {
-        statusDiv.innerText = "Status: Loading Template";
+      async function startDetection() {
+        if (!video.srcObject || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+          statusDiv.innerText = "Status: Start the camera first";
+          return;
+        }
 
-        const img = new Image();
+        if (!roi) {
+          statusDiv.innerText = "Status: Draw a search area first";
+          return;
+        }
 
-        img.onload = () => {
-          let tmp = cv.imread(img);
-          tplMat = new cv.Mat();
+        clearDetectionLoop();
+        detections = [];
+        detectionLocked = false;
+        frameCount = 0;
+        updateStats(0);
+        redrawOverlay();
 
-          cv.cvtColor(tmp, tplMat, cv.COLOR_RGBA2GRAY);
+        try {
+          statusDiv.innerText = "Status: Loading OpenCV";
+          await waitForOpenCv();
 
-          tmp.delete();
+          statusDiv.innerText = "Status: Loading template";
+          await loadTemplateVariants("star.png");
 
           statusDiv.innerText = "Status: Detection Running";
-
-          detectLoop();
-        };
-
-        img.src = "star.png";
+          detectionTimer = window.setInterval(detectFrame, SCAN_INTERVAL_MS);
+        } catch (error) {
+          statusDiv.innerText = "Status: Detection could not start";
+          console.error(error);
+        }
       }
 
-      function detectLoop() {
-        setInterval(() => {
-          try {
-            frameCtx.drawImage(
-              video,
-              0,
-              0,
-              frameCanvas.width,
-              frameCanvas.height,
-            );
+      function detectFrame() {
+        if (scanInProgress || !roi || templateVariants.length === 0) {
+          return;
+        }
 
-            let src = cv.imread(frameCanvas);
-            let gray = new cv.Mat();
+        if (!frameCanvas.width || !frameCanvas.height) {
+          statusDiv.innerText = "Status: Camera frame unavailable";
+          return;
+        }
 
-            cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+        scanInProgress = true;
 
-            cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 0);
+        let src = null;
+        let processed = null;
+        let roiMat = null;
 
-            if (!roi) {
-              src.delete();
-              gray.delete();
-              return;
-            }
+        try {
+          frameCtx.drawImage(
+            video,
+            0,
+            0,
+            frameCanvas.width,
+            frameCanvas.height,
+          );
 
-            let roiMat = gray.roi(new cv.Rect(roi.x, roi.y, roi.w, roi.h));
+          src = cv.imread(frameCanvas);
+          processed = new cv.Mat();
 
-            let result = new cv.Mat();
+          preprocessToGray(src, processed);
 
-            cv.matchTemplate(roiMat, tplMat, result, cv.TM_CCOEFF_NORMED);
+          const safeRoi = clampRoiToMat(roi, processed);
 
-            const { maxVal, maxLoc } = cv.minMaxLoc(result);
-
-            frameCount++;
-
-            statsDiv.innerText =
-              "Frames scanned: " +
-              frameCount +
-              " | Match score: " +
-              maxVal.toFixed(3);
-
-            if (maxVal > threshold && !detectionLocked) {
-              detections.push({
-                x: roi.x + maxLoc.x,
-                y: roi.y + maxLoc.y,
-                w: tplMat.cols,
-                h: tplMat.rows,
-              });
-
-              detectionLocked = true;
-
-              alertUser();
-            }
-
-            detections.forEach((d) => {
-              ctx.strokeStyle = "lime";
-              ctx.lineWidth = 4;
-              ctx.strokeRect(d.x, d.y, d.w, d.h);
-            });
-
-            src.delete();
-            gray.delete();
-            roiMat.delete();
-            result.delete();
-          } catch (err) {
-            console.log(err);
+          if (!safeRoi) {
+            statusDiv.innerText = "Status: Search area is too small";
+            updateStats(0);
+            redrawOverlay();
+            return;
           }
-        }, 120);
+
+          roiMat = processed.roi(
+            new cv.Rect(safeRoi.x, safeRoi.y, safeRoi.w, safeRoi.h),
+          );
+
+          const bestMatch = findBestMatch(roiMat);
+
+          frameCount += 1;
+          updateStats(bestMatch ? bestMatch.score : 0);
+
+          if (!bestMatch) {
+            statusDiv.innerText = "Status: Search area is smaller than template";
+            redrawOverlay();
+            return;
+          }
+
+          if (bestMatch.score >= threshold && !detectionLocked) {
+            detections = [
+              {
+                x: safeRoi.x + bestMatch.x,
+                y: safeRoi.y + bestMatch.y,
+                w: bestMatch.w,
+                h: bestMatch.h,
+              },
+            ];
+
+            detectionLocked = true;
+            statusDiv.innerText =
+              "Status: Match Found (" + bestMatch.score.toFixed(3) + ")";
+            redrawOverlay();
+            alertUser();
+            return;
+          }
+
+          statusDiv.innerText = getDefaultStatus();
+          redrawOverlay();
+        } catch (error) {
+          statusDiv.innerText = "Status: Detection error";
+          clearDetectionLoop();
+          console.error(error);
+        } finally {
+          if (roiMat) {
+            roiMat.delete();
+          }
+
+          if (processed) {
+            processed.delete();
+          }
+
+          if (src) {
+            src.delete();
+          }
+
+          scanInProgress = false;
+        }
       }
 
       function alertUser() {
@@ -312,14 +631,10 @@
       function resetDetections() {
         detections = [];
         detectionLocked = false;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        if (roi) {
-          ctx.strokeStyle = "yellow";
-          ctx.lineWidth = 3;
-          ctx.strokeRect(roi.x, roi.y, roi.w, roi.h);
-        }
+        frameCount = 0;
+        updateStats(0);
+        statusDiv.innerText = getDefaultStatus();
+        redrawOverlay();
       }
     </script>
   </body>
