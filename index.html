@@ -1,0 +1,176 @@
+<!doctype html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Star Detector</title>
+
+    <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+
+    <style>
+      body {
+        font-family: Arial;
+        text-align: center;
+        background: #111;
+        color: white;
+      }
+
+      video {
+        width: 95vw;
+        border: 3px solid #444;
+      }
+
+      canvas {
+        position: absolute;
+        left: 0;
+        top: 0;
+      }
+
+      #container {
+        position: relative;
+        display: inline-block;
+      }
+
+      button {
+        padding: 12px 20px;
+        margin: 10px;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h2>⭐ Star Detector</h2>
+
+    <button onclick="startCamera()">Start Camera</button>
+    <button onclick="startDetection()">Start Detection</button>
+
+    <div id="container">
+      <video id="video" autoplay playsinline></video>
+      <canvas id="overlay"></canvas>
+    </div>
+
+    <script>
+      let template;
+      let roi = null;
+      let drawing = false;
+
+      const video = document.getElementById("video");
+      const canvas = document.getElementById("overlay");
+      const ctx = canvas.getContext("2d");
+
+      async function startCamera() {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+        });
+
+        video.srcObject = stream;
+
+        video.onloadedmetadata = () => {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+        };
+      }
+
+      canvas.addEventListener("mousedown", startDraw);
+      canvas.addEventListener("mousemove", drawBox);
+      canvas.addEventListener("mouseup", endDraw);
+
+      let startX, startY;
+
+      function startDraw(e) {
+        drawing = true;
+
+        startX = e.offsetX;
+        startY = e.offsetY;
+      }
+
+      function drawBox(e) {
+        if (!drawing) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const w = e.offsetX - startX;
+        const h = e.offsetY - startY;
+
+        ctx.strokeStyle = "yellow";
+        ctx.lineWidth = 3;
+
+        ctx.strokeRect(startX, startY, w, h);
+      }
+
+      function endDraw(e) {
+        drawing = false;
+
+        roi = {
+          x: startX,
+          y: startY,
+          w: e.offsetX - startX,
+          h: e.offsetY - startY,
+        };
+      }
+
+      function startDetection() {
+        template = new Image();
+
+        template.onload = () => {
+          detectLoop();
+        };
+
+        template.src = "star.png";
+      }
+
+      function detectLoop() {
+        const cap = new cv.VideoCapture(video);
+
+        const frame = new cv.Mat(
+          video.videoHeight,
+          video.videoWidth,
+          cv.CV_8UC4,
+        );
+        const gray = new cv.Mat();
+
+        const tpl = cv.imread(template);
+        cv.cvtColor(tpl, tpl, cv.COLOR_RGBA2GRAY);
+
+        setInterval(() => {
+          cap.read(frame);
+          cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
+
+          if (!roi) return;
+
+          const roiMat = gray.roi(new cv.Rect(roi.x, roi.y, roi.w, roi.h));
+
+          const result = new cv.Mat();
+
+          cv.matchTemplate(roiMat, tpl, result, cv.TM_CCOEFF_NORMED);
+
+          const { maxVal, maxLoc } = cv.minMaxLoc(result);
+
+          if (maxVal > 0.75) {
+            ctx.strokeStyle = "lime";
+            ctx.lineWidth = 4;
+
+            ctx.strokeRect(
+              roi.x + maxLoc.x,
+              roi.y + maxLoc.y,
+              tpl.cols,
+              tpl.rows,
+            );
+
+            alertSound();
+          }
+
+          roiMat.delete();
+          result.delete();
+        }, 100);
+      }
+
+      function alertSound() {
+        const audio = new Audio(
+          "https://actions.google.com/sounds/v1/alarms/beep_short.ogg",
+        );
+        audio.play();
+      }
+    </script>
+  </body>
+</html>
