@@ -43,6 +43,13 @@
 
     <button onclick="startCamera()">Start Camera</button>
     <button onclick="startDetection()">Start Detection</button>
+    <div id="status" style="margin-top: 10px; font-size: 18px">
+      Status: Idle
+    </div>
+
+    <div id="stats" style="font-size: 14px; color: #aaa">
+      Frames scanned: 0 | Match score: 0
+    </div>
 
     <div id="container">
       <video id="video" autoplay playsinline></video>
@@ -50,6 +57,9 @@
     </div>
 
     <script>
+      let frameCount = 0;
+      let statusDiv = document.getElementById("status");
+      let statsDiv = document.getElementById("stats");
       let template;
       let roi = null;
       let drawing = false;
@@ -74,6 +84,61 @@
       canvas.addEventListener("mousedown", startDraw);
       canvas.addEventListener("mousemove", drawBox);
       canvas.addEventListener("mouseup", endDraw);
+
+      canvas.addEventListener("touchstart", startTouch);
+      canvas.addEventListener("touchmove", moveTouch);
+      canvas.addEventListener("touchend", endTouch);
+
+      function startTouch(e) {
+        e.preventDefault();
+
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+
+        startX = touch.clientX - rect.left;
+        startY = touch.clientY - rect.top;
+
+        drawing = true;
+      }
+
+      function moveTouch(e) {
+        if (!drawing) return;
+
+        e.preventDefault();
+
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const w = x - startX;
+        const h = y - startY;
+
+        ctx.strokeStyle = "yellow";
+        ctx.lineWidth = 3;
+
+        ctx.strokeRect(startX, startY, w, h);
+      }
+
+      function endTouch(e) {
+        drawing = false;
+
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.changedTouches[0];
+
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+
+        roi = {
+          x: startX,
+          y: startY,
+          w: x - startX,
+          h: y - startY,
+        };
+      }
 
       let startX, startY;
 
@@ -111,6 +176,7 @@
 
       function startDetection() {
         template = new Image();
+        statusDiv.innerText = "Status: Detection Running";
 
         template.onload = () => {
           detectLoop();
@@ -145,6 +211,14 @@
           cv.matchTemplate(roiMat, tpl, result, cv.TM_CCOEFF_NORMED);
 
           const { maxVal, maxLoc } = cv.minMaxLoc(result);
+
+          frameCount++;
+
+          statsDiv.innerText =
+            "Frames scanned: " +
+            frameCount +
+            " | Match score: " +
+            maxVal.toFixed(3);
 
           if (maxVal > 0.75) {
             ctx.strokeStyle = "lime";
