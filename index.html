@@ -1,320 +1,342 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>⭐ Star Detector</title>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>⭐ Star Detector</title>
+
+    <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+
+    <style>
+      body {
+        background: #111;
+        color: white;
+        font-family: Arial;
+        text-align: center;
+      }
+
+      button {
+        padding: 14px 20px;
+        margin: 8px;
+        font-size: 16px;
+      }
+
+      #container {
+        position: relative;
+        display: inline-block;
+        width: 95vw;
+      }
+
+      video {
+        width: 100%;
+        border: 3px solid #444;
+      }
+
+      canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+
+      #status {
+        font-size: 18px;
+        margin-top: 10px;
+      }
+
+      #stats {
+        color: #aaa;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h2>⭐ Star Detector</h2>
+
+    <button onclick="startCamera()">Start Camera</button>
+    <button onclick="startDetection()">Start Detection</button>
+    <button onclick="resetDetections()">Reset Detections</button>
+
+    <br />
+
+    Threshold:
+    <input
+      id="thresholdSlider"
+      type="range"
+      min="0.55"
+      max="0.95"
+      step="0.01"
+      value="0.72"
+    />
+    <span id="thresholdValue">0.72</span>
+
+    <div id="status">Status: Idle</div>
+    <div id="stats">Frames scanned: 0 | Match score: 0</div>
+
+    <div id="container">
+      <video id="video" autoplay playsinline></video>
+      <canvas id="overlay"></canvas>
+    </div>
+
+    <canvas id="frameCanvas" style="display: none"></canvas>
+
+    <script>
+      let templateImg;
+      let roi = null;
+      let drawing = false;
+      let startX, startY;
+
+      let frameCount = 0;
+      let threshold = 0.72;
+
+      let detections = [];
+      let detectionLocked = false;
+
+      const video = document.getElementById("video");
+      const canvas = document.getElementById("overlay");
+      const ctx = canvas.getContext("2d");
+
+      const frameCanvas = document.getElementById("frameCanvas");
+      const frameCtx = frameCanvas.getContext("2d");
+
+      const statusDiv = document.getElementById("status");
+      const statsDiv = document.getElementById("stats");
+
+      const slider = document.getElementById("thresholdSlider");
+      const sliderValue = document.getElementById("thresholdValue");
 
-<script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+      slider.oninput = () => {
+        threshold = parseFloat(slider.value);
+        sliderValue.innerText = threshold.toFixed(2);
+      };
 
-<style>
+      async function startCamera() {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+        });
 
-body{
-    background:#111;
-    color:white;
-    font-family:Arial;
-    text-align:center;
-}
+        video.srcObject = stream;
 
-h2{
-    margin-top:20px;
-}
+        video.onloadedmetadata = () => {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
 
-button{
-    padding:14px 22px;
-    margin:10px;
-    font-size:16px;
-}
+          frameCanvas.width = video.videoWidth;
+          frameCanvas.height = video.videoHeight;
+        };
+      }
 
-#container{
-    position:relative;
-    display:inline-block;
-    width:95vw;
-}
+      canvas.addEventListener("mousedown", startDraw);
+      canvas.addEventListener("mousemove", drawBox);
+      canvas.addEventListener("mouseup", endDraw);
 
-video{
-    width:100%;
-    border:3px solid #444;
-}
+      canvas.addEventListener("touchstart", startTouch);
+      canvas.addEventListener("touchmove", moveTouch);
+      canvas.addEventListener("touchend", endTouch);
 
-canvas{
-    position:absolute;
-    left:0;
-    top:0;
-}
+      function startDraw(e) {
+        drawing = true;
+        startX = e.offsetX;
+        startY = e.offsetY;
+      }
 
-#status{
-    font-size:18px;
-    margin-top:10px;
-}
+      function drawBox(e) {
+        if (!drawing) return;
 
-#stats{
-    color:#aaa;
-    font-size:14px;
-}
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-</style>
-</head>
+        const w = e.offsetX - startX;
+        const h = e.offsetY - startY;
 
-<body>
+        ctx.strokeStyle = "yellow";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(startX, startY, w, h);
+      }
 
-<h2>⭐ Star Detector</h2>
+      function endDraw(e) {
+        drawing = false;
 
-<button onclick="startCamera()">Start Camera</button>
-<button onclick="startDetection()">Start Detection</button>
+        roi = {
+          x: startX,
+          y: startY,
+          w: e.offsetX - startX,
+          h: e.offsetY - startY,
+        };
+      }
 
-<div id="status">Status: Idle</div>
-<div id="stats">Frames scanned: 0 | Match score: 0</div>
+      function startTouch(e) {
+        e.preventDefault();
 
-<div id="container">
-    <video id="video" autoplay playsinline></video>
-    <canvas id="overlay"></canvas>
-</div>
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
 
-<canvas id="frameCanvas" style="display:none;"></canvas>
+        startX = touch.clientX - rect.left;
+        startY = touch.clientY - rect.top;
 
-<script>
+        drawing = true;
+      }
 
-let templateImg
-let roi = null
-let drawing = false
-let startX,startY
+      function moveTouch(e) {
+        if (!drawing) return;
 
-let frameCount = 0
+        e.preventDefault();
 
-const video = document.getElementById("video")
-const canvas = document.getElementById("overlay")
-const ctx = canvas.getContext("2d")
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
 
-const frameCanvas = document.getElementById("frameCanvas")
-const frameCtx = frameCanvas.getContext("2d")
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
 
-const statusDiv = document.getElementById("status")
-const statsDiv = document.getElementById("stats")
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-// START CAMERA
+        ctx.strokeStyle = "yellow";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(startX, startY, x - startX, y - startY);
+      }
 
-async function startCamera(){
+      function endTouch(e) {
+        drawing = false;
 
-    const stream = await navigator.mediaDevices.getUserMedia({
-        video:{facingMode:"environment"}
-    })
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.changedTouches[0];
 
-    video.srcObject = stream
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
 
-    video.onloadedmetadata = ()=>{
+        roi = {
+          x: startX,
+          y: startY,
+          w: x - startX,
+          h: y - startY,
+        };
+      }
 
-        canvas.width = video.videoWidth
-        canvas.height = video.videoHeight
+      function startDetection() {
+        templateImg = new Image();
 
-        frameCanvas.width = video.videoWidth
-        frameCanvas.height = video.videoHeight
+        templateImg.onload = () => {
+          statusDiv.innerText = "Status: Detection Running";
 
-    }
+          detectLoop();
+        };
 
-}
+        templateImg.src = "star.png";
+      }
 
-// DRAW BOX (MOUSE)
+      function detectLoop() {
+        setInterval(() => {
+          frameCtx.drawImage(
+            video,
+            0,
+            0,
+            frameCanvas.width,
+            frameCanvas.height,
+          );
 
-canvas.addEventListener("mousedown", startDraw)
-canvas.addEventListener("mousemove", drawBox)
-canvas.addEventListener("mouseup", endDraw)
+          let src = cv.imread(frameCanvas);
 
-// DRAW BOX (TOUCH)
+          let gray = new cv.Mat();
+          cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
 
-canvas.addEventListener("touchstart", startTouch)
-canvas.addEventListener("touchmove", moveTouch)
-canvas.addEventListener("touchend", endTouch)
+          cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 0);
 
-function startDraw(e){
+          if (!roi) {
+            src.delete();
+            gray.delete();
+            return;
+          }
 
-    drawing = true
-    startX = e.offsetX
-    startY = e.offsetY
+          let hsv = new cv.Mat();
+          cv.cvtColor(src, hsv, cv.COLOR_RGBA2RGB);
+          cv.cvtColor(hsv, hsv, cv.COLOR_RGB2HSV);
 
-}
+          let lower = new cv.Mat(
+            hsv.rows,
+            hsv.cols,
+            hsv.type(),
+            [20, 100, 100, 0],
+          );
+          let upper = new cv.Mat(
+            hsv.rows,
+            hsv.cols,
+            hsv.type(),
+            [35, 255, 255, 255],
+          );
 
-function drawBox(e){
+          let mask = new cv.Mat();
 
-    if(!drawing) return
+          cv.inRange(hsv, lower, upper, mask);
 
-    ctx.clearRect(0,0,canvas.width,canvas.height)
+          let tpl = cv.imread(templateImg);
+          cv.cvtColor(tpl, tpl, cv.COLOR_RGBA2GRAY);
 
-    const w = e.offsetX - startX
-    const h = e.offsetY - startY
+          const roiMat = gray.roi(new cv.Rect(roi.x, roi.y, roi.w, roi.h));
 
-    ctx.strokeStyle = "yellow"
-    ctx.lineWidth = 3
+          const result = new cv.Mat();
 
-    ctx.strokeRect(startX,startY,w,h)
+          cv.matchTemplate(roiMat, tpl, result, cv.TM_CCOEFF_NORMED);
 
-}
+          const { maxVal, maxLoc } = cv.minMaxLoc(result);
 
-function endDraw(e){
+          frameCount++;
 
-    drawing = false
+          statsDiv.innerText =
+            "Frames scanned: " +
+            frameCount +
+            " | Match score: " +
+            maxVal.toFixed(3);
 
-    roi = {
-        x:startX,
-        y:startY,
-        w:e.offsetX-startX,
-        h:e.offsetY-startY
-    }
+          if (maxVal > threshold && !detectionLocked) {
+            detections.push({
+              x: roi.x + maxLoc.x,
+              y: roi.y + maxLoc.y,
+              w: tpl.cols,
+              h: tpl.rows,
+            });
 
-}
+            detectionLocked = true;
 
-// TOUCH EVENTS
+            alertUser();
+          }
 
-function startTouch(e){
+          detections.forEach((d) => {
+            ctx.strokeStyle = "lime";
+            ctx.lineWidth = 4;
+            ctx.strokeRect(d.x, d.y, d.w, d.h);
+          });
 
-    e.preventDefault()
+          src.delete();
+          gray.delete();
+          hsv.delete();
+          mask.delete();
+          tpl.delete();
+          roiMat.delete();
+          result.delete();
+        }, 100);
+      }
 
-    const rect = canvas.getBoundingClientRect()
-    const touch = e.touches[0]
+      function alertUser() {
+        const audio = new Audio(
+          "https://actions.google.com/sounds/v1/alarms/beep_short.ogg",
+        );
+        audio.play().catch(() => {});
 
-    startX = touch.clientX - rect.left
-    startY = touch.clientY - rect.top
-
-    drawing = true
-
-}
-
-function moveTouch(e){
-
-    if(!drawing) return
-
-    e.preventDefault()
-
-    const rect = canvas.getBoundingClientRect()
-    const touch = e.touches[0]
-
-    const x = touch.clientX - rect.left
-    const y = touch.clientY - rect.top
-
-    ctx.clearRect(0,0,canvas.width,canvas.height)
-
-    ctx.strokeStyle="yellow"
-    ctx.lineWidth=3
-
-    ctx.strokeRect(startX,startY,x-startX,y-startY)
-
-}
-
-function endTouch(e){
-
-    drawing = false
-
-    const rect = canvas.getBoundingClientRect()
-    const touch = e.changedTouches[0]
-
-    const x = touch.clientX - rect.left
-    const y = touch.clientY - rect.top
-
-    roi = {
-        x:startX,
-        y:startY,
-        w:x-startX,
-        h:y-startY
-    }
-
-}
-
-// START DETECTION
-
-function startDetection(){
-
-    templateImg = new Image()
-
-    templateImg.onload = ()=>{
-
-        statusDiv.innerText = "Status: Detection Running"
-
-        detectLoop()
-
-    }
-
-    templateImg.src = "star.png"
-
-}
-
-// DETECTION LOOP
-
-function detectLoop(){
-
-    setInterval(()=>{
-
-        frameCtx.drawImage(video,0,0,frameCanvas.width,frameCanvas.height)
-
-        let src = cv.imread(frameCanvas)
-        let gray = new cv.Mat()
-
-        cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY)
-
-        if(!roi){
-
-            src.delete()
-            gray.delete()
-            return
-
+        if (navigator.vibrate) {
+          navigator.vibrate([300, 200, 300]);
         }
+      }
 
-        const tpl = cv.imread(templateImg)
-        cv.cvtColor(tpl,tpl,cv.COLOR_RGBA2GRAY)
+      function resetDetections() {
+        detections = [];
+        detectionLocked = false;
 
-        const roiMat = gray.roi(new cv.Rect(
-            roi.x,
-            roi.y,
-            roi.w,
-            roi.h
-        ))
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        const result = new cv.Mat()
-
-        cv.matchTemplate(roiMat,tpl,result,cv.TM_CCOEFF_NORMED)
-
-        const {maxVal,maxLoc} = cv.minMaxLoc(result)
-
-        frameCount++
-
-        statsDiv.innerText =
-            "Frames scanned: " + frameCount +
-            " | Match score: " + maxVal.toFixed(3)
-
-        if(maxVal > 0.72){
-
-            ctx.strokeStyle="lime"
-            ctx.lineWidth=4
-
-            ctx.strokeRect(
-                roi.x + maxLoc.x,
-                roi.y + maxLoc.y,
-                tpl.cols,
-                tpl.rows
-            )
-
-            alertSound()
-
+        if (roi) {
+          ctx.strokeStyle = "yellow";
+          ctx.lineWidth = 3;
+          ctx.strokeRect(roi.x, roi.y, roi.w, roi.h);
         }
-
-        src.delete()
-        gray.delete()
-        tpl.delete()
-        roiMat.delete()
-        result.delete()
-
-    },100)
-
-}
-
-// ALERT
-
-function alertSound(){
-
-    const audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg")
-    audio.play()
-
-}
-
-</script>
-
-</body>
+      }
+    </script>
+  </body>
 </html>
