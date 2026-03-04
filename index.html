@@ -1,250 +1,320 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Star Detector</title>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>⭐ Star Detector</title>
 
-    <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+<script async src="https://docs.opencv.org/4.x/opencv.js"></script>
 
-    <style>
-      body {
-        font-family: Arial;
-        text-align: center;
-        background: #111;
-        color: white;
-      }
+<style>
 
-      video {
-        width: 95vw;
-        border: 3px solid #444;
-      }
+body{
+    background:#111;
+    color:white;
+    font-family:Arial;
+    text-align:center;
+}
 
-      canvas {
-        position: absolute;
-        left: 0;
-        top: 0;
-      }
+h2{
+    margin-top:20px;
+}
 
-      #container {
-        position: relative;
-        display: inline-block;
-      }
+button{
+    padding:14px 22px;
+    margin:10px;
+    font-size:16px;
+}
 
-      button {
-        padding: 12px 20px;
-        margin: 10px;
-        font-size: 16px;
-      }
-    </style>
-  </head>
+#container{
+    position:relative;
+    display:inline-block;
+    width:95vw;
+}
 
-  <body>
-    <h2>⭐ Star Detector</h2>
+video{
+    width:100%;
+    border:3px solid #444;
+}
 
-    <button onclick="startCamera()">Start Camera</button>
-    <button onclick="startDetection()">Start Detection</button>
-    <div id="status" style="margin-top: 10px; font-size: 18px">
-      Status: Idle
-    </div>
+canvas{
+    position:absolute;
+    left:0;
+    top:0;
+}
 
-    <div id="stats" style="font-size: 14px; color: #aaa">
-      Frames scanned: 0 | Match score: 0
-    </div>
+#status{
+    font-size:18px;
+    margin-top:10px;
+}
 
-    <div id="container">
-      <video id="video" autoplay playsinline></video>
-      <canvas id="overlay"></canvas>
-    </div>
+#stats{
+    color:#aaa;
+    font-size:14px;
+}
 
-    <script>
-      let frameCount = 0;
-      let statusDiv = document.getElementById("status");
-      let statsDiv = document.getElementById("stats");
-      let template;
-      let roi = null;
-      let drawing = false;
+</style>
+</head>
 
-      const video = document.getElementById("video");
-      const canvas = document.getElementById("overlay");
-      const ctx = canvas.getContext("2d");
+<body>
 
-      async function startCamera() {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
-        });
+<h2>⭐ Star Detector</h2>
 
-        video.srcObject = stream;
+<button onclick="startCamera()">Start Camera</button>
+<button onclick="startDetection()">Start Detection</button>
 
-        video.onloadedmetadata = () => {
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-        };
-      }
+<div id="status">Status: Idle</div>
+<div id="stats">Frames scanned: 0 | Match score: 0</div>
 
-      canvas.addEventListener("mousedown", startDraw);
-      canvas.addEventListener("mousemove", drawBox);
-      canvas.addEventListener("mouseup", endDraw);
+<div id="container">
+    <video id="video" autoplay playsinline></video>
+    <canvas id="overlay"></canvas>
+</div>
 
-      canvas.addEventListener("touchstart", startTouch);
-      canvas.addEventListener("touchmove", moveTouch);
-      canvas.addEventListener("touchend", endTouch);
+<canvas id="frameCanvas" style="display:none;"></canvas>
 
-      function startTouch(e) {
-        e.preventDefault();
+<script>
 
-        const rect = canvas.getBoundingClientRect();
-        const touch = e.touches[0];
+let templateImg
+let roi = null
+let drawing = false
+let startX,startY
 
-        startX = touch.clientX - rect.left;
-        startY = touch.clientY - rect.top;
+let frameCount = 0
 
-        drawing = true;
-      }
+const video = document.getElementById("video")
+const canvas = document.getElementById("overlay")
+const ctx = canvas.getContext("2d")
 
-      function moveTouch(e) {
-        if (!drawing) return;
+const frameCanvas = document.getElementById("frameCanvas")
+const frameCtx = frameCanvas.getContext("2d")
 
-        e.preventDefault();
+const statusDiv = document.getElementById("status")
+const statsDiv = document.getElementById("stats")
 
-        const rect = canvas.getBoundingClientRect();
-        const touch = e.touches[0];
+// START CAMERA
 
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
+async function startCamera(){
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const stream = await navigator.mediaDevices.getUserMedia({
+        video:{facingMode:"environment"}
+    })
 
-        const w = x - startX;
-        const h = y - startY;
+    video.srcObject = stream
 
-        ctx.strokeStyle = "yellow";
-        ctx.lineWidth = 3;
+    video.onloadedmetadata = ()=>{
 
-        ctx.strokeRect(startX, startY, w, h);
-      }
+        canvas.width = video.videoWidth
+        canvas.height = video.videoHeight
 
-      function endTouch(e) {
-        drawing = false;
+        frameCanvas.width = video.videoWidth
+        frameCanvas.height = video.videoHeight
 
-        const rect = canvas.getBoundingClientRect();
-        const touch = e.changedTouches[0];
+    }
 
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
+}
 
-        roi = {
-          x: startX,
-          y: startY,
-          w: x - startX,
-          h: y - startY,
-        };
-      }
+// DRAW BOX (MOUSE)
 
-      let startX, startY;
+canvas.addEventListener("mousedown", startDraw)
+canvas.addEventListener("mousemove", drawBox)
+canvas.addEventListener("mouseup", endDraw)
 
-      function startDraw(e) {
-        drawing = true;
+// DRAW BOX (TOUCH)
 
-        startX = e.offsetX;
-        startY = e.offsetY;
-      }
+canvas.addEventListener("touchstart", startTouch)
+canvas.addEventListener("touchmove", moveTouch)
+canvas.addEventListener("touchend", endTouch)
 
-      function drawBox(e) {
-        if (!drawing) return;
+function startDraw(e){
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawing = true
+    startX = e.offsetX
+    startY = e.offsetY
 
-        const w = e.offsetX - startX;
-        const h = e.offsetY - startY;
+}
 
-        ctx.strokeStyle = "yellow";
-        ctx.lineWidth = 3;
+function drawBox(e){
 
-        ctx.strokeRect(startX, startY, w, h);
-      }
+    if(!drawing) return
 
-      function endDraw(e) {
-        drawing = false;
+    ctx.clearRect(0,0,canvas.width,canvas.height)
 
-        roi = {
-          x: startX,
-          y: startY,
-          w: e.offsetX - startX,
-          h: e.offsetY - startY,
-        };
-      }
+    const w = e.offsetX - startX
+    const h = e.offsetY - startY
 
-      function startDetection() {
-        template = new Image();
-        statusDiv.innerText = "Status: Detection Running";
+    ctx.strokeStyle = "yellow"
+    ctx.lineWidth = 3
 
-        template.onload = () => {
-          detectLoop();
-        };
+    ctx.strokeRect(startX,startY,w,h)
 
-        template.src = "star.png";
-      }
+}
 
-      function detectLoop() {
-        const cap = new cv.VideoCapture(video);
+function endDraw(e){
 
-        const frame = new cv.Mat(
-          video.videoHeight,
-          video.videoWidth,
-          cv.CV_8UC4,
-        );
-        const gray = new cv.Mat();
+    drawing = false
 
-        const tpl = cv.imread(template);
-        cv.cvtColor(tpl, tpl, cv.COLOR_RGBA2GRAY);
+    roi = {
+        x:startX,
+        y:startY,
+        w:e.offsetX-startX,
+        h:e.offsetY-startY
+    }
 
-        setInterval(() => {
-          cap.read(frame);
-          cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
+}
 
-          if (!roi) return;
+// TOUCH EVENTS
 
-          const roiMat = gray.roi(new cv.Rect(roi.x, roi.y, roi.w, roi.h));
+function startTouch(e){
 
-          const result = new cv.Mat();
+    e.preventDefault()
 
-          cv.matchTemplate(roiMat, tpl, result, cv.TM_CCOEFF_NORMED);
+    const rect = canvas.getBoundingClientRect()
+    const touch = e.touches[0]
 
-          const { maxVal, maxLoc } = cv.minMaxLoc(result);
+    startX = touch.clientX - rect.left
+    startY = touch.clientY - rect.top
 
-          frameCount++;
+    drawing = true
 
-          statsDiv.innerText =
-            "Frames scanned: " +
-            frameCount +
-            " | Match score: " +
-            maxVal.toFixed(3);
+}
 
-          if (maxVal > 0.75) {
-            ctx.strokeStyle = "lime";
-            ctx.lineWidth = 4;
+function moveTouch(e){
+
+    if(!drawing) return
+
+    e.preventDefault()
+
+    const rect = canvas.getBoundingClientRect()
+    const touch = e.touches[0]
+
+    const x = touch.clientX - rect.left
+    const y = touch.clientY - rect.top
+
+    ctx.clearRect(0,0,canvas.width,canvas.height)
+
+    ctx.strokeStyle="yellow"
+    ctx.lineWidth=3
+
+    ctx.strokeRect(startX,startY,x-startX,y-startY)
+
+}
+
+function endTouch(e){
+
+    drawing = false
+
+    const rect = canvas.getBoundingClientRect()
+    const touch = e.changedTouches[0]
+
+    const x = touch.clientX - rect.left
+    const y = touch.clientY - rect.top
+
+    roi = {
+        x:startX,
+        y:startY,
+        w:x-startX,
+        h:y-startY
+    }
+
+}
+
+// START DETECTION
+
+function startDetection(){
+
+    templateImg = new Image()
+
+    templateImg.onload = ()=>{
+
+        statusDiv.innerText = "Status: Detection Running"
+
+        detectLoop()
+
+    }
+
+    templateImg.src = "star.png"
+
+}
+
+// DETECTION LOOP
+
+function detectLoop(){
+
+    setInterval(()=>{
+
+        frameCtx.drawImage(video,0,0,frameCanvas.width,frameCanvas.height)
+
+        let src = cv.imread(frameCanvas)
+        let gray = new cv.Mat()
+
+        cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY)
+
+        if(!roi){
+
+            src.delete()
+            gray.delete()
+            return
+
+        }
+
+        const tpl = cv.imread(templateImg)
+        cv.cvtColor(tpl,tpl,cv.COLOR_RGBA2GRAY)
+
+        const roiMat = gray.roi(new cv.Rect(
+            roi.x,
+            roi.y,
+            roi.w,
+            roi.h
+        ))
+
+        const result = new cv.Mat()
+
+        cv.matchTemplate(roiMat,tpl,result,cv.TM_CCOEFF_NORMED)
+
+        const {maxVal,maxLoc} = cv.minMaxLoc(result)
+
+        frameCount++
+
+        statsDiv.innerText =
+            "Frames scanned: " + frameCount +
+            " | Match score: " + maxVal.toFixed(3)
+
+        if(maxVal > 0.72){
+
+            ctx.strokeStyle="lime"
+            ctx.lineWidth=4
 
             ctx.strokeRect(
-              roi.x + maxLoc.x,
-              roi.y + maxLoc.y,
-              tpl.cols,
-              tpl.rows,
-            );
+                roi.x + maxLoc.x,
+                roi.y + maxLoc.y,
+                tpl.cols,
+                tpl.rows
+            )
 
-            alertSound();
-          }
+            alertSound()
 
-          roiMat.delete();
-          result.delete();
-        }, 100);
-      }
+        }
 
-      function alertSound() {
-        const audio = new Audio(
-          "https://actions.google.com/sounds/v1/alarms/beep_short.ogg",
-        );
-        audio.play();
-      }
-    </script>
-  </body>
+        src.delete()
+        gray.delete()
+        tpl.delete()
+        roiMat.delete()
+        result.delete()
+
+    },100)
+
+}
+
+// ALERT
+
+function alertSound(){
+
+    const audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg")
+    audio.play()
+
+}
+
+</script>
+
+</body>
 </html>
