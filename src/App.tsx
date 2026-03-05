@@ -14,7 +14,7 @@ type TemplateVariant = { scale: number; mat: any }
 
 const TEMPLATE_SCALES = [0.8, 0.9, 1, 1.1, 1.2]
 const MIN_ROI_SIZE = 20
-const SCAN_INTERVAL_MS = 110
+const SCAN_INTERVAL_MS = 150
 const REQUIRED_STABLE_MATCHES = 3
 const MATCH_POSITION_TOLERANCE_PX = 26
 const MATCH_SIZE_TOLERANCE_RATIO = 0.2
