@@ -3,119 +3,491 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>⭐ Star Detector</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;600;700&family=Bangers&display=swap"
+      rel="stylesheet"
+    />
 
     <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
 
     <style>
+      :root {
+        --char-orange: #ff8a22;
+        --char-orange-deep: #f25c18;
+        --char-cream: #ffe2bf;
+        --char-smoke: #25150f;
+        --char-ash: #120905;
+        --char-red: #ff3f1a;
+        --char-yellow: #ffd15f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
-        background: #111;
-        color: white;
-        font-family: Arial;
+        background:
+          radial-gradient(circle at 12% 18%, rgba(255, 132, 32, 0.34), transparent 34%),
+          radial-gradient(circle at 82% 8%, rgba(255, 96, 26, 0.28), transparent 30%),
+          linear-gradient(160deg, #170904 0%, #2d1204 48%, #120703 100%);
+        color: var(--char-cream);
+        font-family: "Barlow Semi Condensed", "Trebuchet MS", sans-serif;
+        margin: 0;
+        min-height: 100vh;
+        padding: 22px 14px 30px;
+        position: relative;
+      }
+
+      body::before {
+        background-image: repeating-linear-gradient(
+          -35deg,
+          rgba(255, 255, 255, 0.02) 0 6px,
+          transparent 6px 18px
+        );
+        content: "";
+        inset: 0;
+        pointer-events: none;
+        position: fixed;
+        z-index: 0;
+      }
+
+      .bg-orb {
+        animation: emberDrift 10s ease-in-out infinite;
+        filter: blur(60px);
+        opacity: 0.4;
+        pointer-events: none;
+        position: fixed;
+        z-index: 0;
+      }
+
+      .bg-orb--left {
+        background: rgba(255, 120, 22, 0.9);
+        border-radius: 50%;
+        height: 280px;
+        left: -90px;
+        top: 40px;
+        width: 280px;
+      }
+
+      .bg-orb--right {
+        animation-duration: 13s;
+        background: rgba(255, 58, 22, 0.8);
+        border-radius: 50%;
+        bottom: -120px;
+        height: 320px;
+        right: -90px;
+        width: 320px;
+      }
+
+      .app-shell {
+        margin: 0 auto;
+        max-width: 1060px;
+        position: relative;
+        width: 100%;
+        z-index: 1;
+      }
+
+      .hero {
         text-align: center;
       }
 
-      button {
-        padding: 14px 20px;
-        margin: 8px;
-        font-size: 16px;
-      }
-
-      #container {
-        position: relative;
+      .badge {
+        background: rgba(255, 130, 40, 0.18);
+        border: 1px solid rgba(255, 178, 96, 0.5);
+        border-radius: 999px;
         display: inline-block;
-        width: 95vw;
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        margin: 0 0 8px;
+        padding: 6px 14px;
+        text-transform: uppercase;
       }
 
-      video {
-        width: 100%;
-        border: 3px solid #444;
+      h1 {
+        color: var(--char-yellow);
+        font-family: "Bangers", "Impact", fantasy;
+        font-size: clamp(2.2rem, 5vw, 3.6rem);
+        letter-spacing: 0.06em;
+        margin: 0;
+        text-shadow:
+          0 2px 0 rgba(92, 25, 0, 0.9),
+          0 10px 28px rgba(255, 85, 24, 0.45);
       }
 
-      canvas {
-        position: absolute;
-        top: 0;
-        left: 0;
+      .spark {
+        animation: flameFlicker 1.65s ease-in-out infinite;
+        display: inline-block;
+        transform-origin: center bottom;
       }
 
-      #status {
-        font-size: 18px;
-        margin-top: 10px;
+      .subtitle {
+        color: #ffd7b0;
+        font-size: 1.05rem;
+        margin: 8px auto 0;
+        max-width: 560px;
       }
 
-      #stats {
-        color: #aaa;
-        font-size: 14px;
+      .panel {
+        backdrop-filter: blur(2px);
+        background: linear-gradient(
+          170deg,
+          rgba(74, 30, 12, 0.7),
+          rgba(32, 14, 8, 0.86)
+        );
+        border: 1px solid rgba(255, 159, 93, 0.22);
+        border-radius: 22px;
+        box-shadow:
+          0 18px 38px rgba(0, 0, 0, 0.35),
+          inset 0 1px 0 rgba(255, 189, 124, 0.25);
+        margin-top: 16px;
+        padding: 18px;
+      }
+
+      .controls-panel {
+        display: grid;
+        gap: 14px;
+      }
+
+      .button-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+      }
+
+      button {
+        background: linear-gradient(180deg, #ffb14d 0%, #ff7a24 60%, #e54f16 100%);
+        border: none;
+        border-radius: 12px;
+        box-shadow:
+          0 8px 16px rgba(240, 92, 20, 0.26),
+          inset 0 1px 0 rgba(255, 235, 201, 0.5);
+        color: #2b1306;
+        cursor: pointer;
+        font-family: "Barlow Semi Condensed", sans-serif;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        min-width: 150px;
+        padding: 12px 18px;
+        transition:
+          transform 0.18s ease,
+          box-shadow 0.18s ease,
+          filter 0.18s ease;
+      }
+
+      button:hover {
+        box-shadow:
+          0 12px 20px rgba(245, 96, 18, 0.35),
+          inset 0 1px 0 rgba(255, 245, 220, 0.56);
+        filter: saturate(1.08);
+        transform: translateY(-1px);
+      }
+
+      button:active {
+        transform: translateY(1px);
+      }
+
+      .button-row button:last-child {
+        background: linear-gradient(180deg, #ffe4c6 0%, #ffc27f 60%, #f99d4f 100%);
       }
 
       .control-row {
         align-items: center;
-        display: flex;
-        gap: 10px;
-        justify-content: center;
-        margin: 8px auto;
-        max-width: 560px;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 132px minmax(120px, 1fr) auto;
       }
 
       .control-row label {
-        min-width: 110px;
+        color: #ffd9af;
+        font-size: 0.95rem;
+        font-weight: 700;
         text-align: right;
       }
 
-      .control-row input[type="range"] {
-        flex: 1;
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        background: linear-gradient(90deg, #ffb85f, #ff6220);
+        border-radius: 999px;
+        height: 8px;
+        outline: none;
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        background: #fff5dd;
+        border: 2px solid #e95a20;
+        border-radius: 50%;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.26);
+        cursor: pointer;
+        height: 20px;
+        width: 20px;
+      }
+
+      input[type="range"]::-moz-range-thumb {
+        background: #fff5dd;
+        border: 2px solid #e95a20;
+        border-radius: 50%;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.26);
+        cursor: pointer;
+        height: 20px;
+        width: 20px;
+      }
+
+      input[type="range"]:disabled {
+        filter: grayscale(0.6);
+        opacity: 0.45;
+      }
+
+      .value-pill {
+        background: rgba(255, 173, 92, 0.16);
+        border: 1px solid rgba(255, 188, 122, 0.5);
+        border-radius: 999px;
+        color: #fff0d7;
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+        min-width: 58px;
+        padding: 4px 10px;
+        text-align: center;
+      }
+
+      .toggle-row {
+        align-items: center;
+        color: #ffe1bf;
+        display: inline-flex;
+        font-weight: 600;
+        gap: 8px;
+        justify-content: center;
+      }
+
+      .toggle-row input[type="checkbox"] {
+        accent-color: #ff8a2d;
+        height: 16px;
+        width: 16px;
       }
 
       #cameraControlStatus {
-        color: #aaa;
-        font-size: 13px;
+        color: #ffcfa1;
+        font-size: 0.85rem;
+        text-align: center;
+      }
+
+      .status-panel {
+        display: grid;
+        gap: 8px;
+      }
+
+      #status {
+        background: linear-gradient(
+          180deg,
+          rgba(255, 169, 86, 0.26),
+          rgba(255, 96, 24, 0.2)
+        );
+        border: 1px solid rgba(255, 173, 103, 0.45);
+        border-radius: 12px;
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin: 0;
+        padding: 10px;
+        text-align: center;
+      }
+
+      #stats {
+        color: #ffd7b8;
+        font-size: 0.9rem;
+        letter-spacing: 0.01em;
+        text-align: center;
+      }
+
+      .video-panel {
+        padding: 14px;
+      }
+
+      #container {
+        border-radius: 18px;
+        overflow: hidden;
+        position: relative;
+        width: 100%;
+      }
+
+      #container::after {
+        border: 2px solid rgba(255, 165, 89, 0.42);
+        border-radius: 18px;
+        box-shadow:
+          inset 0 0 18px rgba(255, 109, 35, 0.2),
+          0 0 30px rgba(255, 95, 22, 0.24);
+        content: "";
+        inset: 0;
+        pointer-events: none;
+        position: absolute;
+      }
+
+      video {
+        display: block;
+        width: 100%;
+      }
+
+      canvas {
+        left: 0;
+        position: absolute;
+        top: 0;
+      }
+
+      .reveal {
+        animation: riseIn 0.6s ease-out forwards;
+        animation-delay: var(--delay, 0ms);
+        opacity: 0;
+      }
+
+      @keyframes riseIn {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes flameFlicker {
+        0%,
+        100% {
+          transform: rotate(-3deg) scale(1);
+        }
+
+        50% {
+          transform: rotate(4deg) scale(1.08);
+        }
+      }
+
+      @keyframes emberDrift {
+        0%,
+        100% {
+          transform: translate3d(0, 0, 0) scale(1);
+        }
+
+        50% {
+          transform: translate3d(8px, -12px, 0) scale(1.06);
+        }
+      }
+
+      @media (max-width: 760px) {
+        body {
+          padding: 14px 10px 22px;
+        }
+
+        .panel {
+          border-radius: 16px;
+          padding: 14px;
+        }
+
+        .control-row {
+          grid-template-columns: 1fr auto;
+        }
+
+        .control-row label {
+          grid-column: 1 / -1;
+          text-align: left;
+        }
+
+        button {
+          min-width: 132px;
+          width: calc(50% - 6px);
+        }
+
+        .button-row button:last-child {
+          width: 100%;
+        }
       }
     </style>
   </head>
 
   <body>
-    <h2>⭐ Star Detector</h2>
+    <div class="bg-orb bg-orb--left"></div>
+    <div class="bg-orb bg-orb--right"></div>
 
-    <button onclick="startCamera()">Start Camera</button>
-    <button onclick="startDetection()">Start Detection</button>
-    <button onclick="resetDetections()">Reset Detections</button>
+    <main class="app-shell">
+      <header class="hero reveal" style="--delay: 0ms">
+        <p class="badge">Fire-Type Vision</p>
+        <h1><span class="spark">🔥</span> Charmander Star Detector</h1>
+        <p class="subtitle">Track your target with ember-sharp recognition.</p>
+      </header>
 
-    <br />
+      <section class="panel controls-panel reveal" style="--delay: 90ms">
+        <div class="button-row">
+          <button onclick="startCamera()">Start Camera</button>
+          <button onclick="startDetection()">Start Detection</button>
+          <button onclick="resetDetections()">Reset Detections</button>
+        </div>
 
-    Threshold:
-    <input
-      id="thresholdSlider"
-      type="range"
-      min="0.55"
-      max="0.95"
-      step="0.01"
-      value="0.78"
-    />
-    <span id="thresholdValue">0.78</span>
+        <div class="control-row">
+          <label for="thresholdSlider">Match Threshold</label>
+          <input
+            id="thresholdSlider"
+            type="range"
+            min="0.55"
+            max="0.95"
+            step="0.01"
+            value="0.78"
+          />
+          <span class="value-pill" id="thresholdValue">0.78</span>
+        </div>
 
-    <div class="control-row">
-      <label for="zoomSlider">Zoom</label>
-      <input id="zoomSlider" type="range" min="1" max="1" step="0.1" value="1" disabled />
-      <span id="zoomValue">N/A</span>
-    </div>
+        <div class="control-row">
+          <label for="zoomSlider">Zoom</label>
+          <input
+            id="zoomSlider"
+            type="range"
+            min="1"
+            max="1"
+            step="0.1"
+            value="1"
+            disabled
+          />
+          <span class="value-pill" id="zoomValue">N/A</span>
+        </div>
 
-    <div class="control-row">
-      <label for="focusSlider">Manual Focus</label>
-      <input id="focusSlider" type="range" min="0" max="1" step="0.01" value="0" disabled />
-      <span id="focusValue">N/A</span>
-    </div>
-    <label>
-      <input id="manualFocusToggle" type="checkbox" disabled />
-      Enable manual focus
-    </label>
-    <div id="cameraControlStatus">Camera controls: unavailable</div>
+        <div class="control-row">
+          <label for="focusSlider">Manual Focus</label>
+          <input
+            id="focusSlider"
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value="0"
+            disabled
+          />
+          <span class="value-pill" id="focusValue">N/A</span>
+        </div>
 
-    <div id="status">Status: Idle</div>
-    <div id="stats">Frames scanned: 0 | Match score: 0.000 | Stable hits: 0/3</div>
+        <label class="toggle-row">
+          <input id="manualFocusToggle" type="checkbox" disabled />
+          Enable manual focus
+        </label>
+        <div id="cameraControlStatus">Camera controls: unavailable</div>
+      </section>
 
-    <div id="container">
-      <video id="video" autoplay playsinline></video>
-      <canvas id="overlay"></canvas>
-    </div>
+      <section class="panel status-panel reveal" style="--delay: 180ms">
+        <div id="status">Status: Idle</div>
+        <div id="stats">Frames scanned: 0 | Match score: 0.000 | Stable hits: 0/3</div>
+      </section>
+
+      <section class="panel video-panel reveal" style="--delay: 270ms">
+        <div id="container">
+          <video id="video" autoplay playsinline></video>
+          <canvas id="overlay"></canvas>
+        </div>
+      </section>
+    </main>
 
     <canvas id="frameCanvas" style="display: none"></canvas>
 
