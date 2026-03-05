@@ -46,6 +46,29 @@
         color: #aaa;
         font-size: 14px;
       }
+
+      .control-row {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin: 8px auto;
+        max-width: 560px;
+      }
+
+      .control-row label {
+        min-width: 110px;
+        text-align: right;
+      }
+
+      .control-row input[type="range"] {
+        flex: 1;
+      }
+
+      #cameraControlStatus {
+        color: #aaa;
+        font-size: 13px;
+      }
     </style>
   </head>
 
@@ -65,12 +88,29 @@
       min="0.55"
       max="0.95"
       step="0.01"
-      value="0.72"
+      value="0.78"
     />
-    <span id="thresholdValue">0.72</span>
+    <span id="thresholdValue">0.78</span>
+
+    <div class="control-row">
+      <label for="zoomSlider">Zoom</label>
+      <input id="zoomSlider" type="range" min="1" max="1" step="0.1" value="1" disabled />
+      <span id="zoomValue">N/A</span>
+    </div>
+
+    <div class="control-row">
+      <label for="focusSlider">Manual Focus</label>
+      <input id="focusSlider" type="range" min="0" max="1" step="0.01" value="0" disabled />
+      <span id="focusValue">N/A</span>
+    </div>
+    <label>
+      <input id="manualFocusToggle" type="checkbox" disabled />
+      Enable manual focus
+    </label>
+    <div id="cameraControlStatus">Camera controls: unavailable</div>
 
     <div id="status">Status: Idle</div>
-    <div id="stats">Frames scanned: 0 | Match score: 0</div>
+    <div id="stats">Frames scanned: 0 | Match score: 0.000 | Stable hits: 0/3</div>
 
     <div id="container">
       <video id="video" autoplay playsinline></video>
@@ -86,7 +126,9 @@
       let startY = 0;
 
       let frameCount = 0;
-      let threshold = 0.72;
+      let threshold = 0.78;
+      let stableMatchCount = 0;
+      let previousCandidateMatch = null;
 
       let detections = [];
       let detectionLocked = false;
@@ -95,12 +137,18 @@
       let openCvReadyPromise = null;
       let alertAudioContext = null;
       let fallbackAlertAudio = null;
+      let activeVideoTrack = null;
+      let zoomDebounceTimer = null;
+      let focusDebounceTimer = null;
 
       let templateVariants = [];
 
       const TEMPLATE_SCALES = [0.8, 0.9, 1, 1.1, 1.2];
       const MIN_ROI_SIZE = 20;
       const SCAN_INTERVAL_MS = 150;
+      const REQUIRED_STABLE_MATCHES = 3;
+      const MATCH_POSITION_TOLERANCE_PX = 26;
+      const MATCH_SIZE_TOLERANCE_RATIO = 0.2;
 
       const video = document.getElementById("video");
       const canvas = document.getElementById("overlay");
@@ -111,14 +159,34 @@
 
       const statusDiv = document.getElementById("status");
       const statsDiv = document.getElementById("stats");
+      const cameraControlStatusDiv = document.getElementById("cameraControlStatus");
 
       const slider = document.getElementById("thresholdSlider");
       const sliderValue = document.getElementById("thresholdValue");
+      const zoomSlider = document.getElementById("zoomSlider");
+      const zoomValue = document.getElementById("zoomValue");
+      const manualFocusToggle = document.getElementById("manualFocusToggle");
+      const focusSlider = document.getElementById("focusSlider");
+      const focusValue = document.getElementById("focusValue");
 
       slider.oninput = () => {
         threshold = parseFloat(slider.value);
         sliderValue.innerText = threshold.toFixed(2);
       };
+
+      zoomSlider.addEventListener("input", () => {
+        zoomValue.innerText = parseFloat(zoomSlider.value).toFixed(2);
+        scheduleZoomApply();
+      });
+
+      manualFocusToggle.addEventListener("change", () => {
+        setManualFocus(manualFocusToggle.checked);
+      });
+
+      focusSlider.addEventListener("input", () => {
+        focusValue.innerText = parseFloat(focusSlider.value).toFixed(2);
+        scheduleFocusApply();
+      });
 
       function waitForOpenCv(timeoutMs = 10000) {
         if (window.cv && typeof cv.Mat === "function") {
@@ -237,6 +305,316 @@
         };
       }
 
+      function clearCandidateState() {
+        stableMatchCount = 0;
+        previousCandidateMatch = null;
+      }
+
+      function isCandidateStable(candidate) {
+        if (!previousCandidateMatch) {
+          return true;
+        }
+
+        const dx = Math.abs(candidate.x - previousCandidateMatch.x);
+        const dy = Math.abs(candidate.y - previousCandidateMatch.y);
+        const dwRatio =
+          Math.abs(candidate.w - previousCandidateMatch.w) /
+          Math.max(1, previousCandidateMatch.w);
+        const dhRatio =
+          Math.abs(candidate.h - previousCandidateMatch.h) /
+          Math.max(1, previousCandidateMatch.h);
+
+        return (
+          dx <= MATCH_POSITION_TOLERANCE_PX &&
+          dy <= MATCH_POSITION_TOLERANCE_PX &&
+          dwRatio <= MATCH_SIZE_TOLERANCE_RATIO &&
+          dhRatio <= MATCH_SIZE_TOLERANCE_RATIO
+        );
+      }
+
+      function getTrackCapabilities() {
+        if (
+          !activeVideoTrack ||
+          typeof activeVideoTrack.getCapabilities !== "function"
+        ) {
+          return null;
+        }
+
+        try {
+          return activeVideoTrack.getCapabilities();
+        } catch (error) {
+          console.error(error);
+          return null;
+        }
+      }
+
+      function getTrackSettings() {
+        if (!activeVideoTrack || typeof activeVideoTrack.getSettings !== "function") {
+          return {};
+        }
+
+        try {
+          return activeVideoTrack.getSettings();
+        } catch (error) {
+          console.error(error);
+          return {};
+        }
+      }
+
+      function setCameraControlStatus(message) {
+        cameraControlStatusDiv.innerText = message;
+      }
+
+      function disableCameraControls() {
+        if (zoomDebounceTimer) {
+          window.clearTimeout(zoomDebounceTimer);
+          zoomDebounceTimer = null;
+        }
+
+        if (focusDebounceTimer) {
+          window.clearTimeout(focusDebounceTimer);
+          focusDebounceTimer = null;
+        }
+
+        zoomSlider.disabled = true;
+        zoomSlider.value = "1";
+        zoomValue.innerText = "N/A";
+
+        manualFocusToggle.disabled = true;
+        manualFocusToggle.checked = false;
+
+        focusSlider.disabled = true;
+        focusSlider.value = "0";
+        focusValue.innerText = "N/A";
+      }
+
+      function configureZoomControl(capabilities, settings) {
+        if (!capabilities || !capabilities.zoom) {
+          zoomSlider.disabled = true;
+          zoomValue.innerText = "N/A";
+          return false;
+        }
+
+        const zoomRange = capabilities.zoom;
+        const zoomStep = zoomRange.step && zoomRange.step > 0 ? zoomRange.step : 0.1;
+        const currentZoom =
+          typeof settings.zoom === "number" ? settings.zoom : zoomRange.min;
+        const clampedZoom = clamp(currentZoom, zoomRange.min, zoomRange.max);
+
+        zoomSlider.min = String(zoomRange.min);
+        zoomSlider.max = String(zoomRange.max);
+        zoomSlider.step = String(zoomStep);
+        zoomSlider.value = String(clampedZoom);
+        zoomSlider.disabled = false;
+        zoomValue.innerText = clampedZoom.toFixed(2);
+        return true;
+      }
+
+      function configureFocusControl(capabilities, settings) {
+        const focusModes =
+          capabilities && Array.isArray(capabilities.focusMode)
+            ? capabilities.focusMode
+            : [];
+
+        if (!capabilities || !capabilities.focusDistance || !focusModes.includes("manual")) {
+          manualFocusToggle.disabled = true;
+          manualFocusToggle.checked = false;
+          focusSlider.disabled = true;
+          focusValue.innerText = "N/A";
+          return false;
+        }
+
+        const focusRange = capabilities.focusDistance;
+        const focusStep = focusRange.step && focusRange.step > 0 ? focusRange.step : 0.01;
+        const currentFocus =
+          typeof settings.focusDistance === "number"
+            ? settings.focusDistance
+            : focusRange.min;
+        const clampedFocus = clamp(currentFocus, focusRange.min, focusRange.max);
+        const isManual = settings.focusMode === "manual";
+
+        manualFocusToggle.disabled = false;
+        manualFocusToggle.checked = isManual;
+
+        focusSlider.min = String(focusRange.min);
+        focusSlider.max = String(focusRange.max);
+        focusSlider.step = String(focusStep);
+        focusSlider.value = String(clampedFocus);
+        focusSlider.disabled = !isManual;
+        focusValue.innerText = clampedFocus.toFixed(2);
+        return true;
+      }
+
+      function getPreferredAutoFocusMode(focusModes) {
+        if (!Array.isArray(focusModes)) {
+          return null;
+        }
+
+        if (focusModes.includes("continuous")) {
+          return "continuous";
+        }
+
+        if (focusModes.includes("single-shot")) {
+          return "single-shot";
+        }
+
+        if (focusModes.includes("auto")) {
+          return "auto";
+        }
+
+        return null;
+      }
+
+      async function applyTrackAdvancedConstraints(constraint) {
+        if (
+          !activeVideoTrack ||
+          typeof activeVideoTrack.applyConstraints !== "function"
+        ) {
+          return false;
+        }
+
+        try {
+          await activeVideoTrack.applyConstraints({ advanced: [constraint] });
+          return true;
+        } catch (error) {
+          console.error(error);
+          return false;
+        }
+      }
+
+      function scheduleZoomApply() {
+        if (zoomDebounceTimer) {
+          window.clearTimeout(zoomDebounceTimer);
+        }
+
+        zoomDebounceTimer = window.setTimeout(async () => {
+          zoomDebounceTimer = null;
+
+          if (zoomSlider.disabled) {
+            return;
+          }
+
+          const applied = await applyTrackAdvancedConstraints({
+            zoom: parseFloat(zoomSlider.value),
+          });
+
+          if (!applied) {
+            setCameraControlStatus("Camera controls: zoom update failed");
+          }
+        }, 80);
+      }
+
+      function scheduleFocusApply() {
+        if (focusDebounceTimer) {
+          window.clearTimeout(focusDebounceTimer);
+        }
+
+        focusDebounceTimer = window.setTimeout(async () => {
+          focusDebounceTimer = null;
+
+          if (focusSlider.disabled || !manualFocusToggle.checked) {
+            return;
+          }
+
+          const applied = await applyTrackAdvancedConstraints({
+            focusMode: "manual",
+            focusDistance: parseFloat(focusSlider.value),
+          });
+
+          if (!applied) {
+            setCameraControlStatus("Camera controls: focus update failed");
+          }
+        }, 80);
+      }
+
+      async function setManualFocus(enabled) {
+        const capabilities = getTrackCapabilities();
+        const focusModes =
+          capabilities && Array.isArray(capabilities.focusMode)
+            ? capabilities.focusMode
+            : [];
+
+        if (!capabilities || !capabilities.focusDistance || !focusModes.includes("manual")) {
+          manualFocusToggle.checked = false;
+          manualFocusToggle.disabled = true;
+          focusSlider.disabled = true;
+          setCameraControlStatus("Camera controls: manual focus unsupported");
+          return;
+        }
+
+        if (enabled) {
+          const applied = await applyTrackAdvancedConstraints({
+            focusMode: "manual",
+            focusDistance: parseFloat(focusSlider.value),
+          });
+
+          if (!applied) {
+            manualFocusToggle.checked = false;
+            focusSlider.disabled = true;
+            setCameraControlStatus("Camera controls: failed to enable manual focus");
+            return;
+          }
+
+          focusSlider.disabled = false;
+          setCameraControlStatus("Camera controls: manual focus enabled");
+          return;
+        }
+
+        const autoMode = getPreferredAutoFocusMode(focusModes);
+        const applied = autoMode
+          ? await applyTrackAdvancedConstraints({ focusMode: autoMode })
+          : true;
+
+        if (!applied) {
+          manualFocusToggle.checked = true;
+          focusSlider.disabled = false;
+          setCameraControlStatus("Camera controls: failed to restore autofocus");
+          return;
+        }
+
+        focusSlider.disabled = true;
+        setCameraControlStatus("Camera controls: autofocus enabled");
+      }
+
+      function updateCameraControlsForTrack(track) {
+        activeVideoTrack = track;
+
+        if (!activeVideoTrack) {
+          disableCameraControls();
+          setCameraControlStatus("Camera controls: unavailable");
+          return;
+        }
+
+        const capabilities = getTrackCapabilities();
+        const settings = getTrackSettings();
+
+        if (!capabilities) {
+          disableCameraControls();
+          setCameraControlStatus("Camera controls: capability data unavailable");
+          return;
+        }
+
+        const zoomReady = configureZoomControl(capabilities, settings);
+        const focusReady = configureFocusControl(capabilities, settings);
+
+        if (zoomReady && focusReady) {
+          setCameraControlStatus("Camera controls: zoom + manual focus available");
+          return;
+        }
+
+        if (zoomReady) {
+          setCameraControlStatus("Camera controls: zoom available");
+          return;
+        }
+
+        if (focusReady) {
+          setCameraControlStatus("Camera controls: manual focus available");
+          return;
+        }
+
+        setCameraControlStatus("Camera controls: unavailable on this device");
+      }
+
       function redrawOverlay() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -270,6 +648,7 @@
           roi = null;
           detections = [];
           detectionLocked = false;
+          clearCandidateState();
           statusDiv.innerText = "Status: Select a larger search area";
           redrawOverlay();
           return;
@@ -278,6 +657,7 @@
         roi = nextRoi;
         detections = [];
         detectionLocked = false;
+        clearCandidateState();
         statusDiv.innerText = "Status: Search area selected";
         redrawOverlay();
       }
@@ -301,7 +681,11 @@
           "Frames scanned: " +
           frameCount +
           " | Match score: " +
-          score.toFixed(3);
+          score.toFixed(3) +
+          " | Stable hits: " +
+          stableMatchCount +
+          "/" +
+          REQUIRED_STABLE_MATCHES;
       }
 
       function clearTemplateVariants() {
@@ -446,6 +830,8 @@
             video.srcObject.getTracks().forEach((track) => track.stop());
           }
 
+          updateCameraControlsForTrack(null);
+
           statusDiv.innerText = "Status: Starting camera";
 
           const stream = await navigator.mediaDevices.getUserMedia({
@@ -453,6 +839,8 @@
           });
 
           video.srcObject = stream;
+          const [track] = stream.getVideoTracks();
+          updateCameraControlsForTrack(track || null);
 
           video.onloadedmetadata = () => {
             canvas.width = video.videoWidth;
@@ -564,6 +952,7 @@
         clearDetectionLoop();
         detections = [];
         detectionLocked = false;
+        clearCandidateState();
         frameCount = 0;
         updateStats(0);
         redrawOverlay();
@@ -617,6 +1006,7 @@
 
           if (!safeRoi) {
             statusDiv.innerText = "Status: Search area is too small";
+            clearCandidateState();
             updateStats(0);
             redrawOverlay();
             return;
@@ -633,19 +1023,40 @@
 
           if (!bestMatch) {
             statusDiv.innerText = "Status: Search area is smaller than template";
+            clearCandidateState();
             redrawOverlay();
             return;
           }
 
           if (bestMatch.score >= threshold && !detectionLocked) {
-            detections = [
-              {
-                x: safeRoi.x + bestMatch.x,
-                y: safeRoi.y + bestMatch.y,
-                w: bestMatch.w,
-                h: bestMatch.h,
-              },
-            ];
+            const candidate = {
+              x: safeRoi.x + bestMatch.x,
+              y: safeRoi.y + bestMatch.y,
+              w: bestMatch.w,
+              h: bestMatch.h,
+            };
+
+            if (isCandidateStable(candidate)) {
+              stableMatchCount += 1;
+            } else {
+              stableMatchCount = 1;
+            }
+
+            previousCandidateMatch = candidate;
+            detections = [candidate];
+
+            if (stableMatchCount < REQUIRED_STABLE_MATCHES) {
+              statusDiv.innerText =
+                "Status: Candidate match " +
+                stableMatchCount +
+                "/" +
+                REQUIRED_STABLE_MATCHES +
+                " (" +
+                bestMatch.score.toFixed(3) +
+                ")";
+              redrawOverlay();
+              return;
+            }
 
             detectionLocked = true;
             statusDiv.innerText =
@@ -653,6 +1064,10 @@
             redrawOverlay();
             alertUser();
             return;
+          }
+
+          if (!detectionLocked) {
+            clearCandidateState();
           }
 
           statusDiv.innerText = getDefaultStatus();
@@ -741,6 +1156,7 @@
       function resetDetections() {
         detections = [];
         detectionLocked = false;
+        clearCandidateState();
         frameCount = 0;
         updateStats(0);
         statusDiv.innerText = getDefaultStatus();
