@@ -191,8 +191,12 @@
         transform: translateY(1px);
       }
 
-      .button-row button:last-child {
+      .button-row .reset-btn {
         background: linear-gradient(180deg, #ffe4c6 0%, #ffc27f 60%, #f99d4f 100%);
+      }
+
+      .button-row .test-btn {
+        background: linear-gradient(180deg, #ffd96d 0%, #ffb444 58%, #f1812d 100%);
       }
 
       .control-row {
@@ -425,7 +429,8 @@
         <div class="button-row">
           <button onclick="startCamera()">Start Camera</button>
           <button onclick="startDetection()">Start Detection</button>
-          <button onclick="resetDetections()">Reset Detections</button>
+          <button class="test-btn" onclick="testAlertTone()">Test Beep</button>
+          <button class="reset-btn" onclick="resetDetections()">Reset Detections</button>
         </div>
 
         <div class="control-row">
@@ -641,7 +646,19 @@
           return;
         }
 
-        getFallbackAlertAudio();
+        const fallback = getFallbackAlertAudio();
+        const wasMuted = fallback.muted;
+
+        try {
+          fallback.muted = true;
+          await fallback.play();
+          fallback.pause();
+          fallback.currentTime = 0;
+        } catch (error) {
+          console.error(error);
+        } finally {
+          fallback.muted = wasMuted;
+        }
       }
 
       function clamp(value, min, max) {
@@ -1494,7 +1511,7 @@
           oscillator.frequency.setValueAtTime(pulse.frequency, pulseStart);
 
           gain.gain.setValueAtTime(0.0001, pulseStart);
-          gain.gain.exponentialRampToValueAtTime(0.28, pulseStart + 0.008);
+          gain.gain.exponentialRampToValueAtTime(0.42, pulseStart + 0.008);
           gain.gain.exponentialRampToValueAtTime(0.0001, pulseEnd);
 
           oscillator.connect(gain);
@@ -1505,7 +1522,9 @@
         });
       }
 
-      async function alertUser() {
+      async function alertUser(options = {}) {
+        const vibrateEnabled = options.vibrate !== false;
+
         try {
           await playAlertTone();
         } catch (error) {
@@ -1520,9 +1539,16 @@
           }
         }
 
-        if (navigator.vibrate) {
+        if (vibrateEnabled && navigator.vibrate) {
           navigator.vibrate([300, 200, 300]);
         }
+      }
+
+      async function testAlertTone() {
+        await primeAlertAudio().catch(() => {});
+        statusDiv.innerText = "Status: Testing alert";
+        await alertUser({ vibrate: false });
+        statusDiv.innerText = getDefaultStatus();
       }
 
       function resetDetections() {
