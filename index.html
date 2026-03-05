@@ -151,6 +151,46 @@
         gap: 14px;
       }
 
+      .slider-disclosure {
+        background: rgba(255, 130, 41, 0.08);
+        border: 1px solid rgba(255, 176, 97, 0.32);
+        border-radius: 14px;
+        padding: 10px 12px;
+      }
+
+      .slider-disclosure > summary {
+        align-items: center;
+        color: #ffe5c5;
+        cursor: pointer;
+        display: flex;
+        font-size: 0.96rem;
+        font-weight: 700;
+        justify-content: space-between;
+        letter-spacing: 0.02em;
+        list-style: none;
+      }
+
+      .slider-disclosure > summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .slider-disclosure > summary::after {
+        color: #ffcf93;
+        content: "Expand";
+        font-size: 0.8rem;
+        text-transform: uppercase;
+      }
+
+      .slider-disclosure[open] > summary::after {
+        content: "Collapse";
+      }
+
+      .slider-content {
+        display: grid;
+        gap: 12px;
+        margin-top: 12px;
+      }
+
       .button-row {
         display: flex;
         flex-wrap: wrap;
@@ -268,6 +308,7 @@
         font-weight: 600;
         gap: 8px;
         justify-content: center;
+        width: 100%;
       }
 
       .toggle-row input[type="checkbox"] {
@@ -397,6 +438,10 @@
           grid-template-columns: 1fr auto;
         }
 
+        .slider-disclosure > summary {
+          font-size: 0.9rem;
+        }
+
         .control-row label {
           grid-column: 1 / -1;
           text-align: left;
@@ -433,52 +478,57 @@
           <button class="reset-btn" onclick="resetDetections()">Reset Detections</button>
         </div>
 
-        <div class="control-row">
-          <label for="thresholdSlider">Match Threshold</label>
-          <input
-            id="thresholdSlider"
-            type="range"
-            min="0.55"
-            max="0.95"
-            step="0.01"
-            value="0.78"
-          />
-          <span class="value-pill" id="thresholdValue">0.78</span>
-        </div>
+        <details class="slider-disclosure" open>
+          <summary>Slider Controls</summary>
+          <div class="slider-content">
+            <div class="control-row">
+              <label for="thresholdSlider">Match Threshold</label>
+              <input
+                id="thresholdSlider"
+                type="range"
+                min="0.55"
+                max="0.95"
+                step="0.01"
+                value="0.78"
+              />
+              <span class="value-pill" id="thresholdValue">0.78</span>
+            </div>
 
-        <div class="control-row">
-          <label for="zoomSlider">Zoom</label>
-          <input
-            id="zoomSlider"
-            type="range"
-            min="1"
-            max="1"
-            step="0.1"
-            value="1"
-            disabled
-          />
-          <span class="value-pill" id="zoomValue">N/A</span>
-        </div>
+            <div class="control-row">
+              <label for="zoomSlider">Zoom</label>
+              <input
+                id="zoomSlider"
+                type="range"
+                min="1"
+                max="1"
+                step="0.1"
+                value="1"
+                disabled
+              />
+              <span class="value-pill" id="zoomValue">N/A</span>
+            </div>
 
-        <div class="control-row">
-          <label for="focusSlider">Manual Focus</label>
-          <input
-            id="focusSlider"
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
-            value="0"
-            disabled
-          />
-          <span class="value-pill" id="focusValue">N/A</span>
-        </div>
+            <div class="control-row">
+              <label for="focusSlider">Manual Focus</label>
+              <input
+                id="focusSlider"
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value="0"
+                disabled
+              />
+              <span class="value-pill" id="focusValue">N/A</span>
+            </div>
 
-        <label class="toggle-row">
-          <input id="manualFocusToggle" type="checkbox" disabled />
-          Enable manual focus
-        </label>
-        <div id="cameraControlStatus">Camera controls: unavailable</div>
+            <label class="toggle-row">
+              <input id="manualFocusToggle" type="checkbox" disabled />
+              Enable manual focus
+            </label>
+            <div id="cameraControlStatus">Camera controls: unavailable</div>
+          </div>
+        </details>
       </section>
 
       <section class="panel status-panel reveal" style="--delay: 180ms">
@@ -514,6 +564,7 @@
       let openCvReadyPromise = null;
       let alertAudioContext = null;
       let fallbackAlertAudio = null;
+      let alertQueue = Promise.resolve();
       let activeVideoTrack = null;
       let zoomDebounceTimer = null;
       let focusDebounceTimer = null;
@@ -1500,6 +1551,9 @@
           { frequency: 1568, offset: 0.32, duration: 0.1 },
           { frequency: 1568, offset: 0.48, duration: 0.14 },
         ];
+        const sequenceDurationSeconds = Math.max(
+          ...pulses.map((pulse) => pulse.offset + pulse.duration),
+        );
 
         pulses.forEach((pulse) => {
           const oscillator = context.createOscillator();
@@ -1520,28 +1574,60 @@
           oscillator.start(pulseStart);
           oscillator.stop(pulseEnd);
         });
+
+        await new Promise((resolve) => {
+          window.setTimeout(resolve, Math.ceil((sequenceDurationSeconds + 0.04) * 1000));
+        });
+      }
+
+      async function playFallbackAlertTone() {
+        const audio = getFallbackAlertAudio();
+
+        audio.pause();
+        audio.currentTime = 0;
+
+        await audio.play();
+        await new Promise((resolve) => {
+          let finished = false;
+          let timeoutId = null;
+
+          const done = () => {
+            if (finished) {
+              return;
+            }
+
+            finished = true;
+            window.clearTimeout(timeoutId);
+            audio.removeEventListener("ended", done);
+            resolve();
+          };
+
+          timeoutId = window.setTimeout(done, 900);
+          audio.addEventListener("ended", done);
+        });
       }
 
       async function alertUser(options = {}) {
         const vibrateEnabled = options.vibrate !== false;
 
-        try {
-          await playAlertTone();
-        } catch (error) {
-          const audio = getFallbackAlertAudio();
-
+        const runAlert = async () => {
           try {
-            audio.pause();
-            audio.currentTime = 0;
-            await audio.play();
-          } catch (fallbackError) {
-            console.error(fallbackError);
+            await playAlertTone();
+          } catch (error) {
+            try {
+              await playFallbackAlertTone();
+            } catch (fallbackError) {
+              console.error(fallbackError);
+            }
           }
-        }
 
-        if (vibrateEnabled && navigator.vibrate) {
-          navigator.vibrate([300, 200, 300]);
-        }
+          if (vibrateEnabled && navigator.vibrate) {
+            navigator.vibrate([300, 200, 300]);
+          }
+        };
+
+        alertQueue = alertQueue.then(runAlert, runAlert);
+        await alertQueue;
       }
 
       async function testAlertTone() {
