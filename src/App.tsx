@@ -65,7 +65,7 @@ function App() {
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const videoTrackRef = useRef<MediaStreamTrack | null>(null)
 
-  // Performance: avoid drawImage + imread per frame by capturing directly from video.
+  // Performance: preprocess and match only the selected ROI instead of the full frame each scan.
   const videoCaptureRef = useRef<any>(null)
   const frameMatRef = useRef<any>(null)
 
