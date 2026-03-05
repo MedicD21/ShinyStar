@@ -1,0 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;600;700&family=Bangers&display=swap');
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
