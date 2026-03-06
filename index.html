@@ -263,6 +263,27 @@
         touch-action: none;
       }
 
+      .viewer-actions {
+        position: absolute;
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        display: flex;
+        justify-content: flex-end;
+        pointer-events: none;
+        z-index: 6;
+      }
+
+      .viewer-action-btn {
+        min-width: 0;
+        padding: 8px 12px;
+        font-size: 0.88rem;
+        border-radius: 999px;
+        pointer-events: auto;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+        opacity: 0.95;
+      }
+
       .hint {
         margin-top: 8px;
         text-align: center;
@@ -383,6 +404,11 @@
         <div class="viewer">
           <video id="video" autoplay playsinline muted></video>
           <canvas id="overlay"></canvas>
+          <div class="viewer-actions">
+            <button id="calibrateViewerButton" type="button" class="secondary viewer-action-btn">
+              Calibrate ROI
+            </button>
+          </div>
         </div>
         <div class="hint">Draw a box on the video for ROI scan. Calibrate ROI around a visible gold star for best lock.</div>
       </section>
@@ -464,6 +490,7 @@
       const autoTemplateButton = document.getElementById("autoTemplateButton");
       const pickTemplateButton = document.getElementById("pickTemplateButton");
       const calibrateButton = document.getElementById("calibrateButton");
+      const calibrateViewerButton = document.getElementById("calibrateViewerButton");
       const startScanButton = document.getElementById("startScanButton");
       const stopScanButton = document.getElementById("stopScanButton");
       const resetButton = document.getElementById("resetButton");
@@ -1642,6 +1669,13 @@
         cameraControlStatusDiv.textContent = "Camera controls: unavailable";
       }
 
+      function handleCalibrationClick() {
+        calibrateFromRoi().catch((error) => {
+          console.error(error);
+          setStatus("Status: Calibration failed", "bad");
+        });
+      }
+
       startCameraButton.addEventListener("click", () => {
         startCamera().catch((error) => {
           console.error(error);
@@ -1672,12 +1706,8 @@
         });
       });
 
-      calibrateButton.addEventListener("click", () => {
-        calibrateFromRoi().catch((error) => {
-          console.error(error);
-          setStatus("Status: Calibration failed", "bad");
-        });
-      });
+      calibrateButton.addEventListener("click", handleCalibrationClick);
+      calibrateViewerButton.addEventListener("click", handleCalibrationClick);
 
       startScanButton.addEventListener("click", () => {
         startScan().catch((error) => {
