@@ -1529,6 +1529,12 @@
             continue;
           }
 
+          // Reject if the surrounding sample box is saturated with gold — indicates
+          // a logo/title screen full of gold graphics rather than an isolated star.
+          if (goldRatio > 0.32) {
+            continue;
+          }
+
           const shapeScore = 1 - Math.min(1, Math.abs(1 - component.aspect));
           const fillScore = 1 - Math.min(1, Math.abs(component.fill - 0.32) / 0.32);
           const goldScore = Math.min(1, goldRatio / Math.max(0.001, settings.minGoldRatio * 2.8));
