@@ -47,7 +47,7 @@
         margin: 0 auto;
         width: min(620px, 100%);
         display: grid;
-        grid-template-rows: auto minmax(0, 1fr) auto;
+        grid-template-rows: auto minmax(240px, 1fr) auto;
         gap: 8px;
       }
 
@@ -132,7 +132,7 @@
       }
 
       .viewer-shell {
-        min-height: 0;
+        min-height: clamp(240px, 44dvh, 540px);
         position: relative;
         border: 1px solid var(--line);
         border-radius: 16px;
@@ -209,7 +209,7 @@
         padding: 9px;
         display: grid;
         gap: 8px;
-        max-height: 45dvh;
+        max-height: clamp(190px, 36dvh, 340px);
         overflow: auto;
       }
 
@@ -356,7 +356,7 @@
           height: 100dvh;
           width: min(920px, 100%);
           grid-template-columns: minmax(0, 1fr) 320px;
-          grid-template-rows: auto minmax(0, 1fr);
+          grid-template-rows: auto minmax(300px, 1fr);
           gap: 10px;
         }
 
@@ -1698,6 +1698,17 @@
         tone(1560, 0.08);
       }
 
+      async function waitForVideoFrameReady(timeoutMs) {
+        const start = performance.now();
+        while (performance.now() - start < timeoutMs) {
+          if (video.videoWidth > 0 && video.videoHeight > 0) {
+            return true;
+          }
+          await new Promise((resolve) => window.setTimeout(resolve, 40));
+        }
+        return false;
+      }
+
       async function startCamera() {
         if (state.stream) {
           return;
@@ -1715,6 +1726,8 @@
         state.stream = stream;
         state.activeTrack = stream.getVideoTracks()[0] || null;
         video.srcObject = stream;
+        video.muted = true;
+        video.playsInline = true;
 
         await new Promise((resolve) => {
           if (video.readyState >= 2) {
@@ -1727,9 +1740,21 @@
           };
         });
 
+        try {
+          await video.play();
+        } catch (error) {
+          console.warn("video.play() failed", error);
+        }
+
+        await waitForVideoFrameReady(1800);
+
         resizeCanvasesForVideo();
         await updateCameraControls();
-        setStatus("Status: Camera ready", "warn");
+        if (video.videoWidth > 0 && video.videoHeight > 0) {
+          setStatus("Status: Camera ready", "warn");
+        } else {
+          setStatus("Status: Camera connected (waiting for frame)", "warn");
+        }
       }
 
       async function updateCameraControls() {
@@ -2242,6 +2267,10 @@
       overlay.addEventListener("pointermove", moveRoiSelection);
       overlay.addEventListener("pointerup", finishRoiSelection);
       overlay.addEventListener("pointercancel", finishRoiSelection);
+
+      video.addEventListener("loadedmetadata", resizeCanvasesForVideo);
+      video.addEventListener("loadeddata", resizeCanvasesForVideo);
+      video.addEventListener("playing", resizeCanvasesForVideo);
 
       window.addEventListener("resize", () => {
         resizeCanvasesForVideo();
