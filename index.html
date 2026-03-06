@@ -284,6 +284,18 @@
         opacity: 0.95;
       }
 
+      .viewer-guide-controls {
+        margin-top: 10px;
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .viewer-guide-controls button {
+        min-width: 138px;
+      }
+
       .hint {
         margin-top: 8px;
         text-align: center;
@@ -410,6 +422,10 @@
             </button>
           </div>
         </div>
+        <div class="viewer-guide-controls">
+          <button id="toggleGuideButton" type="button" class="secondary">Guide: Off</button>
+          <button id="useGuideButton" type="button" class="secondary" disabled>Use Guide ROI</button>
+        </div>
         <div class="hint">Draw a box on the video for ROI scan. Calibrate ROI around a visible gold star for best lock.</div>
       </section>
 
@@ -446,6 +462,7 @@
         candidateBox: null,
         detectionBox: null,
         roi: null,
+        guideEnabled: false,
         drawing: false,
         drawStartX: 0,
         drawStartY: 0,
@@ -491,6 +508,8 @@
       const pickTemplateButton = document.getElementById("pickTemplateButton");
       const calibrateButton = document.getElementById("calibrateButton");
       const calibrateViewerButton = document.getElementById("calibrateViewerButton");
+      const toggleGuideButton = document.getElementById("toggleGuideButton");
+      const useGuideButton = document.getElementById("useGuideButton");
       const startScanButton = document.getElementById("startScanButton");
       const stopScanButton = document.getElementById("stopScanButton");
       const resetButton = document.getElementById("resetButton");
@@ -642,6 +661,22 @@
         };
       }
 
+      function getGuideOverlayRect() {
+        if (!overlay.width || !overlay.height) {
+          return null;
+        }
+
+        const side = Math.round(clamp(Math.min(overlay.width, overlay.height) * 0.22, 88, 210));
+        const x = Math.round((overlay.width - side) * 0.5);
+        const y = Math.round((overlay.height - side) * 0.5);
+        return { x, y, w: side, h: side };
+      }
+
+      function updateGuideControlsUi() {
+        toggleGuideButton.textContent = state.guideEnabled ? "Guide: On" : "Guide: Off";
+        useGuideButton.disabled = !state.guideEnabled;
+      }
+
       function drawOverlay() {
         overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
 
@@ -668,6 +703,26 @@
           overlayCtx.strokeStyle = "#64ff9f";
           overlayCtx.lineWidth = 4;
           overlayCtx.strokeRect(state.detectionBox.x, state.detectionBox.y, state.detectionBox.w, state.detectionBox.h);
+        }
+
+        if (state.guideEnabled) {
+          const guideRect = getGuideOverlayRect();
+          if (guideRect) {
+            overlayCtx.fillStyle = "rgba(113, 239, 255, 0.12)";
+            overlayCtx.fillRect(guideRect.x, guideRect.y, guideRect.w, guideRect.h);
+            overlayCtx.strokeStyle = "#7ef3ff";
+            overlayCtx.lineWidth = 2;
+            overlayCtx.setLineDash([7, 5]);
+            overlayCtx.strokeRect(guideRect.x, guideRect.y, guideRect.w, guideRect.h);
+            overlayCtx.setLineDash([]);
+
+            overlayCtx.fillStyle = "#bdf9ff";
+            overlayCtx.font = "700 15px Nunito, sans-serif";
+            overlayCtx.textAlign = "left";
+            overlayCtx.textBaseline = "bottom";
+            const labelY = guideRect.y > 20 ? guideRect.y - 6 : guideRect.y + guideRect.h + 18;
+            overlayCtx.fillText("Calibration Guide", guideRect.x + 4, labelY);
+          }
         }
       }
 
@@ -1605,6 +1660,9 @@
         if (state.roi) {
           overlaySourceRect = state.roi;
           calibrationSource = "ROI";
+        } else if (state.guideEnabled) {
+          overlaySourceRect = getGuideOverlayRect();
+          calibrationSource = "guide square";
         } else if (state.detectionBox) {
           overlaySourceRect = expandOverlayRect(state.detectionBox, 2.2);
           calibrationSource = "detected box";
@@ -1785,6 +1843,7 @@
         stopScanLoop();
         stopCamera();
         state.roi = null;
+        state.guideEnabled = false;
         clearDetectionState();
         calibrationReadoutDiv.textContent = "Calibration: not set";
         setStatus("Status: Reset complete", "warn");
@@ -1796,6 +1855,7 @@
         manualFocusToggle.checked = false;
         manualFocusToggle.disabled = true;
         cameraControlStatusDiv.textContent = "Camera controls: unavailable";
+        updateGuideControlsUi();
       }
 
       function handleCalibrationClick() {
@@ -1838,6 +1898,29 @@
 
       calibrateButton.addEventListener("click", handleCalibrationClick);
       calibrateViewerButton.addEventListener("click", handleCalibrationClick);
+
+      toggleGuideButton.addEventListener("click", () => {
+        state.guideEnabled = !state.guideEnabled;
+        if (!state.guideEnabled) {
+          useGuideButton.disabled = true;
+        }
+        updateGuideControlsUi();
+        drawOverlay();
+      });
+
+      useGuideButton.addEventListener("click", () => {
+        const guideRect = getGuideOverlayRect();
+        if (!guideRect) {
+          setStatus("Status: Guide unavailable", "bad");
+          return;
+        }
+
+        state.roi = guideRect;
+        drawOverlay();
+        calibrationReadoutDiv.textContent =
+          "Calibration: guide ROI set " + guideRect.w + "x" + guideRect.h + ". Press Calibrate ROI.";
+        setStatus("Status: Guide ROI set", "warn");
+      });
 
       startScanButton.addEventListener("click", () => {
         startScan().catch((error) => {
@@ -1915,6 +1998,7 @@
       });
 
       clearTemplatePreview();
+      updateGuideControlsUi();
       drawOverlay();
       updateStats(0, 0, 0, 0);
 
