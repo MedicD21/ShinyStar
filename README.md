@@ -31,11 +31,13 @@ Your site URL should be:
 
 ## Workflow
 
-1. Click **Start Camera**
-2. Click **Load Template** (auto tries `star.png`, then `8.png`)
-3. Draw ROI around the area where stars appear
-4. Click **Calibrate ROI** while a known star is visible
-5. Click **Start Scan**
+1. Tap **Quick Start**
+2. Put the gold star inside the guide square
+3. Tap **Use Guide ROI**
+4. Tap **Calibrate ROI**
+5. Tap **Start Scan**
+
+Only the essential sliders are always visible (`Match` and `Gold`). Everything else is under **Advanced Controls**.
 
 ## Key Settings
 

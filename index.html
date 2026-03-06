@@ -12,18 +12,16 @@
     />
     <style>
       :root {
-        --bg-a: #170802;
-        --bg-b: #351307;
-        --bg-c: #5e2208;
-        --card: rgba(62, 22, 7, 0.84);
-        --card-strong: rgba(85, 31, 9, 0.92);
-        --text: #ffe7c4;
-        --muted: #ffd1a1;
-        --accent: #ff7f2b;
-        --accent-2: #ffd66c;
-        --good: #64ff9f;
-        --warn: #ffc166;
-        --line: rgba(255, 189, 116, 0.28);
+        --bg-a: #120602;
+        --bg-b: #2b1107;
+        --bg-c: #4d1f0a;
+        --surface: rgba(63, 24, 8, 0.88);
+        --surface-soft: rgba(76, 30, 11, 0.76);
+        --text: #ffe9ca;
+        --muted: #ffcf9a;
+        --line: rgba(255, 190, 120, 0.3);
+        --good: #65ffa2;
+        --warn: #ffc56d;
       }
 
       * {
@@ -32,64 +30,69 @@
 
       body {
         margin: 0;
-        min-height: 100vh;
+        min-height: 100dvh;
         color: var(--text);
         background:
-          radial-gradient(circle at 15% 8%, rgba(255, 121, 45, 0.32), transparent 32%),
-          radial-gradient(circle at 78% 0%, rgba(255, 197, 98, 0.18), transparent 24%),
-          radial-gradient(circle at 66% 72%, rgba(255, 97, 28, 0.16), transparent 35%),
-          linear-gradient(160deg, var(--bg-a) 0%, var(--bg-b) 46%, var(--bg-c) 100%);
+          radial-gradient(circle at 16% 8%, rgba(255, 130, 47, 0.33), transparent 28%),
+          radial-gradient(circle at 82% 0%, rgba(255, 205, 102, 0.14), transparent 25%),
+          radial-gradient(circle at 72% 72%, rgba(255, 99, 34, 0.16), transparent 35%),
+          linear-gradient(165deg, var(--bg-a) 0%, var(--bg-b) 45%, var(--bg-c) 100%);
         font-family: "Nunito", "Trebuchet MS", Tahoma, sans-serif;
-        padding: 18px;
+        overflow: hidden;
       }
 
       .app {
+        height: 100dvh;
+        padding: 10px;
         margin: 0 auto;
-        width: min(1140px, 100%);
+        width: min(620px, 100%);
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        gap: 8px;
       }
 
       h1 {
         margin: 0;
-        text-align: center;
-        color: var(--accent-2);
+        color: #ffd668;
         font-family: "Bangers", "Nunito", sans-serif;
-        letter-spacing: 0.06em;
-        font-size: clamp(2.1rem, 5vw, 3.5rem);
-        text-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+        letter-spacing: 0.05em;
+        font-size: clamp(1.45rem, 6vw, 2.1rem);
+        line-height: 1;
+        text-shadow: 0 5px 16px rgba(0, 0, 0, 0.5);
       }
 
-      .subtitle {
-        margin: 6px auto 0;
-        max-width: 840px;
-        text-align: center;
-        color: #ffdcb2;
-      }
-
-      .panel {
-        margin-top: 14px;
+      .topbar {
         border: 1px solid var(--line);
-        border-radius: 18px;
-        padding: 14px;
-        background: var(--card);
-        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.35);
-        backdrop-filter: blur(3px);
+        border-radius: 14px;
+        background: var(--surface);
+        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+        padding: 8px 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
       }
 
-      .button-row {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 8px;
+      .title-wrap {
+        min-width: 0;
+      }
+
+      .top-hint {
+        margin: 2px 0 0;
+        color: var(--muted);
+        font-size: 0.78rem;
+        line-height: 1.2;
       }
 
       button {
         border: 0;
-        border-radius: 12px;
-        min-width: 122px;
-        padding: 10px 14px;
+        border-radius: 10px;
+        min-width: 0;
+        padding: 9px 12px;
         color: #2a1307;
         font-weight: 800;
-        font-size: 0.95rem;
+        font-size: 0.88rem;
+        line-height: 1;
         cursor: pointer;
         background: linear-gradient(180deg, #ffe190 0%, #ff8d31 70%, #d7521d 100%);
       }
@@ -103,100 +106,15 @@
         cursor: not-allowed;
       }
 
-      details {
-        margin-top: 10px;
-        border: 1px solid rgba(255, 194, 124, 0.22);
-        border-radius: 13px;
-        background: rgba(0, 0, 0, 0.16);
-        overflow: hidden;
-      }
-
-      summary {
-        list-style: none;
-        cursor: pointer;
-        padding: 10px 12px;
-        font-weight: 800;
-        color: #ffd9ad;
-        background: rgba(255, 147, 49, 0.08);
-      }
-
-      summary::-webkit-details-marker {
-        display: none;
-      }
-
-      .details-body {
-        padding: 10px;
-      }
-
-      .slider-grid {
-        display: grid;
-        gap: 10px;
-      }
-
-      .row {
-        display: grid;
-        grid-template-columns: 186px minmax(120px, 1fr) auto;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .row label {
-        text-align: right;
-        font-weight: 700;
-        color: #ffd8ab;
-      }
-
-      .row input[type="range"] {
-        appearance: none;
-        width: 100%;
-        height: 8px;
-        border-radius: 999px;
-        background: linear-gradient(90deg, #ffcf76 0%, #ff6a28 100%);
-      }
-
-      .row input[type="range"]::-webkit-slider-thumb {
-        appearance: none;
-        width: 18px;
-        height: 18px;
-        border-radius: 50%;
-        border: 2px solid #de5a22;
-        background: #fff2d8;
-      }
-
-      .pill {
-        min-width: 72px;
-        text-align: center;
-        padding: 4px 10px;
-        border-radius: 999px;
-        border: 1px solid rgba(255, 202, 147, 0.4);
-        background: rgba(255, 184, 112, 0.12);
-        font-variant-numeric: tabular-nums;
-        font-weight: 800;
-      }
-
-      .toggle-row {
-        margin-top: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        color: #ffd3a0;
-      }
-
-      .camera-status {
-        margin-top: 8px;
-        text-align: center;
-        color: #ffd1a2;
-        font-size: 0.9rem;
-      }
-
       .status {
-        padding: 10px;
-        border-radius: 12px;
+        max-width: 58%;
+        padding: 7px 10px;
+        border-radius: 10px;
         border: 1px solid rgba(255, 193, 124, 0.45);
         background: linear-gradient(180deg, rgba(255, 188, 118, 0.22), rgba(255, 113, 41, 0.15));
         text-align: center;
         font-weight: 800;
+        font-size: 0.82rem;
       }
 
       .status.good {
@@ -213,63 +131,45 @@
         border-color: rgba(255, 118, 97, 0.5);
       }
 
-      .stats {
-        margin-top: 8px;
-        text-align: center;
-        color: var(--muted);
-      }
-
-      .template-row {
-        margin-top: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-      }
-
-      .template-label {
-        font-weight: 800;
-      }
-
-      .template-canvas {
-        width: 92px;
-        height: 92px;
-        border-radius: 11px;
-        border: 1px solid rgba(255, 195, 123, 0.44);
-        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.22);
-      }
-
-      .template-meta {
-        max-width: 420px;
-        font-size: 0.88rem;
-        color: #ffd0a0;
+      .viewer-shell {
+        min-height: 0;
+        position: relative;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        overflow: hidden;
+        background: var(--surface-soft);
+        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.36);
       }
 
       .viewer {
         position: relative;
-        border-radius: 14px;
-        overflow: hidden;
-        background: rgba(0, 0, 0, 0.4);
+        width: 100%;
+        height: 100%;
+        min-height: 220px;
+        background: rgba(0, 0, 0, 0.45);
       }
 
       video {
-        display: block;
+        position: absolute;
+        inset: 0;
         width: 100%;
+        height: 100%;
+        object-fit: cover;
       }
 
       #overlay {
         position: absolute;
         inset: 0;
         touch-action: none;
+        width: 100%;
+        height: 100%;
       }
 
       .viewer-actions {
         position: absolute;
-        left: 10px;
         right: 10px;
-        bottom: 10px;
+        bottom: 12px;
         display: flex;
-        justify-content: flex-end;
         pointer-events: none;
         z-index: 6;
       }
@@ -284,108 +184,290 @@
         opacity: 0.95;
       }
 
-      .viewer-guide-controls {
-        margin-top: 10px;
+      .viewer-guide-overlay {
+        position: absolute;
+        left: 10px;
+        top: 10px;
         display: flex;
-        justify-content: center;
         gap: 8px;
-        flex-wrap: wrap;
+        z-index: 6;
       }
 
-      .viewer-guide-controls button {
-        min-width: 138px;
+      .guide-btn {
+        pointer-events: auto;
+        padding: 8px 11px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
       }
 
-      .hint {
-        margin-top: 8px;
+      .dock {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--surface);
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
+        padding: 9px;
+        display: grid;
+        gap: 8px;
+        max-height: 45dvh;
+        overflow: auto;
+      }
+
+      .primary-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 8px;
+      }
+
+      .primary-actions button {
+        width: 100%;
+        min-height: 40px;
+      }
+
+      .easy-grid {
+        display: grid;
+        gap: 7px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 90px 1fr 58px;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .row label {
+        font-weight: 700;
+        color: #ffd9ad;
+        font-size: 0.82rem;
+      }
+
+      .row input[type="range"] {
+        appearance: none;
+        width: 100%;
+        height: 8px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #ffcf76 0%, #ff6a28 100%);
+      }
+
+      .row input[type="range"]::-webkit-slider-thumb {
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 2px solid #de5a22;
+        background: #fff2d8;
+      }
+
+      .pill {
         text-align: center;
-        color: #ffd8af;
-        font-size: 0.9rem;
+        padding: 3px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 202, 147, 0.4);
+        background: rgba(255, 184, 112, 0.12);
+        font-variant-numeric: tabular-nums;
+        font-weight: 800;
+        font-size: 0.78rem;
       }
 
-      @media (max-width: 860px) {
-        .row {
-          grid-template-columns: 1fr auto;
+      .stats {
+        color: var(--muted);
+        font-size: 0.78rem;
+        line-height: 1.25;
+      }
+
+      .template-row {
+        display: grid;
+        grid-template-columns: auto 64px minmax(0, 1fr);
+        align-items: center;
+        gap: 8px;
+      }
+
+      .template-label {
+        font-weight: 800;
+        font-size: 0.82rem;
+      }
+
+      .template-canvas {
+        width: 64px;
+        height: 64px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 195, 123, 0.44);
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.22);
+      }
+
+      .template-meta {
+        font-size: 0.76rem;
+        color: #ffd0a0;
+      }
+
+      details {
+        border: 1px solid rgba(255, 194, 124, 0.22);
+        border-radius: 11px;
+        background: rgba(0, 0, 0, 0.16);
+        overflow: hidden;
+      }
+
+      summary {
+        list-style: none;
+        cursor: pointer;
+        padding: 8px 10px;
+        font-weight: 800;
+        color: #ffd9ad;
+        background: rgba(255, 147, 49, 0.08);
+        font-size: 0.84rem;
+      }
+
+      summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .details-body {
+        padding: 8px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .button-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #ffd3a0;
+        font-size: 0.84rem;
+      }
+
+      .camera-status {
+        color: #ffd1a2;
+        font-size: 0.8rem;
+      }
+
+      .hidden-utility {
+        display: none !important;
+      }
+
+      @media (min-width: 740px) {
+        .app {
+          height: 100dvh;
+          width: min(920px, 100%);
+          grid-template-columns: minmax(0, 1fr) 320px;
+          grid-template-rows: auto minmax(0, 1fr);
+          gap: 10px;
         }
 
-        .row label {
+        .topbar {
           grid-column: 1 / -1;
-          text-align: left;
         }
 
-        .template-row {
-          flex-direction: column;
-          text-align: center;
+        .dock {
+          max-height: none;
         }
       }
     </style>
   </head>
   <body>
     <main class="app">
-      <h1>Charmander Star Hunter</h1>
-      <p class="subtitle">
-        MediaPipe redo: gold-star candidates are generated from color, then verified with MediaPipe embeddings so
-        detection is locked to your star icon.
-      </p>
+      <header class="topbar">
+        <div class="title-wrap">
+          <h1>Charmander Star Hunter</h1>
+          <p class="top-hint">Quick Start, place star in guide, Calibrate, then scan.</p>
+        </div>
+        <div id="status" class="status">Status: Initializing MediaPipe...</div>
+      </header>
 
-      <section class="panel">
-        <div class="button-row">
-          <button id="startCameraButton" type="button">Start Camera</button>
-          <button id="autoTemplateButton" type="button">Load Template</button>
-          <button id="pickTemplateButton" type="button" class="secondary">Pick File</button>
-          <button id="calibrateButton" type="button" class="secondary">Calibrate ROI</button>
-          <button id="startScanButton" type="button">Start Scan</button>
-          <button id="stopScanButton" type="button" class="secondary">Stop Scan</button>
+      <section class="viewer-shell">
+        <div class="viewer">
+          <video id="video" autoplay playsinline muted></video>
+          <canvas id="overlay"></canvas>
+          <div class="viewer-guide-overlay">
+            <button id="toggleGuideButton" type="button" class="secondary guide-btn">Guide: Off</button>
+            <button id="useGuideButton" type="button" class="secondary guide-btn" disabled>Use Guide ROI</button>
+          </div>
+          <div class="viewer-actions">
+            <button id="calibrateViewerButton" type="button" class="secondary viewer-action-btn">
+              Calibrate ROI
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="dock">
+        <div class="primary-actions">
+          <button id="quickStartButton" type="button">Quick Start</button>
+          <button id="scanToggleButton" type="button" class="secondary">Start Scan</button>
           <button id="resetButton" type="button" class="secondary">Reset</button>
         </div>
-        <input id="templateFileInput" type="file" accept="image/*" style="display: none" />
 
-        <details open>
-          <summary>Detection Settings</summary>
-          <div class="details-body slider-grid">
-            <div class="row">
-              <label for="matchSlider">Match Threshold</label>
-              <input id="matchSlider" type="range" min="0.45" max="0.96" step="0.01" value="0.74" />
-              <span id="matchValue" class="pill">0.74</span>
+        <div class="easy-grid">
+          <div class="row">
+            <label for="matchSlider">Match</label>
+            <input id="matchSlider" type="range" min="0.45" max="0.96" step="0.01" value="0.74" />
+            <span id="matchValue" class="pill">0.74</span>
+          </div>
+          <div class="row">
+            <label for="goldSlider">Gold</label>
+            <input id="goldSlider" type="range" min="0.01" max="0.5" step="0.01" value="0.06" />
+            <span id="goldValue" class="pill">0.06</span>
+          </div>
+        </div>
+
+        <div id="stats" class="stats">
+          Frames: 0 | Best: 0.000 | Stable hits: 0/2 | Similarity: 0.000 | Gold ratio: 0.000 | Candidates: 0
+        </div>
+        <div id="calibrationReadout" class="stats">Calibration: not set</div>
+        <div id="modelReadout" class="stats">Model: loading...</div>
+
+        <div class="template-row">
+          <span class="template-label">Template</span>
+          <canvas id="templatePreview" class="template-canvas" width="92" height="92"></canvas>
+          <span id="templateMeta" class="template-meta">No template loaded</span>
+        </div>
+
+        <details>
+          <summary>Advanced Controls</summary>
+          <div class="details-body">
+            <div class="button-row">
+              <button id="startCameraButton" type="button">Start Camera</button>
+              <button id="autoTemplateButton" type="button">Load Template</button>
+              <button id="pickTemplateButton" type="button" class="secondary">Pick File</button>
+              <button id="calibrateButton" type="button" class="secondary">Calibrate ROI</button>
+              <button id="startScanButton" type="button">Start Scan</button>
+              <button id="stopScanButton" type="button" class="secondary">Stop Scan</button>
             </div>
+
             <div class="row">
-              <label for="stableSlider">Stable Frames</label>
+              <label for="stableSlider">Stable</label>
               <input id="stableSlider" type="range" min="1" max="6" step="1" value="2" />
               <span id="stableValue" class="pill">2</span>
             </div>
             <div class="row">
-              <label for="goldSlider">Min Gold Ratio</label>
-              <input id="goldSlider" type="range" min="0.01" max="0.5" step="0.01" value="0.06" />
-              <span id="goldValue" class="pill">0.06</span>
-            </div>
-            <div class="row">
-              <label for="pixelSlider">Min Gold Pixels</label>
+              <label for="pixelSlider">Pixels</label>
               <input id="pixelSlider" type="range" min="5" max="150" step="1" value="14" />
               <span id="pixelValue" class="pill">14</span>
             </div>
             <div class="row">
-              <label for="intervalSlider">Scan Interval (ms)</label>
+              <label for="intervalSlider">Interval</label>
               <input id="intervalSlider" type="range" min="70" max="340" step="10" value="120" />
               <span id="intervalValue" class="pill">120</span>
             </div>
             <div class="row">
-              <label for="cooldownSlider">Beep Cooldown (ms)</label>
+              <label for="cooldownSlider">Cooldown</label>
               <input id="cooldownSlider" type="range" min="250" max="3000" step="50" value="1000" />
               <span id="cooldownValue" class="pill">1000</span>
             </div>
-          </div>
-        </details>
 
-        <details>
-          <summary>Camera Controls</summary>
-          <div class="details-body slider-grid">
             <div class="row">
               <label for="zoomSlider">Zoom</label>
               <input id="zoomSlider" type="range" min="1" max="1" step="0.01" value="1" disabled />
               <span id="zoomValue" class="pill">N/A</span>
             </div>
             <div class="row">
-              <label for="focusSlider">Focus Distance</label>
+              <label for="focusSlider">Focus</label>
               <input id="focusSlider" type="range" min="0" max="1" step="0.01" value="0" disabled />
               <span id="focusValue" class="pill">N/A</span>
             </div>
@@ -398,36 +480,7 @@
         </details>
       </section>
 
-      <section class="panel">
-        <div id="status" class="status">Status: Initializing MediaPipe...</div>
-        <div id="stats" class="stats">
-          Frames: 0 | Best: 0.000 | Stable hits: 0/2 | Similarity: 0.000 | Gold ratio: 0.000 | Candidates: 0
-        </div>
-        <div id="calibrationReadout" class="stats">Calibration: not set</div>
-        <div id="modelReadout" class="stats">Model: loading...</div>
-        <div class="template-row">
-          <span class="template-label">Template</span>
-          <canvas id="templatePreview" class="template-canvas" width="92" height="92"></canvas>
-          <span id="templateMeta" class="template-meta">No template loaded</span>
-        </div>
-      </section>
-
-      <section class="panel">
-        <div class="viewer">
-          <video id="video" autoplay playsinline muted></video>
-          <canvas id="overlay"></canvas>
-          <div class="viewer-actions">
-            <button id="calibrateViewerButton" type="button" class="secondary viewer-action-btn">
-              Calibrate ROI
-            </button>
-          </div>
-        </div>
-        <div class="viewer-guide-controls">
-          <button id="toggleGuideButton" type="button" class="secondary">Guide: Off</button>
-          <button id="useGuideButton" type="button" class="secondary" disabled>Use Guide ROI</button>
-        </div>
-        <div class="hint">Draw a box on the video for ROI scan. Calibrate ROI around a visible gold star for best lock.</div>
-      </section>
+      <input id="templateFileInput" type="file" accept="image/*" class="hidden-utility" />
 
       <canvas id="processCanvas" style="display: none"></canvas>
       <canvas id="candidateCanvas" style="display: none" width="128" height="128"></canvas>
@@ -508,6 +561,8 @@
       const pickTemplateButton = document.getElementById("pickTemplateButton");
       const calibrateButton = document.getElementById("calibrateButton");
       const calibrateViewerButton = document.getElementById("calibrateViewerButton");
+      const quickStartButton = document.getElementById("quickStartButton");
+      const scanToggleButton = document.getElementById("scanToggleButton");
       const toggleGuideButton = document.getElementById("toggleGuideButton");
       const useGuideButton = document.getElementById("useGuideButton");
       const startScanButton = document.getElementById("startScanButton");
@@ -564,6 +619,25 @@
           goldRatio.toFixed(3) +
           " | Candidates: " +
           candidateCount;
+      }
+
+      function updateScanUi() {
+        if (scanToggleButton) {
+          scanToggleButton.textContent = state.scanning ? "Stop Scan" : "Start Scan";
+          if (state.scanning) {
+            scanToggleButton.classList.add("secondary");
+          } else {
+            scanToggleButton.classList.remove("secondary");
+          }
+        }
+
+        if (startScanButton) {
+          startScanButton.disabled = state.scanning;
+        }
+
+        if (stopScanButton) {
+          stopScanButton.disabled = !state.scanning;
+        }
       }
 
       function drawTemplateBackdrop() {
@@ -798,6 +872,7 @@
         }
         state.scanInProgress = false;
         state.scanning = false;
+        updateScanUi();
       }
 
       function restartScanLoop() {
@@ -1821,12 +1896,14 @@
         }, settings.scanInterval);
 
         setStatus("Status: Scanning", "warn");
+        updateScanUi();
         await detectFrame();
       }
 
       function stopScan() {
         stopScanLoop();
         setStatus("Status: Scan stopped", "warn");
+        updateScanUi();
       }
 
       function stopCamera() {
@@ -1856,6 +1933,7 @@
         manualFocusToggle.disabled = true;
         cameraControlStatusDiv.textContent = "Camera controls: unavailable";
         updateGuideControlsUi();
+        updateScanUi();
       }
 
       function handleCalibrationClick() {
@@ -1871,6 +1949,40 @@
           console.error(error);
           setStatus("Status: Camera failed", "bad");
         });
+      });
+
+      quickStartButton.addEventListener("click", async () => {
+        quickStartButton.disabled = true;
+        try {
+          if (!state.stream) {
+            await startCamera();
+          }
+
+          if (!state.templateEmbedding) {
+            await loadAutoTemplate();
+          }
+
+          if (!state.guideEnabled) {
+            state.guideEnabled = true;
+            updateGuideControlsUi();
+          }
+
+          const guideRect = getGuideOverlayRect();
+          if (guideRect) {
+            state.roi = guideRect;
+            drawOverlay();
+          }
+
+          if (!state.scanning) {
+            await startScan();
+          }
+        } catch (error) {
+          console.error(error);
+          setStatus("Status: Quick Start failed", "bad");
+        } finally {
+          quickStartButton.disabled = false;
+          updateScanUi();
+        }
       });
 
       autoTemplateButton.addEventListener("click", () => {
@@ -1931,6 +2043,18 @@
 
       stopScanButton.addEventListener("click", () => {
         stopScan();
+      });
+
+      scanToggleButton.addEventListener("click", () => {
+        if (state.scanning) {
+          stopScan();
+          return;
+        }
+
+        startScan().catch((error) => {
+          console.error(error);
+          setStatus("Status: Detection could not start", "bad");
+        });
       });
 
       resetButton.addEventListener("click", () => {
@@ -1999,6 +2123,7 @@
 
       clearTemplatePreview();
       updateGuideControlsUi();
+      updateScanUi();
       drawOverlay();
       updateStats(0, 0, 0, 0);
 
