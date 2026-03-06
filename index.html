@@ -1,303 +1,589 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>⭐ Star Detector</title>
-
-    <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
-
+    <title>Charmander Start Hunter</title>
     <style>
+      :root {
+        --bg-a: #120703;
+        --bg-b: #2f1207;
+        --bg-c: #4a1f0b;
+        --card: rgba(54, 21, 9, 0.78);
+        --card-strong: rgba(76, 30, 12, 0.92);
+        --text: #ffe6c7;
+        --muted: #ffca95;
+        --accent: #ff8a2d;
+        --accent-2: #ffd36b;
+        --good: #56ff88;
+        --warn: #ffb15d;
+        --outline: rgba(255, 186, 117, 0.28);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
-        background: #111;
-        color: white;
-        font-family: Arial;
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 15% 8%, rgba(255, 127, 49, 0.28), transparent 30%),
+          radial-gradient(circle at 82% 0%, rgba(255, 194, 92, 0.16), transparent 24%),
+          radial-gradient(circle at 72% 72%, rgba(255, 102, 36, 0.12), transparent 35%),
+          linear-gradient(160deg, var(--bg-a) 0%, var(--bg-b) 45%, var(--bg-c) 100%);
+        font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+        padding: 18px;
+      }
+
+      .app {
+        margin: 0 auto;
+        width: min(1120px, 100%);
+      }
+
+      h1 {
+        margin: 0;
         text-align: center;
+        color: #ffd36b;
+        letter-spacing: 0.03em;
+        font-size: clamp(1.8rem, 4vw, 2.9rem);
+      }
+
+      .subtitle {
+        margin: 8px auto 0;
+        max-width: 800px;
+        text-align: center;
+        color: #ffd9ad;
+      }
+
+      .panel {
+        margin-top: 14px;
+        padding: 14px;
+        border-radius: 16px;
+        border: 1px solid var(--outline);
+        background: var(--card);
+        box-shadow: 0 16px 30px rgba(0, 0, 0, 0.34);
+      }
+
+      .button-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
       }
 
       button {
-        padding: 14px 20px;
-        margin: 8px;
-        font-size: 16px;
+        border: none;
+        border-radius: 11px;
+        min-width: 128px;
+        cursor: pointer;
+        padding: 10px 14px;
+        color: #2b1207;
+        font-weight: 800;
+        font-size: 0.95rem;
+        background: linear-gradient(180deg, #ffd47f 0%, #ff8a2d 68%, #d9541e 100%);
       }
 
-      #container {
+      button.secondary {
+        background: linear-gradient(180deg, #ffecc6 0%, #ffc982 65%, #f0a05b 100%);
+      }
+
+      button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .status {
+        padding: 10px;
+        text-align: center;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 183, 110, 0.45);
+        background: linear-gradient(180deg, rgba(255, 190, 118, 0.22), rgba(255, 118, 43, 0.14));
+        font-weight: 700;
+      }
+
+      .stats {
+        margin-top: 8px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 0.93rem;
+      }
+
+      details {
+        margin-top: 10px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 192, 124, 0.2);
+        background: rgba(0, 0, 0, 0.13);
+        overflow: hidden;
+      }
+
+      summary {
+        list-style: none;
+        cursor: pointer;
+        padding: 10px 12px;
+        font-weight: 800;
+        color: #ffd6a4;
+        background: rgba(255, 141, 46, 0.08);
+      }
+
+      summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .details-body {
+        padding: 10px;
+      }
+
+      .slider-grid {
+        display: grid;
+        gap: 10px;
+      }
+
+      .row {
+        display: grid;
+        gap: 10px;
+        align-items: center;
+        grid-template-columns: 184px minmax(120px, 1fr) auto;
+      }
+
+      .row label {
+        text-align: right;
+        color: #ffd5a7;
+        font-weight: 700;
+      }
+
+      .row input[type="range"] {
+        appearance: none;
+        height: 8px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #ffcc75, #ff6b27);
+      }
+
+      .row input[type="range"]::-webkit-slider-thumb {
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2px solid #df5a22;
+        background: #fff2d8;
+      }
+
+      .pill {
+        min-width: 72px;
+        text-align: center;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 200, 145, 0.38);
+        background: rgba(255, 181, 108, 0.12);
+        font-variant-numeric: tabular-nums;
+        font-weight: 800;
+      }
+
+      .toggle-row {
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        color: #ffd3a0;
+      }
+
+      .camera-status {
+        margin-top: 8px;
+        text-align: center;
+        color: #ffca92;
+        font-size: 0.9rem;
+      }
+
+      .viewer {
         position: relative;
-        display: inline-block;
-        width: 95vw;
+        border-radius: 14px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.38);
       }
 
       video {
         width: 100%;
-        border: 3px solid #444;
+        display: block;
       }
 
-      canvas {
+      #overlay {
         position: absolute;
-        top: 0;
-        left: 0;
+        inset: 0;
+        touch-action: none;
       }
 
-      #status {
-        font-size: 18px;
-        margin-top: 10px;
+      .hint {
+        margin-top: 8px;
+        text-align: center;
+        color: #ffd8af;
+        font-size: 0.9rem;
       }
 
-      #stats {
-        color: #aaa;
-        font-size: 14px;
-      }
+      @media (max-width: 840px) {
+        .row {
+          grid-template-columns: 1fr auto;
+        }
 
-      .control-row {
-        align-items: center;
-        display: flex;
-        gap: 10px;
-        justify-content: center;
-        margin: 8px auto;
-        max-width: 560px;
-      }
-
-      .control-row label {
-        min-width: 110px;
-        text-align: right;
-      }
-
-      .control-row input[type="range"] {
-        flex: 1;
-      }
-
-      #cameraControlStatus {
-        color: #aaa;
-        font-size: 13px;
+        .row label {
+          grid-column: 1 / -1;
+          text-align: left;
+        }
       }
     </style>
   </head>
 
   <body>
-    <h2>⭐ Star Detector</h2>
+    <main class="app">
+      <h1>Charmander Start Hunter</h1>
+      <p class="subtitle">
+        Fresh build: pure Canvas edge matching. Load the new <code>start.png</code>, draw a search box,
+        and scan.
+      </p>
 
-    <button onclick="startCamera()">Start Camera</button>
-    <button onclick="startDetection()">Start Detection</button>
-    <button onclick="resetDetections()">Reset Detections</button>
+      <section class="panel">
+        <div class="button-row">
+          <button id="startCameraButton" type="button">Start Camera</button>
+          <button id="autoTemplateButton" type="button">Load Auto Template</button>
+          <button id="pickTemplateButton" type="button">Pick Template File</button>
+          <button id="startScanButton" type="button">Start Scan</button>
+          <button id="stopScanButton" type="button" class="secondary">Stop Scan</button>
+          <button id="resetButton" type="button" class="secondary">Reset</button>
+        </div>
+        <input id="templateFileInput" type="file" accept="image/*" style="display: none" />
 
-    <br />
+        <details open>
+          <summary>Detection Settings</summary>
+          <div class="details-body slider-grid">
+            <div class="row">
+              <label for="scoreSlider">Match Threshold</label>
+              <input id="scoreSlider" type="range" min="0.35" max="0.93" step="0.01" value="0.67" />
+              <span id="scoreValue" class="pill">0.67</span>
+            </div>
 
-    Threshold:
-    <input
-      id="thresholdSlider"
-      type="range"
-      min="0.55"
-      max="0.95"
-      step="0.01"
-      value="0.72"
-    />
-    <span id="thresholdValue">0.72</span>
+            <div class="row">
+              <label for="stableSlider">Stable Frames</label>
+              <input id="stableSlider" type="range" min="1" max="6" step="1" value="2" />
+              <span id="stableValue" class="pill">2</span>
+            </div>
 
-    <div class="control-row">
-      <label for="zoomSlider">Zoom</label>
-      <input id="zoomSlider" type="range" min="1" max="1" step="0.1" value="1" disabled />
-      <span id="zoomValue">N/A</span>
-    </div>
+            <div class="row">
+              <label for="edgeSlider">Edge Sensitivity</label>
+              <input id="edgeSlider" type="range" min="14" max="82" step="1" value="38" />
+              <span id="edgeValue" class="pill">38</span>
+            </div>
 
-    <div class="control-row">
-      <label for="focusSlider">Manual Focus</label>
-      <input id="focusSlider" type="range" min="0" max="1" step="0.01" value="0" disabled />
-      <span id="focusValue">N/A</span>
-    </div>
-    <label>
-      <input id="manualFocusToggle" type="checkbox" disabled />
-      Enable manual focus
-    </label>
-    <div id="cameraControlStatus">Camera controls: unavailable</div>
+            <div class="row">
+              <label for="intervalSlider">Scan Interval (ms)</label>
+              <input id="intervalSlider" type="range" min="90" max="320" step="10" value="140" />
+              <span id="intervalValue" class="pill">140</span>
+            </div>
 
-    <div id="status">Status: Idle</div>
-    <div id="stats">Frames scanned: 0 | Match score: 0.000 | Stable hits: 0/3</div>
+            <div class="row">
+              <label for="cooldownSlider">Beep Cooldown (ms)</label>
+              <input id="cooldownSlider" type="range" min="300" max="2600" step="100" value="1200" />
+              <span id="cooldownValue" class="pill">1200</span>
+            </div>
+          </div>
+        </details>
 
-    <div id="container">
-      <video id="video" autoplay playsinline></video>
-      <canvas id="overlay"></canvas>
-    </div>
+        <details>
+          <summary>Camera Controls</summary>
+          <div class="details-body slider-grid">
+            <div class="row">
+              <label for="zoomSlider">Zoom</label>
+              <input id="zoomSlider" type="range" min="1" max="1" step="0.01" value="1" disabled />
+              <span id="zoomValue" class="pill">N/A</span>
+            </div>
 
-    <canvas id="frameCanvas" style="display: none"></canvas>
+            <div class="row">
+              <label for="focusSlider">Focus Distance</label>
+              <input id="focusSlider" type="range" min="0" max="1" step="0.01" value="0" disabled />
+              <span id="focusValue" class="pill">N/A</span>
+            </div>
+
+            <div class="toggle-row">
+              <input id="manualFocusToggle" type="checkbox" disabled />
+              <label for="manualFocusToggle">Enable Manual Focus</label>
+            </div>
+
+            <div id="cameraControlStatus" class="camera-status">Camera controls: unavailable</div>
+          </div>
+        </details>
+      </section>
+
+      <section class="panel">
+        <div id="status" class="status">Status: Idle</div>
+        <div id="stats" class="stats">
+          Frames: 0 | Best score: 0.000 | Stable hits: 0/2 | Edge density: 0.0%
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="viewer">
+          <video id="video" autoplay playsinline muted></video>
+          <canvas id="overlay"></canvas>
+        </div>
+        <div class="hint">Drag on video to set a scan box. No box means full-frame scan.</div>
+      </section>
+
+      <canvas id="processCanvas" style="display: none"></canvas>
+    </main>
 
     <script>
-      let roi = null;
-      let drawing = false;
-      let startX = 0;
-      let startY = 0;
-
-      let frameCount = 0;
-      let threshold = 0.72;
-      let stableMatchCount = 0;
-      let previousCandidateMatch = null;
-
-      let detections = [];
-      let detectionLocked = false;
-      let detectionTimer = null;
-      let scanInProgress = false;
-      let openCvReadyPromise = null;
-      let alertAudioContext = null;
-      let fallbackAlertAudio = null;
-      let activeVideoTrack = null;
-      let zoomDebounceTimer = null;
-      let focusDebounceTimer = null;
-
-      let templateVariants = [];
-
-      const TEMPLATE_SCALES = [0.35, 0.45, 0.6, 0.75, 0.9, 1, 1.15, 1.3, 1.5];
-      const TEMPLATE_IMAGE_CANDIDATES = ["start.png", "star.png"];
-      const TEMPLATE_MAX_DIMENSION = 260;
+      const TEMPLATE_CANDIDATES = ["start.png", "star.png"];
+      const TEMPLATE_SCALES = [0.62, 0.76, 0.9, 1, 1.14, 1.28, 1.46, 1.62];
       const MIN_ROI_SIZE = 20;
-      const SCAN_INTERVAL_MS = 150;
-      const REQUIRED_STABLE_MATCHES = 3;
-      const MATCH_POSITION_TOLERANCE_PX = 26;
-      const MATCH_SIZE_TOLERANCE_RATIO = 0.2;
+      const MAX_TEMPLATE_SIDE = 280;
+      const MAX_PROCESS_WIDTH = 780;
+      const POS_TOLERANCE = 26;
+      const SIZE_TOLERANCE_RATIO = 0.3;
+
+      const state = {
+        stream: null,
+        activeTrack: null,
+        scanning: false,
+        scanTimer: null,
+        scanInProgress: false,
+        frameCount: 0,
+        stableHits: 0,
+        lastCandidate: null,
+        candidateBox: null,
+        detectionBox: null,
+        roi: null,
+        drawing: false,
+        drawStartX: 0,
+        drawStartY: 0,
+        templateName: "",
+        templateVariants: [],
+        processScale: 1,
+        audioContext: null,
+        lastBeepAt: 0,
+        zoomDebounce: null,
+        focusDebounce: null,
+      };
+
+      const settings = {
+        scoreThreshold: 0.67,
+        stableFrames: 2,
+        edgeSensitivity: 38,
+        scanInterval: 140,
+        beepCooldown: 1200,
+      };
 
       const video = document.getElementById("video");
-      const canvas = document.getElementById("overlay");
-      const ctx = canvas.getContext("2d");
-
-      const frameCanvas = document.getElementById("frameCanvas");
-      const frameCtx = frameCanvas.getContext("2d");
+      const overlay = document.getElementById("overlay");
+      const overlayCtx = overlay.getContext("2d");
+      const processCanvas = document.getElementById("processCanvas");
+      const processCtx = processCanvas.getContext("2d", { willReadFrequently: true });
 
       const statusDiv = document.getElementById("status");
       const statsDiv = document.getElementById("stats");
       const cameraControlStatusDiv = document.getElementById("cameraControlStatus");
 
-      const slider = document.getElementById("thresholdSlider");
-      const sliderValue = document.getElementById("thresholdValue");
+      const startCameraButton = document.getElementById("startCameraButton");
+      const autoTemplateButton = document.getElementById("autoTemplateButton");
+      const pickTemplateButton = document.getElementById("pickTemplateButton");
+      const startScanButton = document.getElementById("startScanButton");
+      const stopScanButton = document.getElementById("stopScanButton");
+      const resetButton = document.getElementById("resetButton");
+      const templateFileInput = document.getElementById("templateFileInput");
+
+      const scoreSlider = document.getElementById("scoreSlider");
+      const scoreValue = document.getElementById("scoreValue");
+      const stableSlider = document.getElementById("stableSlider");
+      const stableValue = document.getElementById("stableValue");
+      const edgeSlider = document.getElementById("edgeSlider");
+      const edgeValue = document.getElementById("edgeValue");
+      const intervalSlider = document.getElementById("intervalSlider");
+      const intervalValue = document.getElementById("intervalValue");
+      const cooldownSlider = document.getElementById("cooldownSlider");
+      const cooldownValue = document.getElementById("cooldownValue");
+
       const zoomSlider = document.getElementById("zoomSlider");
       const zoomValue = document.getElementById("zoomValue");
       const manualFocusToggle = document.getElementById("manualFocusToggle");
       const focusSlider = document.getElementById("focusSlider");
       const focusValue = document.getElementById("focusValue");
 
-      slider.oninput = () => {
-        threshold = parseFloat(slider.value);
-        sliderValue.innerText = threshold.toFixed(2);
-      };
+      startCameraButton.addEventListener("click", () => {
+        startCamera().catch((error) => {
+          statusDiv.innerText = "Status: Camera failed";
+          console.error(error);
+        });
+      });
+
+      autoTemplateButton.addEventListener("click", () => {
+        loadAutoTemplate().catch((error) => {
+          statusDiv.innerText = "Status: Auto template load failed";
+          console.error(error);
+        });
+      });
+
+      pickTemplateButton.addEventListener("click", () => {
+        templateFileInput.click();
+      });
+
+      templateFileInput.addEventListener("change", () => {
+        const file = templateFileInput.files && templateFileInput.files[0];
+        if (!file) {
+          return;
+        }
+
+        loadTemplateFromFile(file).catch((error) => {
+          statusDiv.innerText = "Status: Template file load failed";
+          console.error(error);
+        });
+      });
+
+      startScanButton.addEventListener("click", () => {
+        startScan().catch((error) => {
+          statusDiv.innerText = "Status: Scan failed to start";
+          console.error(error);
+        });
+      });
+
+      stopScanButton.addEventListener("click", () => {
+        stopScan();
+      });
+
+      resetButton.addEventListener("click", () => {
+        resetState();
+      });
+
+      scoreSlider.addEventListener("input", () => {
+        settings.scoreThreshold = parseFloat(scoreSlider.value);
+        scoreValue.innerText = settings.scoreThreshold.toFixed(2);
+      });
+
+      stableSlider.addEventListener("input", () => {
+        settings.stableFrames = parseInt(stableSlider.value, 10);
+        stableValue.innerText = String(settings.stableFrames);
+      });
+
+      edgeSlider.addEventListener("input", () => {
+        settings.edgeSensitivity = parseInt(edgeSlider.value, 10);
+        edgeValue.innerText = String(settings.edgeSensitivity);
+      });
+
+      intervalSlider.addEventListener("input", () => {
+        settings.scanInterval = parseInt(intervalSlider.value, 10);
+        intervalValue.innerText = String(settings.scanInterval);
+
+        if (state.scanning) {
+          restartScanLoop();
+        }
+      });
+
+      cooldownSlider.addEventListener("input", () => {
+        settings.beepCooldown = parseInt(cooldownSlider.value, 10);
+        cooldownValue.innerText = String(settings.beepCooldown);
+      });
 
       zoomSlider.addEventListener("input", () => {
-        zoomValue.innerText = parseFloat(zoomSlider.value).toFixed(2);
+        const value = parseFloat(zoomSlider.value);
+        zoomValue.innerText = value.toFixed(2);
         scheduleZoomApply();
       });
 
       manualFocusToggle.addEventListener("change", () => {
-        setManualFocus(manualFocusToggle.checked);
+        setManualFocus(manualFocusToggle.checked).catch((error) => {
+          console.error(error);
+        });
       });
 
       focusSlider.addEventListener("input", () => {
-        focusValue.innerText = parseFloat(focusSlider.value).toFixed(2);
+        const value = parseFloat(focusSlider.value);
+        focusValue.innerText = value.toFixed(2);
         scheduleFocusApply();
       });
-
-      function waitForOpenCv(timeoutMs = 10000) {
-        if (window.cv && typeof cv.Mat === "function") {
-          return Promise.resolve();
-        }
-
-        if (!openCvReadyPromise) {
-          openCvReadyPromise = new Promise((resolve, reject) => {
-            const startedAt = Date.now();
-
-            const check = () => {
-              if (window.cv && typeof cv.Mat === "function") {
-                resolve();
-                return;
-              }
-
-              if (Date.now() - startedAt > timeoutMs) {
-                reject(new Error("OpenCV failed to load."));
-                return;
-              }
-
-              window.setTimeout(check, 50);
-            };
-
-            check();
-          }).catch((error) => {
-            openCvReadyPromise = null;
-            throw error;
-          });
-        }
-
-        return openCvReadyPromise;
-      }
-
-      function getAlertAudioContext() {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-
-        if (!AudioContextClass) {
-          return null;
-        }
-
-        if (!alertAudioContext || alertAudioContext.state === "closed") {
-          alertAudioContext = new AudioContextClass();
-        }
-
-        return alertAudioContext;
-      }
-
-      function getFallbackAlertAudio() {
-        if (!fallbackAlertAudio) {
-          fallbackAlertAudio = new Audio(
-            "https://actions.google.com/sounds/v1/alarms/beep_short.ogg",
-          );
-          fallbackAlertAudio.preload = "auto";
-          fallbackAlertAudio.load();
-        }
-
-        return fallbackAlertAudio;
-      }
-
-      async function primeAlertAudio() {
-        const context = getAlertAudioContext();
-
-        if (context) {
-          if (context.state === "suspended") {
-            await context.resume();
-          }
-
-          const source = context.createBufferSource();
-          const gain = context.createGain();
-
-          source.buffer = context.createBuffer(1, 1, 22050);
-          gain.gain.value = 0.0001;
-
-          source.connect(gain);
-          gain.connect(context.destination);
-
-          source.start();
-          source.stop(context.currentTime + 0.001);
-          return;
-        }
-
-        getFallbackAlertAudio();
-      }
 
       function clamp(value, min, max) {
         return Math.min(max, Math.max(min, value));
       }
 
+      function roundTo(value, digits) {
+        const factor = 10 ** digits;
+        return Math.round(value * factor) / factor;
+      }
+
+      function clearScanLoop() {
+        if (state.scanTimer !== null) {
+          window.clearInterval(state.scanTimer);
+          state.scanTimer = null;
+        }
+
+        state.scanning = false;
+        state.scanInProgress = false;
+      }
+
+      function restartScanLoop() {
+        if (!state.scanning) {
+          return;
+        }
+
+        clearScanLoop();
+        state.scanning = true;
+        state.scanTimer = window.setInterval(() => {
+          detectFrame().catch((error) => {
+            statusDiv.innerText = "Status: Detection error";
+            console.error(error);
+          });
+        }, settings.scanInterval);
+      }
+
+      function stopStream() {
+        if (state.stream) {
+          state.stream.getTracks().forEach((track) => track.stop());
+          state.stream = null;
+        }
+
+        state.activeTrack = null;
+      }
+
+      function clearDetectionState() {
+        state.frameCount = 0;
+        state.stableHits = 0;
+        state.lastCandidate = null;
+        state.candidateBox = null;
+        state.detectionBox = null;
+        updateStats(0, 0, 0);
+      }
+
+      function updateStats(bestScore, edgeScore, edgeDensity) {
+        statsDiv.innerText =
+          "Frames: " +
+          state.frameCount +
+          " | Best score: " +
+          bestScore.toFixed(3) +
+          " | Stable hits: " +
+          state.stableHits +
+          "/" +
+          settings.stableFrames +
+          " | Edge score: " +
+          edgeScore.toFixed(3) +
+          " | Edge density: " +
+          (edgeDensity * 100).toFixed(1) +
+          "%";
+      }
+
       function getCanvasPoint(clientX, clientY) {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
+        const rect = overlay.getBoundingClientRect();
+        const scaleX = overlay.width / rect.width;
+        const scaleY = overlay.height / rect.height;
 
         return {
-          x: clamp(Math.round((clientX - rect.left) * scaleX), 0, canvas.width),
-          y: clamp(
-            Math.round((clientY - rect.top) * scaleY),
-            0,
-            canvas.height,
-          ),
+          x: clamp(Math.round((clientX - rect.left) * scaleX), 0, overlay.width),
+          y: clamp(Math.round((clientY - rect.top) * scaleY), 0, overlay.height),
         };
       }
 
-      function normalizeRect(x1, y1, x2, y2) {
-        const left = clamp(Math.min(x1, x2), 0, canvas.width);
-        const top = clamp(Math.min(y1, y2), 0, canvas.height);
-        const right = clamp(Math.max(x1, x2), 0, canvas.width);
-        const bottom = clamp(Math.max(y1, y2), 0, canvas.height);
+      function normalizeRect(x1, y1, x2, y2, width, height) {
+        const left = clamp(Math.min(x1, x2), 0, width);
+        const top = clamp(Math.min(y1, y2), 0, height);
+        const right = clamp(Math.max(x1, x2), 0, width);
+        const bottom = clamp(Math.max(y1, y2), 0, height);
 
         return {
           x: Math.round(left),
@@ -307,419 +593,520 @@
         };
       }
 
-      function clearCandidateState() {
-        stableMatchCount = 0;
-        previousCandidateMatch = null;
-      }
+      function drawOverlay() {
+        overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
 
-      function isCandidateStable(candidate) {
-        if (!previousCandidateMatch) {
-          return true;
+        if (state.roi) {
+          overlayCtx.strokeStyle = "#ffd666";
+          overlayCtx.lineWidth = 3;
+          overlayCtx.strokeRect(state.roi.x, state.roi.y, state.roi.w, state.roi.h);
         }
 
-        const dx = Math.abs(candidate.x - previousCandidateMatch.x);
-        const dy = Math.abs(candidate.y - previousCandidateMatch.y);
-        const dwRatio =
-          Math.abs(candidate.w - previousCandidateMatch.w) /
-          Math.max(1, previousCandidateMatch.w);
-        const dhRatio =
-          Math.abs(candidate.h - previousCandidateMatch.h) /
-          Math.max(1, previousCandidateMatch.h);
-
-        return (
-          dx <= MATCH_POSITION_TOLERANCE_PX &&
-          dy <= MATCH_POSITION_TOLERANCE_PX &&
-          dwRatio <= MATCH_SIZE_TOLERANCE_RATIO &&
-          dhRatio <= MATCH_SIZE_TOLERANCE_RATIO
-        );
-      }
-
-      function getTrackCapabilities() {
-        if (
-          !activeVideoTrack ||
-          typeof activeVideoTrack.getCapabilities !== "function"
-        ) {
-          return null;
+        if (state.candidateBox && state.stableHits < settings.stableFrames) {
+          overlayCtx.strokeStyle = "#ffb15d";
+          overlayCtx.lineWidth = 3;
+          overlayCtx.setLineDash([7, 6]);
+          overlayCtx.strokeRect(
+            state.candidateBox.x,
+            state.candidateBox.y,
+            state.candidateBox.w,
+            state.candidateBox.h,
+          );
+          overlayCtx.setLineDash([]);
         }
 
-        try {
-          return activeVideoTrack.getCapabilities();
-        } catch (error) {
-          console.error(error);
-          return null;
+        if (state.detectionBox) {
+          overlayCtx.strokeStyle = "#56ff88";
+          overlayCtx.lineWidth = 4;
+          overlayCtx.strokeRect(
+            state.detectionBox.x,
+            state.detectionBox.y,
+            state.detectionBox.w,
+            state.detectionBox.h,
+          );
         }
-      }
-
-      function getTrackSettings() {
-        if (!activeVideoTrack || typeof activeVideoTrack.getSettings !== "function") {
-          return {};
-        }
-
-        try {
-          return activeVideoTrack.getSettings();
-        } catch (error) {
-          console.error(error);
-          return {};
-        }
-      }
-
-      function setCameraControlStatus(message) {
-        cameraControlStatusDiv.innerText = message;
-      }
-
-      function disableCameraControls() {
-        if (zoomDebounceTimer) {
-          window.clearTimeout(zoomDebounceTimer);
-          zoomDebounceTimer = null;
-        }
-
-        if (focusDebounceTimer) {
-          window.clearTimeout(focusDebounceTimer);
-          focusDebounceTimer = null;
-        }
-
-        zoomSlider.disabled = true;
-        zoomSlider.value = "1";
-        zoomValue.innerText = "N/A";
-
-        manualFocusToggle.disabled = true;
-        manualFocusToggle.checked = false;
-
-        focusSlider.disabled = true;
-        focusSlider.value = "0";
-        focusValue.innerText = "N/A";
-      }
-
-      function configureZoomControl(capabilities, settings) {
-        if (!capabilities || !capabilities.zoom) {
-          zoomSlider.disabled = true;
-          zoomValue.innerText = "N/A";
-          return false;
-        }
-
-        const zoomRange = capabilities.zoom;
-        const zoomStep = zoomRange.step && zoomRange.step > 0 ? zoomRange.step : 0.1;
-        const currentZoom =
-          typeof settings.zoom === "number" ? settings.zoom : zoomRange.min;
-        const clampedZoom = clamp(currentZoom, zoomRange.min, zoomRange.max);
-
-        zoomSlider.min = String(zoomRange.min);
-        zoomSlider.max = String(zoomRange.max);
-        zoomSlider.step = String(zoomStep);
-        zoomSlider.value = String(clampedZoom);
-        zoomSlider.disabled = false;
-        zoomValue.innerText = clampedZoom.toFixed(2);
-        return true;
-      }
-
-      function configureFocusControl(capabilities, settings) {
-        const focusModes =
-          capabilities && Array.isArray(capabilities.focusMode)
-            ? capabilities.focusMode
-            : [];
-
-        if (!capabilities || !capabilities.focusDistance || !focusModes.includes("manual")) {
-          manualFocusToggle.disabled = true;
-          manualFocusToggle.checked = false;
-          focusSlider.disabled = true;
-          focusValue.innerText = "N/A";
-          return false;
-        }
-
-        const focusRange = capabilities.focusDistance;
-        const focusStep = focusRange.step && focusRange.step > 0 ? focusRange.step : 0.01;
-        const currentFocus =
-          typeof settings.focusDistance === "number"
-            ? settings.focusDistance
-            : focusRange.min;
-        const clampedFocus = clamp(currentFocus, focusRange.min, focusRange.max);
-        const isManual = settings.focusMode === "manual";
-
-        manualFocusToggle.disabled = false;
-        manualFocusToggle.checked = isManual;
-
-        focusSlider.min = String(focusRange.min);
-        focusSlider.max = String(focusRange.max);
-        focusSlider.step = String(focusStep);
-        focusSlider.value = String(clampedFocus);
-        focusSlider.disabled = !isManual;
-        focusValue.innerText = clampedFocus.toFixed(2);
-        return true;
-      }
-
-      function getPreferredAutoFocusMode(focusModes) {
-        if (!Array.isArray(focusModes)) {
-          return null;
-        }
-
-        if (focusModes.includes("continuous")) {
-          return "continuous";
-        }
-
-        if (focusModes.includes("single-shot")) {
-          return "single-shot";
-        }
-
-        if (focusModes.includes("auto")) {
-          return "auto";
-        }
-
-        return null;
-      }
-
-      async function applyTrackAdvancedConstraints(constraint) {
-        if (
-          !activeVideoTrack ||
-          typeof activeVideoTrack.applyConstraints !== "function"
-        ) {
-          return false;
-        }
-
-        try {
-          await activeVideoTrack.applyConstraints({ advanced: [constraint] });
-          return true;
-        } catch (error) {
-          console.error(error);
-          return false;
-        }
-      }
-
-      function scheduleZoomApply() {
-        if (zoomDebounceTimer) {
-          window.clearTimeout(zoomDebounceTimer);
-        }
-
-        zoomDebounceTimer = window.setTimeout(async () => {
-          zoomDebounceTimer = null;
-
-          if (zoomSlider.disabled) {
-            return;
-          }
-
-          const applied = await applyTrackAdvancedConstraints({
-            zoom: parseFloat(zoomSlider.value),
-          });
-
-          if (!applied) {
-            setCameraControlStatus("Camera controls: zoom update failed");
-          }
-        }, 80);
-      }
-
-      function scheduleFocusApply() {
-        if (focusDebounceTimer) {
-          window.clearTimeout(focusDebounceTimer);
-        }
-
-        focusDebounceTimer = window.setTimeout(async () => {
-          focusDebounceTimer = null;
-
-          if (focusSlider.disabled || !manualFocusToggle.checked) {
-            return;
-          }
-
-          const applied = await applyTrackAdvancedConstraints({
-            focusMode: "manual",
-            focusDistance: parseFloat(focusSlider.value),
-          });
-
-          if (!applied) {
-            setCameraControlStatus("Camera controls: focus update failed");
-          }
-        }, 80);
-      }
-
-      async function setManualFocus(enabled) {
-        const capabilities = getTrackCapabilities();
-        const focusModes =
-          capabilities && Array.isArray(capabilities.focusMode)
-            ? capabilities.focusMode
-            : [];
-
-        if (!capabilities || !capabilities.focusDistance || !focusModes.includes("manual")) {
-          manualFocusToggle.checked = false;
-          manualFocusToggle.disabled = true;
-          focusSlider.disabled = true;
-          setCameraControlStatus("Camera controls: manual focus unsupported");
-          return;
-        }
-
-        if (enabled) {
-          const applied = await applyTrackAdvancedConstraints({
-            focusMode: "manual",
-            focusDistance: parseFloat(focusSlider.value),
-          });
-
-          if (!applied) {
-            manualFocusToggle.checked = false;
-            focusSlider.disabled = true;
-            setCameraControlStatus("Camera controls: failed to enable manual focus");
-            return;
-          }
-
-          focusSlider.disabled = false;
-          setCameraControlStatus("Camera controls: manual focus enabled");
-          return;
-        }
-
-        const autoMode = getPreferredAutoFocusMode(focusModes);
-        const applied = autoMode
-          ? await applyTrackAdvancedConstraints({ focusMode: autoMode })
-          : true;
-
-        if (!applied) {
-          manualFocusToggle.checked = true;
-          focusSlider.disabled = false;
-          setCameraControlStatus("Camera controls: failed to restore autofocus");
-          return;
-        }
-
-        focusSlider.disabled = true;
-        setCameraControlStatus("Camera controls: autofocus enabled");
-      }
-
-      function updateCameraControlsForTrack(track) {
-        activeVideoTrack = track;
-
-        if (!activeVideoTrack) {
-          disableCameraControls();
-          setCameraControlStatus("Camera controls: unavailable");
-          return;
-        }
-
-        const capabilities = getTrackCapabilities();
-        const settings = getTrackSettings();
-
-        if (!capabilities) {
-          disableCameraControls();
-          setCameraControlStatus("Camera controls: capability data unavailable");
-          return;
-        }
-
-        const zoomReady = configureZoomControl(capabilities, settings);
-        const focusReady = configureFocusControl(capabilities, settings);
-
-        if (zoomReady && focusReady) {
-          setCameraControlStatus("Camera controls: zoom + manual focus available");
-          return;
-        }
-
-        if (zoomReady) {
-          setCameraControlStatus("Camera controls: zoom available");
-          return;
-        }
-
-        if (focusReady) {
-          setCameraControlStatus("Camera controls: manual focus available");
-          return;
-        }
-
-        setCameraControlStatus("Camera controls: unavailable on this device");
-      }
-
-      function redrawOverlay() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        if (roi) {
-          ctx.strokeStyle = "yellow";
-          ctx.lineWidth = 3;
-          ctx.strokeRect(roi.x, roi.y, roi.w, roi.h);
-        }
-
-        detections.forEach((detection) => {
-          ctx.strokeStyle = "lime";
-          ctx.lineWidth = 4;
-          ctx.strokeRect(detection.x, detection.y, detection.w, detection.h);
-        });
       }
 
       function drawSelectionPreview(x1, y1, x2, y2) {
-        const preview = normalizeRect(x1, y1, x2, y2);
+        drawOverlay();
+        const preview = normalizeRect(x1, y1, x2, y2, overlay.width, overlay.height);
 
-        redrawOverlay();
-
-        ctx.strokeStyle = "yellow";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(preview.x, preview.y, preview.w, preview.h);
+        overlayCtx.strokeStyle = "#ffd666";
+        overlayCtx.lineWidth = 3;
+        overlayCtx.setLineDash([8, 6]);
+        overlayCtx.strokeRect(preview.x, preview.y, preview.w, preview.h);
+        overlayCtx.setLineDash([]);
       }
 
-      function setRoiFromPoints(x1, y1, x2, y2) {
-        const nextRoi = normalizeRect(x1, y1, x2, y2);
+      function setRoi(x1, y1, x2, y2) {
+        const nextRoi = normalizeRect(x1, y1, x2, y2, overlay.width, overlay.height);
 
         if (nextRoi.w < MIN_ROI_SIZE || nextRoi.h < MIN_ROI_SIZE) {
-          roi = null;
-          detections = [];
-          detectionLocked = false;
-          clearCandidateState();
-          statusDiv.innerText = "Status: Select a larger search area";
-          redrawOverlay();
+          state.roi = null;
+          statusDiv.innerText = "Status: ROI cleared (scan full frame)";
+          drawOverlay();
           return;
         }
 
-        roi = nextRoi;
-        detections = [];
-        detectionLocked = false;
-        clearCandidateState();
-        statusDiv.innerText = "Status: Search area selected";
-        redrawOverlay();
+        state.roi = nextRoi;
+        statusDiv.innerText = "Status: ROI selected";
+        drawOverlay();
       }
 
-      function getDefaultStatus() {
-        if (detectionTimer !== null) {
-          return detectionLocked
-            ? "Status: Match Locked"
-            : "Status: Detection Running";
+      overlay.addEventListener("pointerdown", (event) => {
+        if (!overlay.width || !overlay.height) {
+          return;
         }
 
-        if (roi) {
-          return "Status: Search area selected";
+        const point = getCanvasPoint(event.clientX, event.clientY);
+        state.drawing = true;
+        state.drawStartX = point.x;
+        state.drawStartY = point.y;
+
+        overlay.setPointerCapture(event.pointerId);
+      });
+
+      overlay.addEventListener("pointermove", (event) => {
+        if (!state.drawing) {
+          return;
         }
 
-        return "Status: Idle";
-      }
+        const point = getCanvasPoint(event.clientX, event.clientY);
+        drawSelectionPreview(state.drawStartX, state.drawStartY, point.x, point.y);
+      });
 
-      function updateStats(score) {
-        statsDiv.innerText =
-          "Frames scanned: " +
-          frameCount +
-          " | Match score: " +
-          score.toFixed(3) +
-          " | Stable hits: " +
-          stableMatchCount +
-          "/" +
-          REQUIRED_STABLE_MATCHES;
-      }
+      overlay.addEventListener("pointerup", (event) => {
+        if (!state.drawing) {
+          return;
+        }
 
-      function clearTemplateVariants() {
-        templateVariants.forEach((variant) => {
-          variant.mat.delete();
+        const point = getCanvasPoint(event.clientX, event.clientY);
+        state.drawing = false;
+        setRoi(state.drawStartX, state.drawStartY, point.x, point.y);
+      });
+
+      overlay.addEventListener("pointercancel", () => {
+        state.drawing = false;
+        drawOverlay();
+      });
+
+      async function loadImage(source) {
+        return new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = () => reject(new Error("Failed to load image: " + source));
+          image.src = source;
         });
-
-        templateVariants = [];
       }
 
-      function clearDetectionLoop() {
-        if (detectionTimer !== null) {
-          window.clearInterval(detectionTimer);
-          detectionTimer = null;
+      function getAlphaBounds(imageData, width, height) {
+        const { data } = imageData;
+
+        let minX = width;
+        let minY = height;
+        let maxX = -1;
+        let maxY = -1;
+
+        for (let y = 0; y < height; y += 1) {
+          for (let x = 0; x < width; x += 1) {
+            const alpha = data[(y * width + x) * 4 + 3];
+            if (alpha < 18) {
+              continue;
+            }
+
+            if (x < minX) {
+              minX = x;
+            }
+            if (y < minY) {
+              minY = y;
+            }
+            if (x > maxX) {
+              maxX = x;
+            }
+            if (y > maxY) {
+              maxY = y;
+            }
+          }
         }
-      }
 
-      function preprocessToGray(sourceMat, targetMat) {
-        cv.cvtColor(sourceMat, targetMat, cv.COLOR_RGBA2GRAY);
-        cv.equalizeHist(targetMat, targetMat);
-        cv.GaussianBlur(targetMat, targetMat, new cv.Size(5, 5), 0);
-      }
-
-      function clampRoiToMat(sourceRoi, mat) {
-        if (!sourceRoi || mat.cols === 0 || mat.rows === 0) {
+        if (maxX < minX || maxY < minY) {
           return null;
         }
 
-        const x = clamp(sourceRoi.x, 0, Math.max(0, mat.cols - 1));
-        const y = clamp(sourceRoi.y, 0, Math.max(0, mat.rows - 1));
-        const w = Math.min(sourceRoi.w, mat.cols - x);
-        const h = Math.min(sourceRoi.h, mat.rows - y);
+        return {
+          x: minX,
+          y: minY,
+          w: maxX - minX + 1,
+          h: maxY - minY + 1,
+        };
+      }
+
+      function imageDataToGrayAlpha(imageData, width, height) {
+        const gray = new Uint8Array(width * height);
+        const alpha = new Uint8Array(width * height);
+        const { data } = imageData;
+
+        for (let i = 0, p = 0; i < data.length; i += 4, p += 1) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          gray[p] = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+          alpha[p] = data[i + 3];
+        }
+
+        return { gray, alpha };
+      }
+
+      function buildSobelMagnitudes(gray, width, height, alphaMask) {
+        const magnitudes = new Uint16Array(width * height);
+        let sum = 0;
+        let count = 0;
+        let max = 0;
+
+        for (let y = 1; y < height - 1; y += 1) {
+          const row = y * width;
+          for (let x = 1; x < width - 1; x += 1) {
+            const idx = row + x;
+
+            if (alphaMask && alphaMask[idx] < 18) {
+              continue;
+            }
+
+            const a = gray[idx - width - 1];
+            const b = gray[idx - width];
+            const c = gray[idx - width + 1];
+            const d = gray[idx - 1];
+            const f = gray[idx + 1];
+            const g = gray[idx + width - 1];
+            const h = gray[idx + width];
+            const i = gray[idx + width + 1];
+
+            const gx = -a - 2 * d - g + c + 2 * f + i;
+            const gy = -a - 2 * b - c + g + 2 * h + i;
+            const mag = Math.abs(gx) + Math.abs(gy);
+
+            magnitudes[idx] = mag;
+            sum += mag;
+            count += 1;
+            if (mag > max) {
+              max = mag;
+            }
+          }
+        }
+
+        return { magnitudes, average: count ? sum / count : 0, max };
+      }
+
+      function buildTemplateVariant(imageData, width, height) {
+        const { gray, alpha } = imageDataToGrayAlpha(imageData, width, height);
+        const sobel = buildSobelMagnitudes(gray, width, height, alpha);
+
+        const edgeThreshold = Math.max(120, Math.min(sobel.max * 0.92, sobel.average * 1.35 + 35));
+        const edgePoints = [];
+
+        for (let y = 1; y < height - 1; y += 1) {
+          for (let x = 1; x < width - 1; x += 1) {
+            const idx = y * width + x;
+            if (alpha[idx] < 18) {
+              continue;
+            }
+            if (sobel.magnitudes[idx] < edgeThreshold) {
+              continue;
+            }
+            if ((x + y) % 2 !== 0) {
+              continue;
+            }
+
+            edgePoints.push({ x, y });
+          }
+        }
+
+        if (edgePoints.length < 16) {
+          return null;
+        }
+
+        if (edgePoints.length > 380) {
+          const stride = Math.ceil(edgePoints.length / 380);
+          const limited = [];
+          for (let i = 0; i < edgePoints.length; i += stride) {
+            limited.push(edgePoints[i]);
+          }
+          edgePoints.length = 0;
+          for (let i = 0; i < limited.length; i += 1) {
+            edgePoints.push(limited[i]);
+          }
+        }
+
+        const samples = [];
+        const grid = Math.max(2, Math.round(Math.min(width, height) / 8));
+        for (let y = Math.floor(grid / 2); y < height; y += grid) {
+          for (let x = Math.floor(grid / 2); x < width; x += grid) {
+            const idx = y * width + x;
+            if (alpha[idx] < 28) {
+              continue;
+            }
+
+            samples.push({ x, y, v: gray[idx] });
+          }
+        }
+
+        if (samples.length < 10) {
+          return null;
+        }
+
+        if (samples.length > 130) {
+          const stride = Math.ceil(samples.length / 130);
+          const limited = [];
+          for (let i = 0; i < samples.length; i += stride) {
+            limited.push(samples[i]);
+          }
+          samples.length = 0;
+          for (let i = 0; i < limited.length; i += 1) {
+            samples.push(limited[i]);
+          }
+        }
+
+        const edgeX = new Int16Array(edgePoints.length);
+        const edgeY = new Int16Array(edgePoints.length);
+        for (let i = 0; i < edgePoints.length; i += 1) {
+          edgeX[i] = edgePoints[i].x;
+          edgeY[i] = edgePoints[i].y;
+        }
+
+        const sampleX = new Int16Array(samples.length);
+        const sampleY = new Int16Array(samples.length);
+        const sampleV = new Uint8Array(samples.length);
+        for (let i = 0; i < samples.length; i += 1) {
+          sampleX[i] = samples[i].x;
+          sampleY[i] = samples[i].y;
+          sampleV[i] = samples[i].v;
+        }
+
+        const searchStep = Math.max(2, Math.round(Math.min(width, height) / 18));
+
+        return {
+          width,
+          height,
+          edgeX,
+          edgeY,
+          edgeCount: edgePoints.length,
+          sampleX,
+          sampleY,
+          sampleV,
+          sampleCount: samples.length,
+          searchStep,
+        };
+      }
+
+      function buildTemplateVariants(baseCanvas) {
+        const variants = [];
+        const sourceWidth = baseCanvas.width;
+        const sourceHeight = baseCanvas.height;
+
+        const variantCanvas = document.createElement("canvas");
+        const variantCtx = variantCanvas.getContext("2d", { willReadFrequently: true });
+
+        for (let i = 0; i < TEMPLATE_SCALES.length; i += 1) {
+          const scale = TEMPLATE_SCALES[i];
+          const width = Math.round(sourceWidth * scale);
+          const height = Math.round(sourceHeight * scale);
+
+          if (width < 18 || height < 18) {
+            continue;
+          }
+
+          if (width > MAX_TEMPLATE_SIDE || height > MAX_TEMPLATE_SIDE) {
+            continue;
+          }
+
+          variantCanvas.width = width;
+          variantCanvas.height = height;
+          variantCtx.clearRect(0, 0, width, height);
+          variantCtx.imageSmoothingEnabled = true;
+          variantCtx.drawImage(baseCanvas, 0, 0, width, height);
+
+          const imageData = variantCtx.getImageData(0, 0, width, height);
+          const variant = buildTemplateVariant(imageData, width, height);
+
+          if (variant) {
+            variants.push(variant);
+          }
+        }
+
+        return variants;
+      }
+
+      async function buildTemplateFromImage(image, templateName) {
+        const sourceCanvas = document.createElement("canvas");
+        sourceCanvas.width = image.naturalWidth;
+        sourceCanvas.height = image.naturalHeight;
+        const sourceCtx = sourceCanvas.getContext("2d", { willReadFrequently: true });
+        sourceCtx.clearRect(0, 0, sourceCanvas.width, sourceCanvas.height);
+        sourceCtx.drawImage(image, 0, 0);
+
+        const sourceData = sourceCtx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
+        const bounds = getAlphaBounds(sourceData, sourceCanvas.width, sourceCanvas.height);
+
+        if (!bounds) {
+          throw new Error("Template appears empty/transparent");
+        }
+
+        const baseCanvas = document.createElement("canvas");
+        baseCanvas.width = bounds.w;
+        baseCanvas.height = bounds.h;
+        const baseCtx = baseCanvas.getContext("2d", { willReadFrequently: true });
+        baseCtx.drawImage(
+          sourceCanvas,
+          bounds.x,
+          bounds.y,
+          bounds.w,
+          bounds.h,
+          0,
+          0,
+          bounds.w,
+          bounds.h,
+        );
+
+        const variants = buildTemplateVariants(baseCanvas);
+        if (!variants.length) {
+          throw new Error("Template has too few useful edges");
+        }
+
+        state.templateName = templateName;
+        state.templateVariants = variants;
+
+        statusDiv.innerText =
+          "Status: Template ready (" +
+          templateName +
+          ", " +
+          variants.length +
+          " scales, " +
+          bounds.w +
+          "x" +
+          bounds.h +
+          ")";
+      }
+
+      async function loadAutoTemplate() {
+        let lastError = null;
+
+        for (let i = 0; i < TEMPLATE_CANDIDATES.length; i += 1) {
+          const candidate = TEMPLATE_CANDIDATES[i];
+
+          try {
+            const image = await loadImage(candidate);
+            await buildTemplateFromImage(image, candidate);
+            return;
+          } catch (error) {
+            lastError = error;
+          }
+        }
+
+        throw lastError || new Error("No template image found");
+      }
+
+      async function loadTemplateFromFile(file) {
+        const url = URL.createObjectURL(file);
+
+        try {
+          const image = await loadImage(url);
+          await buildTemplateFromImage(image, file.name);
+        } finally {
+          URL.revokeObjectURL(url);
+          templateFileInput.value = "";
+        }
+      }
+
+      async function ensureAudioReady() {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) {
+          return null;
+        }
+
+        if (!state.audioContext || state.audioContext.state === "closed") {
+          state.audioContext = new AudioContextClass();
+        }
+
+        if (state.audioContext.state === "suspended") {
+          await state.audioContext.resume();
+        }
+
+        return state.audioContext;
+      }
+
+      async function playBeep() {
+        const now = Date.now();
+        if (now - state.lastBeepAt < settings.beepCooldown) {
+          return;
+        }
+
+        state.lastBeepAt = now;
+
+        try {
+          const context = await ensureAudioReady();
+          if (!context) {
+            return;
+          }
+
+          const pulses = [
+            { freq: 1108, delay: 0, duration: 0.08 },
+            { freq: 1318, delay: 0.11, duration: 0.08 },
+            { freq: 1661, delay: 0.22, duration: 0.11 },
+          ];
+
+          const begin = context.currentTime + 0.01;
+
+          for (let i = 0; i < pulses.length; i += 1) {
+            const pulse = pulses[i];
+            const osc = context.createOscillator();
+            const gain = context.createGain();
+
+            const startTime = begin + pulse.delay;
+            const endTime = startTime + pulse.duration;
+
+            osc.type = "square";
+            osc.frequency.setValueAtTime(pulse.freq, startTime);
+
+            gain.gain.setValueAtTime(0.0001, startTime);
+            gain.gain.exponentialRampToValueAtTime(0.22, startTime + 0.008);
+            gain.gain.exponentialRampToValueAtTime(0.0001, endTime);
+
+            osc.connect(gain);
+            gain.connect(context.destination);
+
+            osc.start(startTime);
+            osc.stop(endTime);
+          }
+
+          if (navigator.vibrate) {
+            navigator.vibrate([110, 70, 110]);
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      function getSearchRectInProcessSpace() {
+        if (!processCanvas.width || !processCanvas.height) {
+          return null;
+        }
+
+        if (!state.roi) {
+          return {
+            x: 0,
+            y: 0,
+            w: processCanvas.width,
+            h: processCanvas.height,
+          };
+        }
+
+        const scaleX = processCanvas.width / overlay.width;
+        const scaleY = processCanvas.height / overlay.height;
+
+        const x = clamp(Math.round(state.roi.x * scaleX), 0, processCanvas.width - 1);
+        const y = clamp(Math.round(state.roi.y * scaleY), 0, processCanvas.height - 1);
+        const w = Math.min(processCanvas.width - x, Math.round(state.roi.w * scaleX));
+        const h = Math.min(processCanvas.height - y, Math.round(state.roi.h * scaleY));
 
         if (w < MIN_ROI_SIZE || h < MIN_ROI_SIZE) {
           return null;
@@ -728,546 +1115,537 @@
         return { x, y, w, h };
       }
 
-      function createTemplateVariant(baseMat, scale) {
-        const width = Math.max(1, Math.round(baseMat.cols * scale));
-        const height = Math.max(1, Math.round(baseMat.rows * scale));
+      function preprocessSearchImage(imageData, width, height) {
+        const gray = new Uint8Array(width * height);
+        const rgba = imageData.data;
 
-        if (width < MIN_ROI_SIZE || height < MIN_ROI_SIZE) {
+        for (let i = 0, p = 0; i < rgba.length; i += 4, p += 1) {
+          gray[p] = Math.round(0.299 * rgba[i] + 0.587 * rgba[i + 1] + 0.114 * rgba[i + 2]);
+        }
+
+        const sobel = buildSobelMagnitudes(gray, width, height, null);
+        const threshold = Math.max(settings.edgeSensitivity * 8, sobel.average * 1.12);
+
+        const edges = new Uint8Array(width * height);
+        let edgePixels = 0;
+
+        for (let i = 0; i < edges.length; i += 1) {
+          if (sobel.magnitudes[i] >= threshold) {
+            edges[i] = 1;
+            edgePixels += 1;
+          }
+        }
+
+        const edgeDensity = edges.length ? edgePixels / edges.length : 0;
+
+        return {
+          gray,
+          edges,
+          edgeDensity,
+        };
+      }
+
+      function scoreCandidate(gray, edges, searchWidth, templateVariant, offsetX, offsetY) {
+        const edgeCount = templateVariant.edgeCount;
+        let edgeHits = 0;
+
+        for (let i = 0; i < edgeCount; i += 1) {
+          const px = templateVariant.edgeX[i];
+          const py = templateVariant.edgeY[i];
+          const idx = (offsetY + py) * searchWidth + (offsetX + px);
+          edgeHits += edges[idx];
+        }
+
+        const edgeScore = edgeHits / edgeCount;
+        const quickCutoff = Math.max(0.22, settings.scoreThreshold * 0.54);
+
+        if (edgeScore < quickCutoff) {
+          return {
+            score: 0,
+            edgeScore,
+            toneScore: 0,
+          };
+        }
+
+        const sampleCount = templateVariant.sampleCount;
+        let absDiff = 0;
+
+        for (let i = 0; i < sampleCount; i += 1) {
+          const px = templateVariant.sampleX[i];
+          const py = templateVariant.sampleY[i];
+          const idx = (offsetY + py) * searchWidth + (offsetX + px);
+          const observed = gray[idx];
+          absDiff += Math.abs(observed - templateVariant.sampleV[i]);
+        }
+
+        const toneScore = 1 - absDiff / (sampleCount * 255);
+        const score = edgeScore * 0.72 + toneScore * 0.28;
+
+        return {
+          score,
+          edgeScore,
+          toneScore,
+        };
+      }
+
+      function refineCandidate(gray, edges, searchWidth, searchHeight, candidate) {
+        const variant = candidate.variant;
+        const maxX = searchWidth - variant.width;
+        const maxY = searchHeight - variant.height;
+
+        const radius = Math.max(1, variant.searchStep - 1);
+        const startX = clamp(candidate.x - radius, 0, maxX);
+        const endX = clamp(candidate.x + radius, 0, maxX);
+        const startY = clamp(candidate.y - radius, 0, maxY);
+        const endY = clamp(candidate.y + radius, 0, maxY);
+
+        let best = candidate;
+
+        for (let y = startY; y <= endY; y += 1) {
+          for (let x = startX; x <= endX; x += 1) {
+            const scored = scoreCandidate(gray, edges, searchWidth, variant, x, y);
+            if (scored.score > best.score) {
+              best = {
+                score: scored.score,
+                edgeScore: scored.edgeScore,
+                toneScore: scored.toneScore,
+                x,
+                y,
+                w: variant.width,
+                h: variant.height,
+                variant,
+              };
+            }
+          }
+        }
+
+        return best;
+      }
+
+      function findBestMatch(gray, edges, searchWidth, searchHeight) {
+        let best = {
+          score: 0,
+          edgeScore: 0,
+          toneScore: 0,
+          x: 0,
+          y: 0,
+          w: 0,
+          h: 0,
+          variant: null,
+        };
+
+        for (let v = 0; v < state.templateVariants.length; v += 1) {
+          const variant = state.templateVariants[v];
+          const maxX = searchWidth - variant.width;
+          const maxY = searchHeight - variant.height;
+
+          if (maxX < 0 || maxY < 0) {
+            continue;
+          }
+
+          const step = variant.searchStep;
+
+          for (let y = 0; y <= maxY; y += step) {
+            for (let x = 0; x <= maxX; x += step) {
+              const scored = scoreCandidate(gray, edges, searchWidth, variant, x, y);
+
+              if (scored.score > best.score) {
+                best = {
+                  score: scored.score,
+                  edgeScore: scored.edgeScore,
+                  toneScore: scored.toneScore,
+                  x,
+                  y,
+                  w: variant.width,
+                  h: variant.height,
+                  variant,
+                };
+              }
+            }
+          }
+        }
+
+        if (!best.variant) {
           return null;
         }
 
-        const variantMat = new cv.Mat();
-        const interpolation = scale < 1 ? cv.INTER_AREA : cv.INTER_LINEAR;
-
-        cv.resize(
-          baseMat,
-          variantMat,
-          new cv.Size(width, height),
-          0,
-          0,
-          interpolation,
-        );
-
-        return { scale, mat: variantMat };
+        return refineCandidate(gray, edges, searchWidth, searchHeight, best);
       }
 
-      function cropTemplateToSubject(templateMat) {
-        const rgb = new cv.Mat();
-        const hsv = new cv.Mat();
-        const mask = new cv.Mat();
-        const points = new cv.Mat();
-        const kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(3, 3));
+      function convertProcessRectToOverlayRect(rect) {
+        const scaleX = overlay.width / processCanvas.width;
+        const scaleY = overlay.height / processCanvas.height;
 
-        try {
-          if (templateMat.channels() === 4) {
-            cv.cvtColor(templateMat, rgb, cv.COLOR_RGBA2RGB);
-          } else {
-            templateMat.copyTo(rgb);
-          }
-
-          cv.cvtColor(rgb, hsv, cv.COLOR_RGB2HSV);
-
-          cv.inRange(
-            hsv,
-            new cv.Scalar(0, 35, 35, 0),
-            new cv.Scalar(180, 255, 255, 255),
-            mask,
-          );
-
-          cv.morphologyEx(mask, mask, cv.MORPH_OPEN, kernel);
-          cv.morphologyEx(mask, mask, cv.MORPH_CLOSE, kernel);
-          cv.findNonZero(mask, points);
-
-          if (points.rows === 0) {
-            return templateMat.clone();
-          }
-
-          const rect = cv.boundingRect(points);
-          const padding = 8;
-          const x = Math.max(0, rect.x - padding);
-          const y = Math.max(0, rect.y - padding);
-          const maxWidth = templateMat.cols - x;
-          const maxHeight = templateMat.rows - y;
-          const w = Math.min(maxWidth, rect.width + padding * 2);
-          const h = Math.min(maxHeight, rect.height + padding * 2);
-
-          if (w < MIN_ROI_SIZE || h < MIN_ROI_SIZE) {
-            return templateMat.clone();
-          }
-
-          const roi = templateMat.roi(new cv.Rect(x, y, w, h));
-          const cropped = roi.clone();
-          roi.delete();
-
-          return cropped;
-        } finally {
-          rgb.delete();
-          hsv.delete();
-          mask.delete();
-          points.delete();
-          kernel.delete();
-        }
+        return {
+          x: Math.round(rect.x * scaleX),
+          y: Math.round(rect.y * scaleY),
+          w: Math.round(rect.w * scaleX),
+          h: Math.round(rect.h * scaleY),
+        };
       }
 
-      function normalizeTemplateSize(templateMat, maxDimension = TEMPLATE_MAX_DIMENSION) {
-        const maxDim = Math.max(templateMat.cols, templateMat.rows);
-
-        if (!maxDim || maxDim <= maxDimension) {
-          return templateMat.clone();
+      function areRectsSimilar(a, b) {
+        if (!a || !b) {
+          return false;
         }
 
-        const scale = maxDimension / maxDim;
-        const width = Math.max(1, Math.round(templateMat.cols * scale));
-        const height = Math.max(1, Math.round(templateMat.rows * scale));
-        const normalized = new cv.Mat();
+        const dx = Math.abs(a.x - b.x);
+        const dy = Math.abs(a.y - b.y);
+        const dw = Math.abs(a.w - b.w);
+        const dh = Math.abs(a.h - b.h);
 
-        cv.resize(
-          templateMat,
-          normalized,
-          new cv.Size(width, height),
-          0,
-          0,
-          cv.INTER_AREA,
-        );
-
-        return normalized;
-      }
-
-      function loadImage(src) {
-        return new Promise((resolve, reject) => {
-          const img = new Image();
-          img.onload = () => resolve(img);
-          img.onerror = () =>
-            reject(new Error("Template image could not be loaded."));
-          img.src = src;
-        });
-      }
-
-      async function loadTemplateVariants(src) {
-        clearTemplateVariants();
-
-        const img = await loadImage(src);
-        const rawTemplate = cv.imread(img);
-        const croppedTemplate = cropTemplateToSubject(rawTemplate);
-        const normalizedTemplate = normalizeTemplateSize(croppedTemplate);
-        const processedTemplate = new cv.Mat();
-
-        try {
-          preprocessToGray(normalizedTemplate, processedTemplate);
-
-          TEMPLATE_SCALES.forEach((scale) => {
-            const variant = createTemplateVariant(processedTemplate, scale);
-
-            if (variant) {
-              templateVariants.push(variant);
-            }
-          });
-        } finally {
-          rawTemplate.delete();
-          croppedTemplate.delete();
-          normalizedTemplate.delete();
-          processedTemplate.delete();
+        if (dx > POS_TOLERANCE || dy > POS_TOLERANCE) {
+          return false;
         }
 
-        if (templateVariants.length === 0) {
-          throw new Error("Template sizes are invalid for matching.");
-        }
+        const widthRatio = a.w ? dw / a.w : 1;
+        const heightRatio = a.h ? dh / a.h : 1;
+
+        return widthRatio <= SIZE_TOLERANCE_RATIO && heightRatio <= SIZE_TOLERANCE_RATIO;
       }
 
-      async function loadTemplateFromCandidates() {
-        let latestError = null;
-
-        for (let i = 0; i < TEMPLATE_IMAGE_CANDIDATES.length; i += 1) {
-          const candidate = TEMPLATE_IMAGE_CANDIDATES[i];
-
-          try {
-            await loadTemplateVariants(candidate);
-            return candidate;
-          } catch (error) {
-            latestError = error;
-          }
-        }
-
-        throw latestError || new Error("Template image could not be loaded.");
-      }
-
-      function findBestMatch(searchMat) {
-        let bestMatch = null;
-
-        templateVariants.forEach((variant) => {
-          if (
-            searchMat.cols < variant.mat.cols ||
-            searchMat.rows < variant.mat.rows
-          ) {
-            return;
-          }
-
-          const result = new cv.Mat();
-
-          try {
-            cv.matchTemplate(searchMat, variant.mat, result, cv.TM_CCOEFF_NORMED);
-
-            const { maxVal, maxLoc } = cv.minMaxLoc(result);
-
-            if (!bestMatch || maxVal > bestMatch.score) {
-              bestMatch = {
-                score: maxVal,
-                x: maxLoc.x,
-                y: maxLoc.y,
-                w: variant.mat.cols,
-                h: variant.mat.rows,
-                scale: variant.scale,
-              };
-            }
-          } finally {
-            result.delete();
-          }
-        });
-
-        return bestMatch;
-      }
-
-      async function startCamera() {
-        try {
-          await primeAlertAudio().catch(() => {});
-
-          if (video.srcObject) {
-            video.srcObject.getTracks().forEach((track) => track.stop());
-          }
-
-          updateCameraControlsForTrack(null);
-
-          statusDiv.innerText = "Status: Starting camera";
-
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "environment" },
-          });
-
-          video.srcObject = stream;
-          const [track] = stream.getVideoTracks();
-          updateCameraControlsForTrack(track || null);
-
-          video.onloadedmetadata = () => {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            frameCanvas.width = video.videoWidth;
-            frameCanvas.height = video.videoHeight;
-
-            statusDiv.innerText = "Status: Camera ready";
-            redrawOverlay();
-          };
-        } catch (error) {
-          statusDiv.innerText = "Status: Camera access failed";
-          console.error(error);
-        }
-      }
-
-      canvas.addEventListener("mousedown", startDraw);
-      canvas.addEventListener("mousemove", drawBox);
-      canvas.addEventListener("mouseup", endDraw);
-
-      canvas.addEventListener("touchstart", startTouch);
-      canvas.addEventListener("touchmove", moveTouch);
-      canvas.addEventListener("touchend", endTouch);
-
-      function startDraw(e) {
-        if (!canvas.width || !canvas.height) return;
-
-        primeAlertAudio().catch(() => {});
-
-        const point = getCanvasPoint(e.clientX, e.clientY);
-
-        drawing = true;
-        startX = point.x;
-        startY = point.y;
-      }
-
-      function drawBox(e) {
-        if (!drawing) return;
-
-        const point = getCanvasPoint(e.clientX, e.clientY);
-        drawSelectionPreview(startX, startY, point.x, point.y);
-      }
-
-      function endDraw(e) {
-        if (!drawing) return;
-
-        const point = getCanvasPoint(e.clientX, e.clientY);
-
-        drawing = false;
-        setRoiFromPoints(startX, startY, point.x, point.y);
-      }
-
-      function startTouch(e) {
-        e.preventDefault();
-
-        if (!canvas.width || !canvas.height) return;
-
-        primeAlertAudio().catch(() => {});
-
-        const point = getCanvasPoint(
-          e.touches[0].clientX,
-          e.touches[0].clientY,
-        );
-
-        startX = point.x;
-        startY = point.y;
-
-        drawing = true;
-      }
-
-      function moveTouch(e) {
-        if (!drawing) return;
-
-        e.preventDefault();
-
-        const point = getCanvasPoint(
-          e.touches[0].clientX,
-          e.touches[0].clientY,
-        );
-
-        drawSelectionPreview(startX, startY, point.x, point.y);
-      }
-
-      function endTouch(e) {
-        if (!drawing) return;
-
-        const point = getCanvasPoint(
-          e.changedTouches[0].clientX,
-          e.changedTouches[0].clientY,
-        );
-
-        drawing = false;
-        setRoiFromPoints(startX, startY, point.x, point.y);
-      }
-
-      async function startDetection() {
-        await primeAlertAudio().catch(() => {});
-
-        if (!video.srcObject || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
-          statusDiv.innerText = "Status: Start the camera first";
+      async function detectFrame() {
+        if (state.scanInProgress || !state.scanning) {
           return;
         }
 
-        if (!roi) {
-          statusDiv.innerText = "Status: Draw a search area first";
+        if (!state.templateVariants.length) {
+          statusDiv.innerText = "Status: Load a template first";
           return;
         }
 
-        clearDetectionLoop();
-        detections = [];
-        detectionLocked = false;
-        clearCandidateState();
-        frameCount = 0;
-        updateStats(0);
-        redrawOverlay();
-
-        try {
-          statusDiv.innerText = "Status: Loading OpenCV";
-          await waitForOpenCv();
-
-          statusDiv.innerText = "Status: Loading template";
-          const templateName = await loadTemplateFromCandidates();
-
-          statusDiv.innerText =
-            "Status: Detection Running (" + templateName + ")";
-          detectionTimer = window.setInterval(detectFrame, SCAN_INTERVAL_MS);
-        } catch (error) {
-          statusDiv.innerText = "Status: Detection could not start";
-          console.error(error);
-        }
-      }
-
-      function detectFrame() {
-        if (scanInProgress || !roi || templateVariants.length === 0) {
-          return;
-        }
-
-        if (!frameCanvas.width || !frameCanvas.height) {
+        if (!processCanvas.width || !processCanvas.height) {
           statusDiv.innerText = "Status: Camera frame unavailable";
           return;
         }
 
-        scanInProgress = true;
-
-        let src = null;
-        let processed = null;
-        let roiMat = null;
+        state.scanInProgress = true;
 
         try {
-          frameCtx.drawImage(
-            video,
-            0,
-            0,
-            frameCanvas.width,
-            frameCanvas.height,
-          );
+          processCtx.drawImage(video, 0, 0, processCanvas.width, processCanvas.height);
 
-          src = cv.imread(frameCanvas);
-          processed = new cv.Mat();
-
-          preprocessToGray(src, processed);
-
-          const safeRoi = clampRoiToMat(roi, processed);
-
-          if (!safeRoi) {
-            statusDiv.innerText = "Status: Search area is too small";
-            clearCandidateState();
-            updateStats(0);
-            redrawOverlay();
+          const searchRect = getSearchRectInProcessSpace();
+          if (!searchRect) {
+            statusDiv.innerText = "Status: Scan area too small";
+            state.stableHits = 0;
+            state.lastCandidate = null;
+            state.candidateBox = null;
+            state.detectionBox = null;
+            drawOverlay();
+            updateStats(0, 0, 0);
             return;
           }
 
-          roiMat = processed.roi(
-            new cv.Rect(safeRoi.x, safeRoi.y, safeRoi.w, safeRoi.h),
-          );
+          const frameData = processCtx.getImageData(searchRect.x, searchRect.y, searchRect.w, searchRect.h);
+          const prepared = preprocessSearchImage(frameData, searchRect.w, searchRect.h);
+          const best = findBestMatch(prepared.gray, prepared.edges, searchRect.w, searchRect.h);
 
-          const bestMatch = findBestMatch(roiMat);
+          state.frameCount += 1;
 
-          frameCount += 1;
-          updateStats(bestMatch ? bestMatch.score : 0);
-
-          if (!bestMatch) {
-            statusDiv.innerText = "Status: Search area is smaller than template";
-            clearCandidateState();
-            redrawOverlay();
+          if (!best || best.score < settings.scoreThreshold) {
+            state.stableHits = 0;
+            state.lastCandidate = null;
+            state.candidateBox = null;
+            state.detectionBox = null;
+            statusDiv.innerText = "Status: Scanning";
+            updateStats(best ? best.score : 0, best ? best.edgeScore : 0, prepared.edgeDensity);
+            drawOverlay();
             return;
           }
 
-          if (bestMatch.score >= threshold && !detectionLocked) {
-            const candidate = {
-              x: safeRoi.x + bestMatch.x,
-              y: safeRoi.y + bestMatch.y,
-              w: bestMatch.w,
-              h: bestMatch.h,
-            };
+          const candidateProcessRect = {
+            x: searchRect.x + best.x,
+            y: searchRect.y + best.y,
+            w: best.w,
+            h: best.h,
+          };
 
-            if (isCandidateStable(candidate)) {
-              stableMatchCount += 1;
-            } else {
-              stableMatchCount = 1;
-            }
+          if (areRectsSimilar(candidateProcessRect, state.lastCandidate)) {
+            state.stableHits += 1;
+          } else {
+            state.stableHits = 1;
+          }
 
-            previousCandidateMatch = candidate;
-            detections = [candidate];
+          state.lastCandidate = candidateProcessRect;
+          state.candidateBox = convertProcessRectToOverlayRect(candidateProcessRect);
 
-            if (stableMatchCount < REQUIRED_STABLE_MATCHES) {
-              statusDiv.innerText =
-                "Status: Candidate match " +
-                stableMatchCount +
-                "/" +
-                REQUIRED_STABLE_MATCHES +
-                " (" +
-                bestMatch.score.toFixed(3) +
-                ")";
-              redrawOverlay();
-              return;
-            }
-
-            detectionLocked = true;
+          if (state.stableHits >= settings.stableFrames) {
+            state.detectionBox = state.candidateBox;
             statusDiv.innerText =
-              "Status: Match Found (" + bestMatch.score.toFixed(3) + ")";
-            redrawOverlay();
-            alertUser();
-            return;
+              "Status: Match found (score " + roundTo(best.score, 3).toFixed(3) + ", " + state.templateName + ")";
+            playBeep().catch((error) => {
+              console.error(error);
+            });
+          } else {
+            statusDiv.innerText =
+              "Status: Candidate " +
+              state.stableHits +
+              "/" +
+              settings.stableFrames +
+              " (score " +
+              roundTo(best.score, 3).toFixed(3) +
+              ")";
           }
 
-          if (!detectionLocked) {
-            clearCandidateState();
-          }
-
-          statusDiv.innerText = getDefaultStatus();
-          redrawOverlay();
+          updateStats(best.score, best.edgeScore, prepared.edgeDensity);
+          drawOverlay();
         } catch (error) {
           statusDiv.innerText = "Status: Detection error";
-          clearDetectionLoop();
           console.error(error);
         } finally {
-          if (roiMat) {
-            roiMat.delete();
-          }
-
-          if (processed) {
-            processed.delete();
-          }
-
-          if (src) {
-            src.delete();
-          }
-
-          scanInProgress = false;
+          state.scanInProgress = false;
         }
       }
 
-      async function playAlertTone() {
-        const context = getAlertAudioContext();
+      async function startCamera() {
+        clearScanLoop();
+        stopStream();
 
-        if (!context) {
-          throw new Error("Web Audio is unavailable.");
-        }
+        statusDiv.innerText = "Status: Starting camera";
 
-        if (context.state === "suspended") {
-          await context.resume();
-        }
+        await ensureAudioReady().catch(() => {});
 
-        const startAt = context.currentTime + 0.01;
-        const pulses = [
-          { frequency: 1320, offset: 0, duration: 0.1 },
-          { frequency: 1320, offset: 0.16, duration: 0.1 },
-          { frequency: 1568, offset: 0.32, duration: 0.1 },
-          { frequency: 1568, offset: 0.48, duration: 0.14 },
-        ];
-
-        pulses.forEach((pulse) => {
-          const oscillator = context.createOscillator();
-          const gain = context.createGain();
-          const pulseStart = startAt + pulse.offset;
-          const pulseEnd = pulseStart + pulse.duration;
-
-          oscillator.type = "square";
-          oscillator.frequency.setValueAtTime(pulse.frequency, pulseStart);
-
-          gain.gain.setValueAtTime(0.0001, pulseStart);
-          gain.gain.exponentialRampToValueAtTime(0.28, pulseStart + 0.008);
-          gain.gain.exponentialRampToValueAtTime(0.0001, pulseEnd);
-
-          oscillator.connect(gain);
-          gain.connect(context.destination);
-
-          oscillator.start(pulseStart);
-          oscillator.stop(pulseEnd);
+        const mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+          audio: false,
         });
+
+        state.stream = mediaStream;
+        video.srcObject = mediaStream;
+
+        await new Promise((resolve) => {
+          video.onloadedmetadata = () => resolve();
+        });
+
+        await video.play().catch(() => {});
+
+        overlay.width = video.videoWidth;
+        overlay.height = video.videoHeight;
+
+        state.processScale = Math.min(1, MAX_PROCESS_WIDTH / video.videoWidth);
+        processCanvas.width = Math.max(160, Math.round(video.videoWidth * state.processScale));
+        processCanvas.height = Math.max(120, Math.round(video.videoHeight * state.processScale));
+
+        state.activeTrack = mediaStream.getVideoTracks()[0] || null;
+        await configureCameraControls();
+
+        clearDetectionState();
+        statusDiv.innerText = "Status: Camera ready";
+        drawOverlay();
       }
 
-      async function alertUser() {
-        try {
-          await playAlertTone();
-        } catch (error) {
-          const audio = getFallbackAlertAudio();
+      async function startScan() {
+        if (!video.srcObject || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+          statusDiv.innerText = "Status: Start camera first";
+          return;
+        }
 
+        if (!state.templateVariants.length) {
+          statusDiv.innerText = "Status: Loading template";
           try {
-            audio.pause();
-            audio.currentTime = 0;
-            await audio.play();
-          } catch (fallbackError) {
-            console.error(fallbackError);
+            await loadAutoTemplate();
+          } catch (error) {
+            statusDiv.innerText = "Status: Template unavailable";
+            throw error;
           }
         }
 
-        if (navigator.vibrate) {
-          navigator.vibrate([300, 200, 300]);
+        await ensureAudioReady().catch(() => {});
+
+        clearDetectionState();
+        state.scanning = true;
+        statusDiv.innerText = "Status: Scanning";
+
+        state.scanTimer = window.setInterval(() => {
+          detectFrame().catch((error) => {
+            statusDiv.innerText = "Status: Detection error";
+            console.error(error);
+          });
+        }, settings.scanInterval);
+      }
+
+      function stopScan() {
+        clearScanLoop();
+
+        statusDiv.innerText = state.templateVariants.length
+          ? "Status: Scan stopped (template ready)"
+          : "Status: Scan stopped";
+      }
+
+      function resetState() {
+        clearScanLoop();
+
+        state.roi = null;
+        clearDetectionState();
+
+        statusDiv.innerText = "Status: Reset complete";
+        drawOverlay();
+      }
+
+      async function applyTrackConstraint(advancedConstraint) {
+        if (!state.activeTrack) {
+          return;
+        }
+
+        try {
+          await state.activeTrack.applyConstraints({ advanced: [advancedConstraint] });
+        } catch (error) {
+          console.warn("Track constraint failed", advancedConstraint, error);
         }
       }
 
-      function resetDetections() {
-        detections = [];
-        detectionLocked = false;
-        clearCandidateState();
-        frameCount = 0;
-        updateStats(0);
-        statusDiv.innerText = getDefaultStatus();
-        redrawOverlay();
+      function scheduleZoomApply() {
+        if (state.zoomDebounce) {
+          window.clearTimeout(state.zoomDebounce);
+        }
+
+        state.zoomDebounce = window.setTimeout(() => {
+          const value = parseFloat(zoomSlider.value);
+          applyTrackConstraint({ zoom: value }).catch(() => {});
+        }, 80);
       }
+
+      function scheduleFocusApply() {
+        if (!manualFocusToggle.checked) {
+          return;
+        }
+
+        if (state.focusDebounce) {
+          window.clearTimeout(state.focusDebounce);
+        }
+
+        state.focusDebounce = window.setTimeout(() => {
+          const value = parseFloat(focusSlider.value);
+          applyTrackConstraint({ focusDistance: value }).catch(() => {});
+        }, 80);
+      }
+
+      async function setManualFocus(enabled) {
+        if (!state.activeTrack) {
+          manualFocusToggle.checked = false;
+          return;
+        }
+
+        const capabilities = state.activeTrack.getCapabilities ? state.activeTrack.getCapabilities() : null;
+        if (!capabilities || !capabilities.focusDistance) {
+          manualFocusToggle.checked = false;
+          focusSlider.disabled = true;
+          cameraControlStatusDiv.innerText = "Camera controls: manual focus unavailable";
+          return;
+        }
+
+        try {
+          if (enabled) {
+            await applyTrackConstraint({ focusMode: "manual" });
+            focusSlider.disabled = false;
+            await applyTrackConstraint({ focusDistance: parseFloat(focusSlider.value) });
+            cameraControlStatusDiv.innerText = "Camera controls: manual focus enabled";
+          } else {
+            focusSlider.disabled = true;
+            await applyTrackConstraint({ focusMode: "continuous" });
+            cameraControlStatusDiv.innerText = "Camera controls: continuous focus";
+          }
+        } catch (error) {
+          console.warn(error);
+          manualFocusToggle.checked = false;
+          focusSlider.disabled = true;
+          cameraControlStatusDiv.innerText = "Camera controls: focus mode update failed";
+        }
+      }
+
+      async function configureCameraControls() {
+        const track = state.activeTrack;
+
+        if (!track || typeof track.getCapabilities !== "function") {
+          zoomSlider.disabled = true;
+          focusSlider.disabled = true;
+          manualFocusToggle.disabled = true;
+          zoomValue.innerText = "N/A";
+          focusValue.innerText = "N/A";
+          cameraControlStatusDiv.innerText = "Camera controls: unavailable";
+          return;
+        }
+
+        const capabilities = track.getCapabilities();
+        const trackSettings = track.getSettings ? track.getSettings() : {};
+
+        if (capabilities.zoom) {
+          zoomSlider.disabled = false;
+          zoomSlider.min = String(capabilities.zoom.min);
+          zoomSlider.max = String(capabilities.zoom.max);
+          zoomSlider.step = String(capabilities.zoom.step || 0.01);
+
+          const zoomValueNumber = clamp(
+            trackSettings.zoom ?? capabilities.zoom.min,
+            capabilities.zoom.min,
+            capabilities.zoom.max,
+          );
+
+          zoomSlider.value = String(zoomValueNumber);
+          zoomValue.innerText = zoomValueNumber.toFixed(2);
+        } else {
+          zoomSlider.disabled = true;
+          zoomValue.innerText = "N/A";
+        }
+
+        if (capabilities.focusDistance) {
+          manualFocusToggle.disabled = false;
+          focusSlider.min = String(capabilities.focusDistance.min);
+          focusSlider.max = String(capabilities.focusDistance.max);
+          focusSlider.step = String(capabilities.focusDistance.step || 0.01);
+
+          const focusValueNumber = clamp(
+            trackSettings.focusDistance ?? capabilities.focusDistance.min,
+            capabilities.focusDistance.min,
+            capabilities.focusDistance.max,
+          );
+
+          focusSlider.value = String(focusValueNumber);
+          focusValue.innerText = focusValueNumber.toFixed(2);
+          focusSlider.disabled = !manualFocusToggle.checked;
+        } else {
+          manualFocusToggle.disabled = true;
+          manualFocusToggle.checked = false;
+          focusSlider.disabled = true;
+          focusValue.innerText = "N/A";
+        }
+
+        if (!capabilities.zoom && !capabilities.focusDistance) {
+          cameraControlStatusDiv.innerText = "Camera controls: unavailable";
+        } else if (capabilities.focusDistance) {
+          cameraControlStatusDiv.innerText = "Camera controls: zoom/focus ready";
+        } else {
+          cameraControlStatusDiv.innerText = "Camera controls: zoom ready, focus unavailable";
+        }
+      }
+
+      function teardown() {
+        clearScanLoop();
+        stopStream();
+
+        if (state.zoomDebounce) {
+          window.clearTimeout(state.zoomDebounce);
+        }
+
+        if (state.focusDebounce) {
+          window.clearTimeout(state.focusDebounce);
+        }
+
+        if (state.audioContext && state.audioContext.state !== "closed") {
+          state.audioContext.close().catch(() => {});
+        }
+      }
+
+      window.addEventListener("beforeunload", () => {
+        teardown();
+      });
+
+      statusDiv.innerText = "Status: Idle";
+      drawOverlay();
     </script>
   </body>
 </html>
