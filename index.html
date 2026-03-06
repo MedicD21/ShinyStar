@@ -497,8 +497,13 @@
       const MAX_PROCESS_WIDTH = 900;
       const MIN_ROI_SIZE = 24;
       const MAX_CANDIDATES = 8;
+      const MAX_EMBEDDING_CANDIDATES = 4;
+      const EMBEDDING_SCALES = [0.86, 1, 1.15];
       const POSITION_TOLERANCE = 28;
       const SIZE_TOLERANCE_RATIO = 0.45;
+      const TRACK_GRACE_FRAMES = 3;
+      const TRACK_BLEND_ALPHA = 0.34;
+      const TRACK_HOLD_MARGIN = 0.08;
 
       const state = {
         embedder: null,
@@ -511,6 +516,9 @@
         scanInProgress: false,
         frameCount: 0,
         stableHits: 0,
+        missFrames: 0,
+        temporalScore: 0,
+        smoothedCandidate: null,
         lastCandidate: null,
         candidateBox: null,
         detectionBox: null,
@@ -593,6 +601,23 @@
 
       function clamp(value, min, max) {
         return Math.min(max, Math.max(min, value));
+      }
+
+      function lerp(a, b, t) {
+        return a + (b - a) * t;
+      }
+
+      function blendBoxes(a, b, alpha) {
+        if (!a) {
+          return b;
+        }
+
+        return {
+          x: Math.round(lerp(a.x, b.x, alpha)),
+          y: Math.round(lerp(a.y, b.y, alpha)),
+          w: Math.round(lerp(a.w, b.w, alpha)),
+          h: Math.round(lerp(a.h, b.h, alpha)),
+        };
       }
 
       function setStatus(text, mode) {
@@ -892,6 +917,9 @@
       function clearDetectionState() {
         state.frameCount = 0;
         state.stableHits = 0;
+        state.missFrames = 0;
+        state.temporalScore = 0;
+        state.smoothedCandidate = null;
         state.lastCandidate = null;
         state.candidateBox = null;
         state.detectionBox = null;
@@ -1145,6 +1173,23 @@
         const side = Math.round(
           clamp(Math.max(component.w, component.h) * 2.2, 12, Math.min(scanWidth, scanHeight) * 0.42),
         );
+        const localX = clamp(Math.round(centerX - side * 0.5), 0, scanWidth - side);
+        const localY = clamp(Math.round(centerY - side * 0.5), 0, scanHeight - side);
+
+        return {
+          x: scanRect.x + localX,
+          y: scanRect.y + localY,
+          w: side,
+          h: side,
+          localX,
+          localY,
+        };
+      }
+
+      function scaleSampleBox(sampleBox, scale, scanRect, scanWidth, scanHeight) {
+        const centerX = sampleBox.localX + sampleBox.w * 0.5;
+        const centerY = sampleBox.localY + sampleBox.h * 0.5;
+        const side = Math.round(clamp(sampleBox.w * scale, 12, Math.min(scanWidth, scanHeight)));
         const localX = clamp(Math.round(centerX - side * 0.5), 0, scanWidth - side);
         const localY = clamp(Math.round(centerY - side * 0.5), 0, scanHeight - side);
 
@@ -1431,8 +1476,7 @@
         const maxPixels = Math.max(settings.minGoldPixels + 1, Math.round(scanRect.w * scanRect.h * 0.25));
         const components = findMaskComponents(mask, scanRect.w, scanRect.h, settings.minGoldPixels, maxPixels);
         const trimmed = components.slice(0, MAX_CANDIDATES);
-
-        let best = null;
+        const candidates = [];
 
         for (const component of trimmed) {
           if (component.aspect < 0.4 || component.aspect > 1.95) {
@@ -1445,26 +1489,81 @@
 
           const sampleBox = componentToSampleBox(component, scanRect, scanRect.w, scanRect.h);
           const goldRatio = computeMaskRatio(mask, scanRect.w, sampleBox);
-          const similarity = evaluateCandidateEmbedding(sampleBox);
+          if (goldRatio < settings.minGoldRatio * 0.45) {
+            continue;
+          }
 
-          let score = similarity * 0.86 + Math.min(1, goldRatio / Math.max(0.001, settings.minGoldRatio * 2.8)) * 0.14;
-          if (goldRatio < settings.minGoldRatio) {
-            score *= 0.55;
+          const shapeScore = 1 - Math.min(1, Math.abs(1 - component.aspect));
+          const fillScore = 1 - Math.min(1, Math.abs(component.fill - 0.32) / 0.32);
+          const goldScore = Math.min(1, goldRatio / Math.max(0.001, settings.minGoldRatio * 2.8));
+          const preScore = goldScore * 0.62 + shapeScore * 0.23 + fillScore * 0.15;
+
+          candidates.push({
+            component,
+            sampleBox,
+            goldRatio,
+            goldScore,
+            preScore,
+          });
+        }
+
+        if (!candidates.length) {
+          return {
+            best: null,
+            candidateCount: 0,
+            similarity: 0,
+            goldRatio: 0,
+          };
+        }
+
+        candidates.sort((a, b) => b.preScore - a.preScore);
+        const embeddingCandidates = candidates.slice(0, MAX_EMBEDDING_CANDIDATES);
+
+        let best = null;
+        for (const candidate of embeddingCandidates) {
+          let bestSimilarity = 0;
+          let bestBox = candidate.sampleBox;
+
+          for (const scale of EMBEDDING_SCALES) {
+            const scaledBox =
+              scale === 1
+                ? candidate.sampleBox
+                : scaleSampleBox(candidate.sampleBox, scale, scanRect, scanRect.w, scanRect.h);
+            const similarity = evaluateCandidateEmbedding(scaledBox);
+
+            if (similarity > bestSimilarity) {
+              bestSimilarity = similarity;
+              bestBox = scaledBox;
+            }
+          }
+
+          const overlayBox = processToOverlayRect(bestBox);
+          let temporalBias = 0;
+          if (state.lastCandidate) {
+            const distance = boxDistance(overlayBox, state.lastCandidate);
+            const distanceRef = Math.max(16, Math.max(overlayBox.w, overlayBox.h) * 1.7);
+            temporalBias = clamp(1 - distance / distanceRef, 0, 1) * 0.08;
+          }
+
+          let score = bestSimilarity * 0.79 + candidate.goldScore * 0.13 + candidate.preScore * 0.08 + temporalBias;
+          if (candidate.goldRatio < settings.minGoldRatio) {
+            score *= 0.62;
           }
 
           if (!best || score > best.score) {
             best = {
               score,
-              similarity,
-              goldRatio,
-              box: { x: sampleBox.x, y: sampleBox.y, w: sampleBox.w, h: sampleBox.h },
+              similarity: bestSimilarity,
+              goldRatio: candidate.goldRatio,
+              box: { x: bestBox.x, y: bestBox.y, w: bestBox.w, h: bestBox.h },
+              overlayBox,
             };
           }
         }
 
         return {
           best,
-          candidateCount: trimmed.length,
+          candidateCount: candidates.length,
           similarity: best ? best.similarity : 0,
           goldRatio: best ? best.goldRatio : 0,
         };
@@ -1490,15 +1589,24 @@
           const { best, candidateCount, similarity, goldRatio } = pickBestCandidate(scanRect, scanImageData);
 
           let bestScore = 0;
+          const hasTrack = Boolean(state.lastCandidate);
+          const requiredScore = hasTrack
+            ? Math.max(0.45, settings.matchThreshold - TRACK_HOLD_MARGIN)
+            : settings.matchThreshold;
 
-          if (best && best.score >= settings.matchThreshold) {
+          if (best && best.score >= requiredScore) {
             bestScore = best.score;
-            const overlayBox = processToOverlayRect(best.box);
+            const rawOverlayBox = best.overlayBox || processToOverlayRect(best.box);
+            const overlayBox = blendBoxes(state.smoothedCandidate || state.lastCandidate, rawOverlayBox, TRACK_BLEND_ALPHA);
+
+            state.missFrames = 0;
+            state.temporalScore = state.temporalScore * 0.64 + best.score * 0.36;
+            state.smoothedCandidate = overlayBox;
 
             if (state.lastCandidate && isSameCandidate(state.lastCandidate, overlayBox)) {
               state.stableHits += 1;
             } else {
-              state.stableHits = 1;
+              state.stableHits = state.stableHits > 0 ? Math.max(1, state.stableHits - 1) : 1;
             }
 
             state.lastCandidate = overlayBox;
@@ -1506,12 +1614,10 @@
 
             if (state.stableHits >= settings.stableFrames) {
               state.detectionBox = overlayBox;
-              setStatus(
-                "Status: Star detected (score " + best.score.toFixed(3) + ")",
-                "good",
-              );
+              setStatus("Status: Star detected (score " + best.score.toFixed(3) + ")", "good");
               await playBeep();
             } else {
+              state.detectionBox = null;
               setStatus(
                 "Status: Candidate " +
                   state.stableHits +
@@ -1522,14 +1628,31 @@
                   ")",
                 "warn",
               );
-              state.detectionBox = null;
             }
           } else {
-            state.stableHits = 0;
-            state.lastCandidate = null;
-            state.candidateBox = null;
-            state.detectionBox = null;
-            setStatus("Status: Scanning", "warn");
+            if (state.lastCandidate && state.missFrames < TRACK_GRACE_FRAMES) {
+              state.missFrames += 1;
+              state.temporalScore *= 0.86;
+              state.candidateBox = state.lastCandidate;
+
+              if (state.stableHits >= settings.stableFrames) {
+                state.detectionBox = state.lastCandidate;
+                setStatus("Status: Tracking hold " + state.missFrames + "/" + TRACK_GRACE_FRAMES, "warn");
+              } else {
+                state.stableHits = Math.max(0, state.stableHits - 1);
+                state.detectionBox = null;
+                setStatus("Status: Reacquiring...", "warn");
+              }
+            } else {
+              state.stableHits = 0;
+              state.missFrames = 0;
+              state.temporalScore = 0;
+              state.lastCandidate = null;
+              state.smoothedCandidate = null;
+              state.candidateBox = null;
+              state.detectionBox = null;
+              setStatus("Status: Scanning", "warn");
+            }
           }
 
           updateStats(bestScore, similarity, goldRatio, candidateCount);
@@ -1842,6 +1965,9 @@
         state.candidateBox = pickedOverlayBox;
         state.detectionBox = null;
         state.stableHits = 0;
+        state.missFrames = 0;
+        state.temporalScore = 0;
+        state.smoothedCandidate = pickedOverlayBox;
         state.lastCandidate = pickedOverlayBox;
         drawOverlay();
 
