@@ -1600,12 +1600,18 @@
         const roiImageData = processCtx.getImageData(roiRect.x, roiRect.y, roiRect.w, roiRect.h);
 
         const { mask } = buildGoldMask(roiImageData, roiRect.w, roiRect.h);
+        const calibrationMinPixels = Math.max(5, Math.floor(settings.minGoldPixels * 0.6));
         const maxPixels = Math.max(settings.minGoldPixels + 1, Math.round(roiRect.w * roiRect.h * 0.3));
-        const components = findMaskComponents(mask, roiRect.w, roiRect.h, settings.minGoldPixels, maxPixels).slice(0, 28);
+        const components = findMaskComponents(mask, roiRect.w, roiRect.h, calibrationMinPixels, maxPixels).slice(0, 28);
 
         if (!components.length) {
           throw new Error("No gold star candidate found. Keep the star visible and retry.");
         }
+
+        const roiCenterX = roiRect.w * 0.5;
+        const roiCenterY = roiRect.h * 0.5;
+        const roiDiag = Math.max(1, Math.hypot(roiRect.w, roiRect.h));
+        const preferCenter = calibrationSource === "ROI";
 
         let bestResult = null;
         for (const component of components) {
@@ -1622,14 +1628,25 @@
 
           const shapeScore = 1 - Math.min(1, Math.abs(1 - component.aspect));
           const fillScore = 1 - Math.min(1, Math.abs(component.fill - 0.34) / 0.34);
+          const compCenterX = component.x + component.w * 0.5;
+          const compCenterY = component.y + component.h * 0.5;
+          const centerDist = Math.hypot(compCenterX - roiCenterX, compCenterY - roiCenterY) / roiDiag;
+          const centerScore = clamp(1 - centerDist * 1.35, 0, 1);
 
-          let score = goldRatio * 0.5 + shapeScore * 0.25 + fillScore * 0.15;
+          if (preferCenter && centerDist > 0.58) {
+            continue;
+          }
+
+          let score = goldRatio * 0.42 + shapeScore * 0.2 + fillScore * 0.12 + centerScore * 0.2;
           if (state.templateEmbedding) {
-            score += similarity * 0.1;
+            score += similarity * 0.06;
+            if (similarity < 0.45) {
+              score *= 0.72;
+            }
           }
 
           if (!bestResult || score > bestResult.score) {
-            bestResult = { score, sampleBox, goldRatio, similarity };
+            bestResult = { score, sampleBox, goldRatio, similarity, centerDist };
           }
         }
 
@@ -1664,6 +1681,13 @@
         stableSlider.value = "2";
         stableValue.textContent = "2";
 
+        const pickedOverlayBox = processToOverlayRect(sampleBox);
+        state.candidateBox = pickedOverlayBox;
+        state.detectionBox = null;
+        state.stableHits = 0;
+        state.lastCandidate = pickedOverlayBox;
+        drawOverlay();
+
         calibrationReadoutDiv.textContent =
           "Calibration: " +
           calibrationSource +
@@ -1678,7 +1702,9 @@
           " | threshold " +
           settings.matchThreshold.toFixed(2) +
           " | gold " +
-          bestResult.goldRatio.toFixed(3);
+          bestResult.goldRatio.toFixed(3) +
+          " | center " +
+          (1 - Math.min(1, bestResult.centerDist)).toFixed(3);
         setStatus("Status: Calibration complete", "warn");
       }
 
