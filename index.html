@@ -33,10 +33,27 @@
         min-height: 100dvh;
         color: var(--text);
         background:
-          radial-gradient(circle at 16% 8%, rgba(255, 130, 47, 0.33), transparent 28%),
-          radial-gradient(circle at 82% 0%, rgba(255, 205, 102, 0.14), transparent 25%),
-          radial-gradient(circle at 72% 72%, rgba(255, 99, 34, 0.16), transparent 35%),
-          linear-gradient(165deg, var(--bg-a) 0%, var(--bg-b) 45%, var(--bg-c) 100%);
+          radial-gradient(
+            circle at 16% 8%,
+            rgba(255, 130, 47, 0.33),
+            transparent 28%
+          ),
+          radial-gradient(
+            circle at 82% 0%,
+            rgba(255, 205, 102, 0.14),
+            transparent 25%
+          ),
+          radial-gradient(
+            circle at 72% 72%,
+            rgba(255, 99, 34, 0.16),
+            transparent 35%
+          ),
+          linear-gradient(
+            165deg,
+            var(--bg-a) 0%,
+            var(--bg-b) 45%,
+            var(--bg-c) 100%
+          );
         font-family: "Nunito", "Trebuchet MS", Tahoma, sans-serif;
         overflow: hidden;
       }
@@ -94,11 +111,21 @@
         font-size: 0.88rem;
         line-height: 1;
         cursor: pointer;
-        background: linear-gradient(180deg, #ffe190 0%, #ff8d31 70%, #d7521d 100%);
+        background: linear-gradient(
+          180deg,
+          #ffe190 0%,
+          #ff8d31 70%,
+          #d7521d 100%
+        );
       }
 
       button.secondary {
-        background: linear-gradient(180deg, #fff0ca 0%, #ffc785 68%, #e38e4b 100%);
+        background: linear-gradient(
+          180deg,
+          #fff0ca 0%,
+          #ffc785 68%,
+          #e38e4b 100%
+        );
       }
 
       button:disabled {
@@ -111,7 +138,11 @@
         padding: 7px 10px;
         border-radius: 10px;
         border: 1px solid rgba(255, 193, 124, 0.45);
-        background: linear-gradient(180deg, rgba(255, 188, 118, 0.22), rgba(255, 113, 41, 0.15));
+        background: linear-gradient(
+          180deg,
+          rgba(255, 188, 118, 0.22),
+          rgba(255, 113, 41, 0.15)
+        );
         text-align: center;
         font-weight: 800;
         font-size: 0.82rem;
@@ -120,7 +151,11 @@
       .status.good {
         color: #f7ffe6;
         border-color: rgba(101, 255, 158, 0.5);
-        background: linear-gradient(180deg, rgba(97, 255, 150, 0.22), rgba(58, 177, 95, 0.2));
+        background: linear-gradient(
+          180deg,
+          rgba(97, 255, 150, 0.22),
+          rgba(58, 177, 95, 0.2)
+        );
       }
 
       .status.warn {
@@ -374,8 +409,10 @@
     <main class="app">
       <header class="topbar">
         <div class="title-wrap">
-          <h1>Charmander Star Hunter</h1>
-          <p class="top-hint">Quick Start, place star in guide, Calibrate, then scan.</p>
+          <h1>FRLG Starter Star Hunter</h1>
+          <p class="top-hint">
+            Quick Start, place star in guide, Calibrate, then scan.
+          </p>
         </div>
         <div id="status" class="status">Status: Initializing MediaPipe...</div>
       </header>
@@ -385,11 +422,28 @@
           <video id="video" autoplay playsinline muted></video>
           <canvas id="overlay"></canvas>
           <div class="viewer-guide-overlay">
-            <button id="toggleGuideButton" type="button" class="secondary guide-btn">Guide: Off</button>
-            <button id="useGuideButton" type="button" class="secondary guide-btn" disabled>Use Guide ROI</button>
+            <button
+              id="toggleGuideButton"
+              type="button"
+              class="secondary guide-btn"
+            >
+              Guide: Off
+            </button>
+            <button
+              id="useGuideButton"
+              type="button"
+              class="secondary guide-btn"
+              disabled
+            >
+              Use Guide ROI
+            </button>
           </div>
           <div class="viewer-actions">
-            <button id="calibrateViewerButton" type="button" class="secondary viewer-action-btn">
+            <button
+              id="calibrateViewerButton"
+              type="button"
+              class="secondary viewer-action-btn"
+            >
               Calibrate ROI
             </button>
           </div>
@@ -399,33 +453,58 @@
       <section class="dock">
         <div class="primary-actions">
           <button id="quickStartButton" type="button">Quick Start</button>
-          <button id="scanToggleButton" type="button" class="secondary">Start Scan</button>
-          <button id="resetButton" type="button" class="secondary">Reset</button>
+          <button id="scanToggleButton" type="button" class="secondary">
+            Start Scan
+          </button>
+          <button id="resetButton" type="button" class="secondary">
+            Reset
+          </button>
         </div>
 
         <div class="easy-grid">
           <div class="row">
             <label for="matchSlider">Match</label>
-            <input id="matchSlider" type="range" min="0.45" max="0.96" step="0.01" value="0.77" />
+            <input
+              id="matchSlider"
+              type="range"
+              min="0.45"
+              max="0.96"
+              step="0.01"
+              value="0.77"
+            />
             <span id="matchValue" class="pill">0.77</span>
           </div>
           <div class="row">
             <label for="goldSlider">Gold</label>
-            <input id="goldSlider" type="range" min="0.01" max="0.5" step="0.01" value="0.06" />
+            <input
+              id="goldSlider"
+              type="range"
+              min="0.01"
+              max="0.5"
+              step="0.01"
+              value="0.06"
+            />
             <span id="goldValue" class="pill">0.06</span>
           </div>
         </div>
 
         <div id="stats" class="stats">
-          Frames: 0 | Best: 0.000 | Stable hits: 0/2 | Similarity: 0.000 | Gold ratio: 0.000 | Candidates: 0
+          Frames: 0 | Best: 0.000 | Stable hits: 0/2 | Similarity: 0.000 | Gold ratio: 0.000 | Gold px: 0 | Candidates: 0
         </div>
         <div id="calibrationReadout" class="stats">Calibration: not set</div>
         <div id="modelReadout" class="stats">Model: loading...</div>
 
         <div class="template-row">
           <span class="template-label">Template</span>
-          <canvas id="templatePreview" class="template-canvas" width="92" height="92"></canvas>
-          <span id="templateMeta" class="template-meta">No template loaded</span>
+          <canvas
+            id="templatePreview"
+            class="template-canvas"
+            width="92"
+            height="92"
+          ></canvas>
+          <span id="templateMeta" class="template-meta"
+            >No template loaded</span
+          >
         </div>
 
         <details>
@@ -433,63 +512,131 @@
           <div class="details-body">
             <div class="button-row">
               <button id="startCameraButton" type="button">Start Camera</button>
-              <button id="autoTemplateButton" type="button">Load Template</button>
-              <button id="pickTemplateButton" type="button" class="secondary">Pick File</button>
-              <button id="calibrateButton" type="button" class="secondary">Calibrate ROI</button>
+              <button id="autoTemplateButton" type="button">
+                Load Template
+              </button>
+              <button id="pickTemplateButton" type="button" class="secondary">
+                Pick File
+              </button>
+              <button id="calibrateButton" type="button" class="secondary">
+                Calibrate ROI
+              </button>
               <button id="startScanButton" type="button">Start Scan</button>
-              <button id="stopScanButton" type="button" class="secondary">Stop Scan</button>
+              <button id="stopScanButton" type="button" class="secondary">
+                Stop Scan
+              </button>
             </div>
 
             <div class="row">
               <label for="stableSlider">Stable</label>
-              <input id="stableSlider" type="range" min="1" max="6" step="1" value="2" />
+              <input
+                id="stableSlider"
+                type="range"
+                min="1"
+                max="6"
+                step="1"
+                value="2"
+              />
               <span id="stableValue" class="pill">2</span>
             </div>
             <div class="row">
               <label for="pixelSlider">Pixels</label>
-              <input id="pixelSlider" type="range" min="5" max="150" step="1" value="14" />
+              <input
+                id="pixelSlider"
+                type="range"
+                min="5"
+                max="150"
+                step="1"
+                value="14"
+              />
               <span id="pixelValue" class="pill">14</span>
             </div>
             <div class="row">
               <label for="intervalSlider">Interval</label>
-              <input id="intervalSlider" type="range" min="70" max="340" step="10" value="120" />
+              <input
+                id="intervalSlider"
+                type="range"
+                min="70"
+                max="340"
+                step="10"
+                value="120"
+              />
               <span id="intervalValue" class="pill">120</span>
             </div>
             <div class="row">
               <label for="cooldownSlider">Cooldown</label>
-              <input id="cooldownSlider" type="range" min="250" max="3000" step="50" value="1000" />
+              <input
+                id="cooldownSlider"
+                type="range"
+                min="250"
+                max="3000"
+                step="50"
+                value="1000"
+              />
               <span id="cooldownValue" class="pill">1000</span>
             </div>
 
             <div class="row">
               <label for="zoomSlider">Zoom</label>
-              <input id="zoomSlider" type="range" min="1" max="1" step="0.01" value="1" disabled />
+              <input
+                id="zoomSlider"
+                type="range"
+                min="1"
+                max="1"
+                step="0.01"
+                value="1"
+                disabled
+              />
               <span id="zoomValue" class="pill">N/A</span>
             </div>
             <div class="row">
               <label for="focusSlider">Focus</label>
-              <input id="focusSlider" type="range" min="0" max="1" step="0.01" value="0" disabled />
+              <input
+                id="focusSlider"
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value="0"
+                disabled
+              />
               <span id="focusValue" class="pill">N/A</span>
             </div>
             <div class="toggle-row">
               <input id="manualFocusToggle" type="checkbox" disabled />
               <label for="manualFocusToggle">Enable Manual Focus</label>
             </div>
-            <div id="cameraControlStatus" class="camera-status">Camera controls: unavailable</div>
+            <div id="cameraControlStatus" class="camera-status">
+              Camera controls: unavailable
+            </div>
           </div>
         </details>
       </section>
 
-      <input id="templateFileInput" type="file" accept="image/*" class="hidden-utility" />
+      <input
+        id="templateFileInput"
+        type="file"
+        accept="image/*"
+        class="hidden-utility"
+      />
 
       <canvas id="processCanvas" style="display: none"></canvas>
-      <canvas id="candidateCanvas" style="display: none" width="128" height="128"></canvas>
+      <canvas
+        id="candidateCanvas"
+        style="display: none"
+        width="128"
+        height="128"
+      ></canvas>
     </main>
 
     <script type="module">
-      import { FilesetResolver, ImageEmbedder } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+      import {
+        FilesetResolver,
+        ImageEmbedder,
+      } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
 
-      const MEDIAPIPE_WASM_ROOT = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
+      const MEDIAPIPE_WASM_ROOT =
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
       const EMBEDDER_MODEL_URL =
         "https://storage.googleapis.com/mediapipe-models/image_embedder/mobilenet_v3_small/float32/latest/mobilenet_v3_small.tflite";
 
@@ -542,7 +689,7 @@
         matchThreshold: 0.77,
         stableFrames: 2,
         minGoldRatio: 0.06,
-        minGoldPixels: 14,
+        minGoldPixels: 8,
         scanInterval: 120,
         beepCooldown: 1000,
       };
@@ -551,24 +698,33 @@
       const overlay = document.getElementById("overlay");
       const overlayCtx = overlay.getContext("2d");
       const processCanvas = document.getElementById("processCanvas");
-      const processCtx = processCanvas.getContext("2d", { willReadFrequently: true });
+      const processCtx = processCanvas.getContext("2d", {
+        willReadFrequently: true,
+      });
       const candidateCanvas = document.getElementById("candidateCanvas");
-      const candidateCtx = candidateCanvas.getContext("2d", { willReadFrequently: true });
+      const candidateCtx = candidateCanvas.getContext("2d", {
+        willReadFrequently: true,
+      });
 
       const statusDiv = document.getElementById("status");
       const statsDiv = document.getElementById("stats");
-      const calibrationReadoutDiv = document.getElementById("calibrationReadout");
+      const calibrationReadoutDiv =
+        document.getElementById("calibrationReadout");
       const modelReadoutDiv = document.getElementById("modelReadout");
       const templatePreviewCanvas = document.getElementById("templatePreview");
       const templatePreviewCtx = templatePreviewCanvas.getContext("2d");
       const templateMeta = document.getElementById("templateMeta");
-      const cameraControlStatusDiv = document.getElementById("cameraControlStatus");
+      const cameraControlStatusDiv = document.getElementById(
+        "cameraControlStatus",
+      );
 
       const startCameraButton = document.getElementById("startCameraButton");
       const autoTemplateButton = document.getElementById("autoTemplateButton");
       const pickTemplateButton = document.getElementById("pickTemplateButton");
       const calibrateButton = document.getElementById("calibrateButton");
-      const calibrateViewerButton = document.getElementById("calibrateViewerButton");
+      const calibrateViewerButton = document.getElementById(
+        "calibrateViewerButton",
+      );
       const quickStartButton = document.getElementById("quickStartButton");
       const scanToggleButton = document.getElementById("scanToggleButton");
       const toggleGuideButton = document.getElementById("toggleGuideButton");
@@ -628,7 +784,7 @@
         }
       }
 
-      function updateStats(bestScore, similarity, goldRatio, candidateCount) {
+      function updateStats(bestScore, similarity, goldRatio, candidateCount, goldCount) {
         statsDiv.textContent =
           "Frames: " +
           state.frameCount +
@@ -642,13 +798,17 @@
           similarity.toFixed(3) +
           " | Gold ratio: " +
           goldRatio.toFixed(3) +
+          " | Gold px: " +
+          (goldCount || 0) +
           " | Candidates: " +
           candidateCount;
       }
 
       function updateScanUi() {
         if (scanToggleButton) {
-          scanToggleButton.textContent = state.scanning ? "Stop Scan" : "Start Scan";
+          scanToggleButton.textContent = state.scanning
+            ? "Stop Scan"
+            : "Start Scan";
           if (state.scanning) {
             scanToggleButton.classList.add("secondary");
           } else {
@@ -677,7 +837,9 @@
         for (let y = 0; y < height; y += tile) {
           for (let x = 0; x < width; x += tile) {
             const dark = ((x / tile + y / tile) & 1) === 0;
-            templatePreviewCtx.fillStyle = dark ? "rgba(255, 196, 131, 0.18)" : "rgba(255, 196, 131, 0.08)";
+            templatePreviewCtx.fillStyle = dark
+              ? "rgba(255, 196, 131, 0.18)"
+              : "rgba(255, 196, 131, 0.08)";
             templatePreviewCtx.fillRect(x, y, tile, tile);
           }
         }
@@ -689,7 +851,10 @@
         templatePreviewCtx.lineWidth = 2;
         templatePreviewCtx.beginPath();
         templatePreviewCtx.moveTo(20, 20);
-        templatePreviewCtx.lineTo(templatePreviewCanvas.width - 20, templatePreviewCanvas.height - 20);
+        templatePreviewCtx.lineTo(
+          templatePreviewCanvas.width - 20,
+          templatePreviewCanvas.height - 20,
+        );
         templatePreviewCtx.moveTo(templatePreviewCanvas.width - 20, 20);
         templatePreviewCtx.lineTo(20, templatePreviewCanvas.height - 20);
         templatePreviewCtx.stroke();
@@ -709,7 +874,17 @@
         const drawY = Math.round((templatePreviewCanvas.height - drawH) / 2);
 
         templatePreviewCtx.imageSmoothingEnabled = true;
-        templatePreviewCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, drawX, drawY, drawW, drawH);
+        templatePreviewCtx.drawImage(
+          canvas,
+          0,
+          0,
+          canvas.width,
+          canvas.height,
+          drawX,
+          drawY,
+          drawW,
+          drawH,
+        );
 
         templateMeta.textContent =
           name +
@@ -725,8 +900,16 @@
 
       function getCanvasPoint(clientX, clientY) {
         const rect = overlay.getBoundingClientRect();
-        const x = clamp(Math.round(((clientX - rect.left) / rect.width) * overlay.width), 0, overlay.width);
-        const y = clamp(Math.round(((clientY - rect.top) / rect.height) * overlay.height), 0, overlay.height);
+        const x = clamp(
+          Math.round(((clientX - rect.left) / rect.width) * overlay.width),
+          0,
+          overlay.width,
+        );
+        const y = clamp(
+          Math.round(((clientY - rect.top) / rect.height) * overlay.height),
+          0,
+          overlay.height,
+        );
         return { x, y };
       }
 
@@ -749,8 +932,16 @@
         const width = Math.max(1, Math.round(rect.w * factor));
         const height = Math.max(1, Math.round(rect.h * factor));
 
-        const x = clamp(Math.round(centerX - width * 0.5), 0, overlay.width - 1);
-        const y = clamp(Math.round(centerY - height * 0.5), 0, overlay.height - 1);
+        const x = clamp(
+          Math.round(centerX - width * 0.5),
+          0,
+          overlay.width - 1,
+        );
+        const y = clamp(
+          Math.round(centerY - height * 0.5),
+          0,
+          overlay.height - 1,
+        );
 
         return {
           x,
@@ -765,14 +956,18 @@
           return null;
         }
 
-        const side = Math.round(clamp(Math.min(overlay.width, overlay.height) * 0.22, 88, 210));
+        const side = Math.round(
+          clamp(Math.min(overlay.width, overlay.height) * 0.22, 88, 210),
+        );
         const x = Math.round((overlay.width - side) * 0.5);
         const y = Math.round((overlay.height - side) * 0.5);
         return { x, y, w: side, h: side };
       }
 
       function updateGuideControlsUi() {
-        toggleGuideButton.textContent = state.guideEnabled ? "Guide: On" : "Guide: Off";
+        toggleGuideButton.textContent = state.guideEnabled
+          ? "Guide: On"
+          : "Guide: Off";
         useGuideButton.disabled = !state.guideEnabled;
       }
 
@@ -782,7 +977,12 @@
         if (state.roi) {
           overlayCtx.strokeStyle = "#ffd666";
           overlayCtx.lineWidth = 3;
-          overlayCtx.strokeRect(state.roi.x, state.roi.y, state.roi.w, state.roi.h);
+          overlayCtx.strokeRect(
+            state.roi.x,
+            state.roi.y,
+            state.roi.w,
+            state.roi.h,
+          );
         }
 
         if (state.candidateBox && state.stableHits < settings.stableFrames) {
@@ -801,25 +1001,43 @@
         if (state.detectionBox) {
           overlayCtx.strokeStyle = "#64ff9f";
           overlayCtx.lineWidth = 4;
-          overlayCtx.strokeRect(state.detectionBox.x, state.detectionBox.y, state.detectionBox.w, state.detectionBox.h);
+          overlayCtx.strokeRect(
+            state.detectionBox.x,
+            state.detectionBox.y,
+            state.detectionBox.w,
+            state.detectionBox.h,
+          );
         }
 
         if (state.guideEnabled) {
           const guideRect = getGuideOverlayRect();
           if (guideRect) {
             overlayCtx.fillStyle = "rgba(113, 239, 255, 0.12)";
-            overlayCtx.fillRect(guideRect.x, guideRect.y, guideRect.w, guideRect.h);
+            overlayCtx.fillRect(
+              guideRect.x,
+              guideRect.y,
+              guideRect.w,
+              guideRect.h,
+            );
             overlayCtx.strokeStyle = "#7ef3ff";
             overlayCtx.lineWidth = 2;
             overlayCtx.setLineDash([7, 5]);
-            overlayCtx.strokeRect(guideRect.x, guideRect.y, guideRect.w, guideRect.h);
+            overlayCtx.strokeRect(
+              guideRect.x,
+              guideRect.y,
+              guideRect.w,
+              guideRect.h,
+            );
             overlayCtx.setLineDash([]);
 
             overlayCtx.fillStyle = "#bdf9ff";
             overlayCtx.font = "700 15px Nunito, sans-serif";
             overlayCtx.textAlign = "left";
             overlayCtx.textBaseline = "bottom";
-            const labelY = guideRect.y > 20 ? guideRect.y - 6 : guideRect.y + guideRect.h + 18;
+            const labelY =
+              guideRect.y > 20
+                ? guideRect.y - 6
+                : guideRect.y + guideRect.h + 18;
             overlayCtx.fillText("Calibration Guide", guideRect.x + 4, labelY);
           }
         }
@@ -827,7 +1045,14 @@
 
       function drawSelectionPreview(x1, y1, x2, y2) {
         drawOverlay();
-        const preview = normalizeRect(x1, y1, x2, y2, overlay.width, overlay.height);
+        const preview = normalizeRect(
+          x1,
+          y1,
+          x2,
+          y2,
+          overlay.width,
+          overlay.height,
+        );
         overlayCtx.strokeStyle = "#ffd666";
         overlayCtx.lineWidth = 3;
         overlayCtx.setLineDash([8, 6]);
@@ -854,7 +1079,12 @@
         }
 
         const point = getCanvasPoint(event.clientX, event.clientY);
-        drawSelectionPreview(state.drawStartX, state.drawStartY, point.x, point.y);
+        drawSelectionPreview(
+          state.drawStartX,
+          state.drawStartY,
+          point.x,
+          point.y,
+        );
       }
 
       function finishRoiSelection(event) {
@@ -864,7 +1094,14 @@
 
         state.drawing = false;
         const point = getCanvasPoint(event.clientX, event.clientY);
-        const rect = normalizeRect(state.drawStartX, state.drawStartY, point.x, point.y, overlay.width, overlay.height);
+        const rect = normalizeRect(
+          state.drawStartX,
+          state.drawStartY,
+          point.x,
+          point.y,
+          overlay.width,
+          overlay.height,
+        );
 
         if (rect.w < MIN_ROI_SIZE || rect.h < MIN_ROI_SIZE) {
           state.roi = null;
@@ -884,8 +1121,14 @@
         overlay.height = video.videoHeight;
 
         const processScale = Math.min(1, MAX_PROCESS_WIDTH / video.videoWidth);
-        processCanvas.width = Math.max(1, Math.round(video.videoWidth * processScale));
-        processCanvas.height = Math.max(1, Math.round(video.videoHeight * processScale));
+        processCanvas.width = Math.max(
+          1,
+          Math.round(video.videoWidth * processScale),
+        );
+        processCanvas.height = Math.max(
+          1,
+          Math.round(video.videoHeight * processScale),
+        );
 
         drawOverlay();
       }
@@ -923,7 +1166,7 @@
         state.lastCandidate = null;
         state.candidateBox = null;
         state.detectionBox = null;
-        updateStats(0, 0, 0, 0);
+        updateStats(0, 0, 0, 0, 0);
         drawOverlay();
       }
 
@@ -940,7 +1183,8 @@
         setStatus("Status: Loading MediaPipe model...", "warn");
 
         modelInitPromise = (async () => {
-          const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_ROOT);
+          const vision =
+            await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_ROOT);
           const embedder = await ImageEmbedder.createFromOptions(vision, {
             baseOptions: { modelAssetPath: EMBEDDER_MODEL_URL },
             runningMode: "IMAGE",
@@ -950,7 +1194,8 @@
           state.embedder = embedder;
           state.modelReady = true;
           state.modelError = null;
-          modelReadoutDiv.textContent = "Model: MobileNet v3 small image embedder (MediaPipe)";
+          modelReadoutDiv.textContent =
+            "Model: MobileNet v3 small image embedder (MediaPipe)";
           setStatus("Status: MediaPipe ready", "warn");
           return embedder;
         })();
@@ -976,7 +1221,10 @@
           return Float32Array.from(embedding.floatEmbedding);
         }
 
-        if (embedding.quantizedEmbedding && embedding.quantizedEmbedding.length) {
+        if (
+          embedding.quantizedEmbedding &&
+          embedding.quantizedEmbedding.length
+        ) {
           const output = new Float32Array(embedding.quantizedEmbedding.length);
           for (let i = 0; i < embedding.quantizedEmbedding.length; i += 1) {
             output[i] = (embedding.quantizedEmbedding[i] - 128) / 128;
@@ -1016,12 +1264,12 @@
         const max = Math.max(r, g, b);
         const min = Math.min(r, g, b);
         const chroma = max - min;
-        if (max < 78 || chroma < 18) {
+        if (max < 55 || chroma < 14) {
           return false;
         }
 
         const saturation = chroma / max;
-        if (saturation < 0.16 || saturation > 0.9) {
+        if (saturation < 0.14 || saturation > 0.98) {
           return false;
         }
 
@@ -1175,31 +1423,31 @@
         return components;
       }
 
-      function componentToSampleBox(component, scanRect, scanWidth, scanHeight) {
-        const centerX = component.x + component.w * 0.5;
-        const centerY = component.y + component.h * 0.5;
-        const side = Math.round(clamp(Math.max(component.w, component.h) * 3.2, 16, Math.min(scanWidth, scanHeight) * 0.75));
-        const localX = clamp(Math.round(centerX - side * 0.5), 0, scanWidth - side);
-        const localY = clamp(Math.round(centerY - side * 0.5), 0, scanHeight - side);
-
-        return {
-          x: scanRect.x + localX,
-          y: scanRect.y + localY,
-          w: side,
-          h: side,
-          localX,
-          localY,
-        };
-      }
-
-      function componentToCalibrationBox(component, scanRect, scanWidth, scanHeight) {
+      function componentToSampleBox(
+        component,
+        scanRect,
+        scanWidth,
+        scanHeight,
+      ) {
         const centerX = component.x + component.w * 0.5;
         const centerY = component.y + component.h * 0.5;
         const side = Math.round(
-          clamp(Math.max(component.w, component.h) * 2.2, 12, Math.min(scanWidth, scanHeight) * 0.42),
+          clamp(
+            Math.max(component.w, component.h) * 3.2,
+            16,
+            Math.min(scanWidth, scanHeight) * 0.75,
+          ),
         );
-        const localX = clamp(Math.round(centerX - side * 0.5), 0, scanWidth - side);
-        const localY = clamp(Math.round(centerY - side * 0.5), 0, scanHeight - side);
+        const localX = clamp(
+          Math.round(centerX - side * 0.5),
+          0,
+          scanWidth - side,
+        );
+        const localY = clamp(
+          Math.round(centerY - side * 0.5),
+          0,
+          scanHeight - side,
+        );
 
         return {
           x: scanRect.x + localX,
@@ -1211,12 +1459,64 @@
         };
       }
 
-      function scaleSampleBox(sampleBox, scale, scanRect, scanWidth, scanHeight) {
+      function componentToCalibrationBox(
+        component,
+        scanRect,
+        scanWidth,
+        scanHeight,
+      ) {
+        const centerX = component.x + component.w * 0.5;
+        const centerY = component.y + component.h * 0.5;
+        const side = Math.round(
+          clamp(
+            Math.max(component.w, component.h) * 2.2,
+            12,
+            Math.min(scanWidth, scanHeight) * 0.42,
+          ),
+        );
+        const localX = clamp(
+          Math.round(centerX - side * 0.5),
+          0,
+          scanWidth - side,
+        );
+        const localY = clamp(
+          Math.round(centerY - side * 0.5),
+          0,
+          scanHeight - side,
+        );
+
+        return {
+          x: scanRect.x + localX,
+          y: scanRect.y + localY,
+          w: side,
+          h: side,
+          localX,
+          localY,
+        };
+      }
+
+      function scaleSampleBox(
+        sampleBox,
+        scale,
+        scanRect,
+        scanWidth,
+        scanHeight,
+      ) {
         const centerX = sampleBox.localX + sampleBox.w * 0.5;
         const centerY = sampleBox.localY + sampleBox.h * 0.5;
-        const side = Math.round(clamp(sampleBox.w * scale, 12, Math.min(scanWidth, scanHeight)));
-        const localX = clamp(Math.round(centerX - side * 0.5), 0, scanWidth - side);
-        const localY = clamp(Math.round(centerY - side * 0.5), 0, scanHeight - side);
+        const side = Math.round(
+          clamp(sampleBox.w * scale, 12, Math.min(scanWidth, scanHeight)),
+        );
+        const localX = clamp(
+          Math.round(centerX - side * 0.5),
+          0,
+          scanWidth - side,
+        );
+        const localY = clamp(
+          Math.round(centerY - side * 0.5),
+          0,
+          scanHeight - side,
+        );
 
         return {
           x: scanRect.x + localX,
@@ -1249,8 +1549,16 @@
         const scaleY = processCanvas.height / overlay.height;
 
         return {
-          x: clamp(Math.round(overlayRect.x * scaleX), 0, processCanvas.width - 1),
-          y: clamp(Math.round(overlayRect.y * scaleY), 0, processCanvas.height - 1),
+          x: clamp(
+            Math.round(overlayRect.x * scaleX),
+            0,
+            processCanvas.width - 1,
+          ),
+          y: clamp(
+            Math.round(overlayRect.y * scaleY),
+            0,
+            processCanvas.height - 1,
+          ),
           w: clamp(Math.round(overlayRect.w * scaleX), 1, processCanvas.width),
           h: clamp(Math.round(overlayRect.h * scaleY), 1, processCanvas.height),
         };
@@ -1314,7 +1622,13 @@
         const imageData = ctx.getImageData(0, 0, width, height);
 
         const { mask } = buildGoldMask(imageData, width, height);
-        const components = findMaskComponents(mask, width, height, 8, Math.max(120, Math.round(width * height * 0.06)));
+        const components = findMaskComponents(
+          mask,
+          width,
+          height,
+          8,
+          Math.max(120, Math.round(width * height * 0.06)),
+        );
 
         if (!components.length) {
           return null;
@@ -1334,9 +1648,12 @@
 
           const areaRatio = component.pixels / (width * height);
           const expected = width * height > 70000 ? 0.00025 : 0.02;
-          const areaScore = 1 - Math.min(1, Math.abs(Math.log((areaRatio + 1e-9) / expected)) / 8);
+          const areaScore =
+            1 -
+            Math.min(1, Math.abs(Math.log((areaRatio + 1e-9) / expected)) / 8);
           const squareScore = 1 - Math.min(1, Math.abs(1 - component.aspect));
-          const fillScore = 1 - Math.min(1, Math.abs(component.fill - 0.35) / 0.35);
+          const fillScore =
+            1 - Math.min(1, Math.abs(component.fill - 0.35) / 0.35);
 
           const score = squareScore * 0.45 + fillScore * 0.35 + areaScore * 0.2;
           if (score > bestScore) {
@@ -1351,14 +1668,22 @@
 
         const centerX = best.x + best.w * 0.5;
         const centerY = best.y + best.h * 0.5;
-        const side = Math.round(clamp(Math.max(best.w, best.h) * 3.25, 18, Math.min(width, height) * 0.85));
+        const side = Math.round(
+          clamp(
+            Math.max(best.w, best.h) * 3.25,
+            18,
+            Math.min(width, height) * 0.85,
+          ),
+        );
         const x = clamp(Math.round(centerX - side * 0.5), 0, width - side);
         const y = clamp(Math.round(centerY - side * 0.5), 0, height - side);
 
         const output = document.createElement("canvas");
         output.width = side;
         output.height = side;
-        output.getContext("2d").drawImage(sourceCanvas, x, y, side, side, 0, 0, side, side);
+        output
+          .getContext("2d")
+          .drawImage(sourceCanvas, x, y, side, side, 0, 0, side, side);
 
         return {
           canvas: output,
@@ -1370,7 +1695,11 @@
       function computeCanvasGoldRatio(canvas) {
         const ctx = canvas.getContext("2d", { willReadFrequently: true });
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const { goldCount } = buildGoldMask(imageData, canvas.width, canvas.height);
+        const { goldCount } = buildGoldMask(
+          imageData,
+          canvas.width,
+          canvas.height,
+        );
         return goldCount / Math.max(1, canvas.width * canvas.height);
       }
 
@@ -1396,7 +1725,8 @@
         return new Promise((resolve, reject) => {
           const image = new Image();
           image.onload = () => resolve(image);
-          image.onerror = () => reject(new Error("Failed to load image: " + url));
+          image.onerror = () =>
+            reject(new Error("Failed to load image: " + url));
           image.src = url;
         });
       }
@@ -1417,7 +1747,10 @@
         });
 
         const sourceCanvas = buildSourceCanvas(image);
-        const crop = sourceCanvas.width > 180 || sourceCanvas.height > 180 ? findTemplateCropFromCanvas(sourceCanvas) : null;
+        const crop =
+          sourceCanvas.width > 180 || sourceCanvas.height > 180
+            ? findTemplateCropFromCanvas(sourceCanvas)
+            : null;
         const templateCanvas = crop ? crop.canvas : sourceCanvas;
         const method = crop ? crop.method : "full image";
 
@@ -1432,7 +1765,10 @@
           try {
             const image = await loadImage(candidate);
             const sourceCanvas = buildSourceCanvas(image);
-            const crop = sourceCanvas.width > 180 || sourceCanvas.height > 180 ? findTemplateCropFromCanvas(sourceCanvas) : null;
+            const crop =
+              sourceCanvas.width > 180 || sourceCanvas.height > 180
+                ? findTemplateCropFromCanvas(sourceCanvas)
+                : null;
             const templateCanvas = crop ? crop.canvas : sourceCanvas;
             const method = crop ? crop.method : "full image";
             await applyTemplateCanvas(templateCanvas, candidate, method);
@@ -1447,12 +1783,23 @@
       }
 
       function prepareProcessFrame() {
-        processCtx.drawImage(video, 0, 0, processCanvas.width, processCanvas.height);
+        processCtx.drawImage(
+          video,
+          0,
+          0,
+          processCanvas.width,
+          processCanvas.height,
+        );
       }
 
       function getScanRectProcess() {
         if (!state.roi) {
-          return { x: 0, y: 0, w: processCanvas.width, h: processCanvas.height };
+          return {
+            x: 0,
+            y: 0,
+            w: processCanvas.width,
+            h: processCanvas.height,
+          };
         }
 
         const roi = overlayToProcessRect(state.roi);
@@ -1465,7 +1812,12 @@
       }
 
       function evaluateCandidateEmbedding(sampleBox) {
-        candidateCtx.clearRect(0, 0, candidateCanvas.width, candidateCanvas.height);
+        candidateCtx.clearRect(
+          0,
+          0,
+          candidateCanvas.width,
+          candidateCanvas.height,
+        );
         candidateCtx.drawImage(
           processCanvas,
           sampleBox.x,
@@ -1488,18 +1840,32 @@
       }
 
       function pickBestCandidate(scanRect, scanImageData) {
-        const { mask, goldCount } = buildGoldMask(scanImageData, scanRect.w, scanRect.h);
+        const { mask, goldCount } = buildGoldMask(
+          scanImageData,
+          scanRect.w,
+          scanRect.h,
+        );
         if (!goldCount) {
           return {
             best: null,
             candidateCount: 0,
             similarity: 0,
             goldRatio: 0,
+            goldCount: 0,
           };
         }
 
-        const maxPixels = Math.max(settings.minGoldPixels + 1, Math.round(scanRect.w * scanRect.h * 0.25));
-        const components = findMaskComponents(mask, scanRect.w, scanRect.h, settings.minGoldPixels, maxPixels);
+        const maxPixels = Math.max(
+          settings.minGoldPixels + 1,
+          Math.round(scanRect.w * scanRect.h * 0.25),
+        );
+        const components = findMaskComponents(
+          mask,
+          scanRect.w,
+          scanRect.h,
+          settings.minGoldPixels,
+          maxPixels,
+        );
         const trimmed = components.slice(0, MAX_CANDIDATES);
         const candidates = [];
         const minGoldGate = Math.max(0.075, settings.minGoldRatio * 0.9);
@@ -1523,7 +1889,12 @@
             }
           }
 
-          const sampleBox = componentToSampleBox(component, scanRect, scanRect.w, scanRect.h);
+          const sampleBox = componentToSampleBox(
+            component,
+            scanRect,
+            scanRect.w,
+            scanRect.h,
+          );
           const goldRatio = computeMaskRatio(mask, scanRect.w, sampleBox);
           if (goldRatio < minGoldGate) {
             continue;
@@ -1536,16 +1907,29 @@
           }
 
           const shapeScore = 1 - Math.min(1, Math.abs(1 - component.aspect));
-          const fillScore = 1 - Math.min(1, Math.abs(component.fill - 0.32) / 0.32);
-          const goldScore = Math.min(1, goldRatio / Math.max(0.001, settings.minGoldRatio * 2.8));
+          const fillScore =
+            1 - Math.min(1, Math.abs(component.fill - 0.32) / 0.32);
+          const goldScore = Math.min(
+            1,
+            goldRatio / Math.max(0.001, settings.minGoldRatio * 2.8),
+          );
 
           // Position score: candidate closer to center of scan area scores higher.
           // This biases toward where the star is expected within the calibrated ROI.
-          const normDx = (component.x + component.w * 0.5 - scanRect.w * 0.5) / Math.max(1, scanRect.w * 0.5);
-          const normDy = (component.y + component.h * 0.5 - scanRect.h * 0.5) / Math.max(1, scanRect.h * 0.5);
-          const positionScore = clamp(1 - Math.hypot(normDx, normDy) * 0.55, 0, 1);
+          const normDx =
+            (component.x + component.w * 0.5 - scanRect.w * 0.5) /
+            Math.max(1, scanRect.w * 0.5);
+          const normDy =
+            (component.y + component.h * 0.5 - scanRect.h * 0.5) /
+            Math.max(1, scanRect.h * 0.5);
+          const positionScore = clamp(
+            1 - Math.hypot(normDx, normDy) * 0.55,
+            0,
+            1,
+          );
 
-          const preScore = goldScore * 0.62 + shapeScore * 0.23 + fillScore * 0.15;
+          const preScore =
+            goldScore * 0.62 + shapeScore * 0.23 + fillScore * 0.15;
 
           candidates.push({
             component,
@@ -1567,7 +1951,10 @@
         }
 
         candidates.sort((a, b) => b.preScore - a.preScore);
-        const embeddingCandidates = candidates.slice(0, MAX_EMBEDDING_CANDIDATES);
+        const embeddingCandidates = candidates.slice(
+          0,
+          MAX_EMBEDDING_CANDIDATES,
+        );
 
         let best = null;
         for (const candidate of embeddingCandidates) {
@@ -1578,7 +1965,13 @@
             const scaledBox =
               scale === 1
                 ? candidate.sampleBox
-                : scaleSampleBox(candidate.sampleBox, scale, scanRect, scanRect.w, scanRect.h);
+                : scaleSampleBox(
+                    candidate.sampleBox,
+                    scale,
+                    scanRect,
+                    scanRect.w,
+                    scanRect.h,
+                  );
             const similarity = evaluateCandidateEmbedding(scaledBox);
 
             if (similarity > bestSimilarity) {
@@ -1591,11 +1984,19 @@
           let temporalBias = 0;
           if (state.lastCandidate) {
             const distance = boxDistance(overlayBox, state.lastCandidate);
-            const distanceRef = Math.max(16, Math.max(overlayBox.w, overlayBox.h) * 1.7);
+            const distanceRef = Math.max(
+              16,
+              Math.max(overlayBox.w, overlayBox.h) * 1.7,
+            );
             temporalBias = clamp(1 - distance / distanceRef, 0, 1) * 0.08;
           }
 
-          let score = bestSimilarity * 0.70 + candidate.goldScore * 0.18 + candidate.preScore * 0.07 + candidate.positionScore * 0.05 + temporalBias;
+          let score =
+            bestSimilarity * 0.7 +
+            candidate.goldScore * 0.18 +
+            candidate.preScore * 0.07 +
+            candidate.positionScore * 0.05 +
+            temporalBias;
           if (candidate.goldRatio < Math.max(settings.minGoldRatio, 0.085)) {
             score *= 0.48;
           }
@@ -1616,6 +2017,7 @@
           candidateCount: candidates.length,
           similarity: best ? best.similarity : 0,
           goldRatio: best ? best.goldRatio : 0,
+          goldCount,
         };
       }
 
@@ -1635,8 +2037,14 @@
           state.frameCount += 1;
 
           const scanRect = getScanRectProcess();
-          const scanImageData = processCtx.getImageData(scanRect.x, scanRect.y, scanRect.w, scanRect.h);
-          const { best, candidateCount, similarity, goldRatio } = pickBestCandidate(scanRect, scanImageData);
+          const scanImageData = processCtx.getImageData(
+            scanRect.x,
+            scanRect.y,
+            scanRect.w,
+            scanRect.h,
+          );
+          const { best, candidateCount, similarity, goldRatio, goldCount } =
+            pickBestCandidate(scanRect, scanImageData);
 
           let bestScore = 0;
           const hasTrack = Boolean(state.lastCandidate);
@@ -1646,17 +2054,27 @@
 
           if (best && best.score >= requiredScore) {
             bestScore = best.score;
-            const rawOverlayBox = best.overlayBox || processToOverlayRect(best.box);
-            const overlayBox = blendBoxes(state.smoothedCandidate || state.lastCandidate, rawOverlayBox, TRACK_BLEND_ALPHA);
+            const rawOverlayBox =
+              best.overlayBox || processToOverlayRect(best.box);
+            const overlayBox = blendBoxes(
+              state.smoothedCandidate || state.lastCandidate,
+              rawOverlayBox,
+              TRACK_BLEND_ALPHA,
+            );
 
             state.missFrames = 0;
-            state.temporalScore = state.temporalScore * 0.64 + best.score * 0.36;
+            state.temporalScore =
+              state.temporalScore * 0.64 + best.score * 0.36;
             state.smoothedCandidate = overlayBox;
 
-            if (state.lastCandidate && isSameCandidate(state.lastCandidate, overlayBox)) {
+            if (
+              state.lastCandidate &&
+              isSameCandidate(state.lastCandidate, overlayBox)
+            ) {
               state.stableHits += 1;
             } else {
-              state.stableHits = state.stableHits > 0 ? Math.max(1, state.stableHits - 1) : 1;
+              state.stableHits =
+                state.stableHits > 0 ? Math.max(1, state.stableHits - 1) : 1;
             }
 
             state.lastCandidate = overlayBox;
@@ -1664,7 +2082,10 @@
 
             if (state.stableHits >= settings.stableFrames) {
               state.detectionBox = overlayBox;
-              setStatus("Status: Star detected (score " + best.score.toFixed(3) + ")", "good");
+              setStatus(
+                "Status: Star detected (score " + best.score.toFixed(3) + ")",
+                "good",
+              );
               await playBeep();
             } else {
               state.detectionBox = null;
@@ -1687,7 +2108,13 @@
 
               if (state.stableHits >= settings.stableFrames) {
                 state.detectionBox = state.lastCandidate;
-                setStatus("Status: Tracking hold " + state.missFrames + "/" + TRACK_GRACE_FRAMES, "warn");
+                setStatus(
+                  "Status: Tracking hold " +
+                    state.missFrames +
+                    "/" +
+                    TRACK_GRACE_FRAMES,
+                  "warn",
+                );
               } else {
                 state.stableHits = Math.max(0, state.stableHits - 1);
                 state.detectionBox = null;
@@ -1705,7 +2132,7 @@
             }
           }
 
-          updateStats(bestScore, similarity, goldRatio, candidateCount);
+          updateStats(bestScore, similarity, goldRatio, candidateCount, goldCount);
           drawOverlay();
         } finally {
           state.scanInProgress = false;
@@ -1814,7 +2241,9 @@
           return;
         }
 
-        const capabilities = track.getCapabilities ? track.getCapabilities() : null;
+        const capabilities = track.getCapabilities
+          ? track.getCapabilities()
+          : null;
         if (!capabilities) {
           cameraControlStatusDiv.textContent = "Camera controls: not supported";
           return;
@@ -1911,7 +2340,11 @@
       }
 
       async function applyFocus() {
-        if (!state.activeTrack || focusSlider.disabled || !manualFocusToggle.checked) {
+        if (
+          !state.activeTrack ||
+          focusSlider.disabled ||
+          !manualFocusToggle.checked
+        ) {
           return;
         }
 
@@ -1947,22 +2380,44 @@
         const roiRect = overlaySourceRect
           ? overlayToProcessRect(overlaySourceRect)
           : { x: 0, y: 0, w: processCanvas.width, h: processCanvas.height };
-        const roiImageData = processCtx.getImageData(roiRect.x, roiRect.y, roiRect.w, roiRect.h);
+        const roiImageData = processCtx.getImageData(
+          roiRect.x,
+          roiRect.y,
+          roiRect.w,
+          roiRect.h,
+        );
 
         const { mask } = buildGoldMask(roiImageData, roiRect.w, roiRect.h);
-        const calibrationMinPixels = Math.max(5, Math.floor(settings.minGoldPixels * 0.6));
-        const maxPixels = Math.max(settings.minGoldPixels + 1, Math.round(roiRect.w * roiRect.h * 0.3));
-        const components = findMaskComponents(mask, roiRect.w, roiRect.h, calibrationMinPixels, maxPixels).slice(0, 28);
+        const calibrationMinPixels = Math.max(
+          5,
+          Math.floor(settings.minGoldPixels * 0.6),
+        );
+        const maxPixels = Math.max(
+          settings.minGoldPixels + 1,
+          Math.round(roiRect.w * roiRect.h * 0.3),
+        );
+        const components = findMaskComponents(
+          mask,
+          roiRect.w,
+          roiRect.h,
+          calibrationMinPixels,
+          maxPixels,
+        ).slice(0, 28);
 
         if (!components.length) {
-          throw new Error("No gold star candidate found. Keep the star visible and retry.");
+          throw new Error(
+            "No gold star candidate found. Keep the star visible and retry.",
+          );
         }
 
         const roiCenterX = roiRect.w * 0.5;
         const roiCenterY = roiRect.h * 0.5;
         const roiDiag = Math.max(1, Math.hypot(roiRect.w, roiRect.h));
         const preferCenter = calibrationSource === "ROI";
-        const minCalibrationGoldRatio = Math.max(0.05, settings.minGoldRatio * 0.9);
+        const minCalibrationGoldRatio = Math.max(
+          0.05,
+          settings.minGoldRatio * 0.9,
+        );
 
         let bestResult = null;
         for (const component of components) {
@@ -1970,7 +2425,12 @@
             continue;
           }
 
-          const sampleBox = componentToCalibrationBox(component, roiRect, roiRect.w, roiRect.h);
+          const sampleBox = componentToCalibrationBox(
+            component,
+            roiRect,
+            roiRect.w,
+            roiRect.h,
+          );
           const goldRatio = computeMaskRatio(mask, roiRect.w, sampleBox);
           if (goldRatio < minCalibrationGoldRatio) {
             continue;
@@ -1982,17 +2442,24 @@
           }
 
           const shapeScore = 1 - Math.min(1, Math.abs(1 - component.aspect));
-          const fillScore = 1 - Math.min(1, Math.abs(component.fill - 0.34) / 0.34);
+          const fillScore =
+            1 - Math.min(1, Math.abs(component.fill - 0.34) / 0.34);
           const compCenterX = component.x + component.w * 0.5;
           const compCenterY = component.y + component.h * 0.5;
-          const centerDist = Math.hypot(compCenterX - roiCenterX, compCenterY - roiCenterY) / roiDiag;
+          const centerDist =
+            Math.hypot(compCenterX - roiCenterX, compCenterY - roiCenterY) /
+            roiDiag;
           const centerScore = clamp(1 - centerDist * 1.95, 0, 1);
 
           if (preferCenter && centerDist > 0.42) {
             continue;
           }
 
-          let score = goldRatio * 0.38 + shapeScore * 0.13 + fillScore * 0.06 + centerScore * 0.33;
+          let score =
+            goldRatio * 0.38 +
+            shapeScore * 0.13 +
+            fillScore * 0.06 +
+            centerScore * 0.33;
           if (state.templateEmbedding) {
             score += similarity * 0.1;
             if (similarity < 0.5) {
@@ -2001,12 +2468,20 @@
           }
 
           if (!bestResult || score > bestResult.score) {
-            bestResult = { score, sampleBox, goldRatio, similarity, centerDist };
+            bestResult = {
+              score,
+              sampleBox,
+              goldRatio,
+              similarity,
+              centerDist,
+            };
           }
         }
 
         if (!bestResult) {
-          throw new Error("Could not isolate a clean star candidate. Try a tighter ROI.");
+          throw new Error(
+            "Could not isolate a clean star candidate. Try a tighter ROI.",
+          );
         }
 
         const sampleBox = bestResult.sampleBox;
@@ -2016,14 +2491,31 @@
         calibratedCanvas.height = sampleBox.h;
         calibratedCanvas
           .getContext("2d")
-          .drawImage(processCanvas, sampleBox.x, sampleBox.y, sampleBox.w, sampleBox.h, 0, 0, sampleBox.w, sampleBox.h);
+          .drawImage(
+            processCanvas,
+            sampleBox.x,
+            sampleBox.y,
+            sampleBox.w,
+            sampleBox.h,
+            0,
+            0,
+            sampleBox.w,
+            sampleBox.h,
+          );
 
         const previousEmbedding = state.templateEmbedding;
-        await applyTemplateCanvas(calibratedCanvas, "live-calibration", "ROI calibration");
+        await applyTemplateCanvas(
+          calibratedCanvas,
+          "live-calibration",
+          "ROI calibration",
+        );
 
         let suggestion = 0.72;
         if (previousEmbedding) {
-          const similarity = cosineSimilarity(previousEmbedding, state.templateEmbedding);
+          const similarity = cosineSimilarity(
+            previousEmbedding,
+            state.templateEmbedding,
+          );
           suggestion = clamp(similarity * 0.92, 0.58, 0.9);
         } else {
           suggestion = clamp(0.66 + bestResult.goldRatio * 0.35, 0.58, 0.9);
@@ -2140,7 +2632,9 @@
       function handleCalibrationClick() {
         calibrateFromRoi().catch((error) => {
           console.error(error);
-          calibrationReadoutDiv.textContent = "Calibration: " + (error && error.message ? error.message : "failed");
+          calibrationReadoutDiv.textContent =
+            "Calibration: " +
+            (error && error.message ? error.message : "failed");
           setStatus("Status: Calibration failed", "bad");
         });
       }
@@ -2231,7 +2725,11 @@
         state.roi = guideRect;
         drawOverlay();
         calibrationReadoutDiv.textContent =
-          "Calibration: guide ROI set " + guideRect.w + "x" + guideRect.h + ". Press Calibrate ROI.";
+          "Calibration: guide ROI set " +
+          guideRect.w +
+          "x" +
+          guideRect.h +
+          ". Press Calibrate ROI.";
         setStatus("Status: Guide ROI set", "warn");
       });
 
@@ -2330,7 +2828,7 @@
       updateGuideControlsUi();
       updateScanUi();
       drawOverlay();
-      updateStats(0, 0, 0, 0);
+      updateStats(0, 0, 0, 0, 0);
 
       initMediaPipe()
         .then(() => loadAutoTemplate())
