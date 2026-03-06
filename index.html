@@ -316,7 +316,7 @@
       <section class="panel">
         <div id="status" class="status">Status: Idle</div>
         <div id="stats" class="stats">
-          Frames: 0 | Best score: 0.000 | Stable hits: 0/2 | Edge density: 0.0%
+          Frames: 0 | Best score: 0.000 | Stable hits: 0/2 | Edge: 0.000 | Tone: 0.000 | Color: 0.000 | Edge density: 0.0%
         </div>
       </section>
 
@@ -332,10 +332,11 @@
     </main>
 
     <script>
-      const TEMPLATE_CANDIDATES = ["start.png", "star.png"];
+      const TEMPLATE_CANDIDATES = ["8.png", "start.png", "star.png"];
       const TEMPLATE_SCALES = [0.62, 0.76, 0.9, 1, 1.14, 1.28, 1.46, 1.62];
       const MIN_ROI_SIZE = 20;
       const MAX_TEMPLATE_SIDE = 280;
+      const MIN_AUTO_STAR_SEARCH_SIDE = 220;
       const MAX_PROCESS_WIDTH = 780;
       const POS_TOLERANCE = 26;
       const SIZE_TOLERANCE_RATIO = 0.3;
@@ -548,10 +549,10 @@
         state.lastCandidate = null;
         state.candidateBox = null;
         state.detectionBox = null;
-        updateStats(0, 0, 0);
+        updateStats(0, 0, 0, 0, 0);
       }
 
-      function updateStats(bestScore, edgeScore, edgeDensity) {
+      function updateStats(bestScore, edgeScore, toneScore, colorScore, edgeDensity) {
         statsDiv.innerText =
           "Frames: " +
           state.frameCount +
@@ -561,8 +562,12 @@
           state.stableHits +
           "/" +
           settings.stableFrames +
-          " | Edge score: " +
+          " | Edge: " +
           edgeScore.toFixed(3) +
+          " | Tone: " +
+          toneScore.toFixed(3) +
+          " | Color: " +
+          colorScore.toFixed(3) +
           " | Edge density: " +
           (edgeDensity * 100).toFixed(1) +
           "%";
@@ -741,9 +746,212 @@
         };
       }
 
+      function findGoldStarBounds(imageData, width, height) {
+        const pixelCount = width * height;
+        const { data } = imageData;
+        const mask = new Uint8Array(pixelCount);
+        const saturation = new Uint8Array(pixelCount);
+
+        for (let i = 0, p = 0; i < data.length; i += 4, p += 1) {
+          const alpha = data[i + 3];
+          if (alpha < 24) {
+            continue;
+          }
+
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const max = Math.max(r, g, b);
+          const min = Math.min(r, g, b);
+          const diff = max - min;
+
+          if (max < 100 || diff < 16) {
+            continue;
+          }
+
+          let hue = 0;
+          if (diff !== 0) {
+            if (max === r) {
+              hue = ((g - b) / diff) % 6;
+            } else if (max === g) {
+              hue = (b - r) / diff + 2;
+            } else {
+              hue = (r - g) / diff + 4;
+            }
+          }
+
+          hue *= 60;
+          if (hue < 0) {
+            hue += 360;
+          }
+
+          const sat = diff / max;
+          if (hue < 30 || hue > 74 || sat < 0.28) {
+            continue;
+          }
+
+          mask[p] = 1;
+          saturation[p] = Math.round(sat * 255);
+        }
+
+        const visited = new Uint8Array(pixelCount);
+        const stack = [];
+        let best = null;
+        let bestScore = -1;
+
+        for (let idx = 0; idx < pixelCount; idx += 1) {
+          if (!mask[idx] || visited[idx]) {
+            continue;
+          }
+
+          visited[idx] = 1;
+          stack.push(idx);
+
+          let count = 0;
+          let satSum = 0;
+          let minX = width;
+          let minY = height;
+          let maxX = 0;
+          let maxY = 0;
+
+          while (stack.length) {
+            const current = stack.pop();
+            const x = current % width;
+            const y = Math.floor(current / width);
+
+            count += 1;
+            satSum += saturation[current];
+
+            if (x < minX) {
+              minX = x;
+            }
+            if (y < minY) {
+              minY = y;
+            }
+            if (x > maxX) {
+              maxX = x;
+            }
+            if (y > maxY) {
+              maxY = y;
+            }
+
+            if (x > 0) {
+              const left = current - 1;
+              if (mask[left] && !visited[left]) {
+                visited[left] = 1;
+                stack.push(left);
+              }
+            }
+
+            if (x < width - 1) {
+              const right = current + 1;
+              if (mask[right] && !visited[right]) {
+                visited[right] = 1;
+                stack.push(right);
+              }
+            }
+
+            if (y > 0) {
+              const top = current - width;
+              if (mask[top] && !visited[top]) {
+                visited[top] = 1;
+                stack.push(top);
+              }
+            }
+
+            if (y < height - 1) {
+              const bottom = current + width;
+              if (mask[bottom] && !visited[bottom]) {
+                visited[bottom] = 1;
+                stack.push(bottom);
+              }
+            }
+          }
+
+          if (count < 14 || count > 9000) {
+            continue;
+          }
+
+          const boxWidth = maxX - minX + 1;
+          const boxHeight = maxY - minY + 1;
+          if (boxWidth < 6 || boxHeight < 6 || boxWidth > 220 || boxHeight > 220) {
+            continue;
+          }
+
+          if (minX <= 1 || minY <= 1 || maxX >= width - 2 || maxY >= height - 2) {
+            continue;
+          }
+
+          const fill = count / (boxWidth * boxHeight);
+          if (fill < 0.16 || fill > 0.78) {
+            continue;
+          }
+
+          const aspectScore =
+            1 - Math.min(1, Math.abs(boxWidth - boxHeight) / Math.max(boxWidth, boxHeight));
+          const fillScore = 1 - Math.min(1, Math.abs(fill - 0.42) / 0.42);
+          const satMean = satSum / (count * 255);
+          const satScore = clamp((satMean - 0.3) / 0.55, 0, 1);
+          const areaRatio = count / pixelCount;
+          const tinyScore = clamp(1 - areaRatio * 180, 0, 1);
+          const score = satScore * 0.38 + aspectScore * 0.23 + fillScore * 0.25 + tinyScore * 0.14;
+
+          if (score > bestScore) {
+            bestScore = score;
+            best = {
+              x: minX,
+              y: minY,
+              w: boxWidth,
+              h: boxHeight,
+            };
+          }
+        }
+
+        if (!best) {
+          return null;
+        }
+
+        const margin = Math.max(2, Math.round(Math.min(best.w, best.h) * 0.22));
+        const x = clamp(best.x - margin, 0, width - 1);
+        const y = clamp(best.y - margin, 0, height - 1);
+        const right = clamp(best.x + best.w + margin, 0, width);
+        const bottom = clamp(best.y + best.h + margin, 0, height);
+
+        return {
+          x,
+          y,
+          w: Math.max(1, right - x),
+          h: Math.max(1, bottom - y),
+        };
+      }
+
+      function getTemplateBounds(imageData, width, height) {
+        if (Math.max(width, height) >= MIN_AUTO_STAR_SEARCH_SIDE) {
+          const goldBounds = findGoldStarBounds(imageData, width, height);
+          if (goldBounds) {
+            return {
+              bounds: goldBounds,
+              method: "gold-star auto-crop",
+            };
+          }
+        }
+
+        const alphaBounds = getAlphaBounds(imageData, width, height);
+        if (!alphaBounds) {
+          return null;
+        }
+
+        return {
+          bounds: alphaBounds,
+          method: "alpha crop",
+        };
+      }
+
       function imageDataToGrayAlpha(imageData, width, height) {
         const gray = new Uint8Array(width * height);
         const alpha = new Uint8Array(width * height);
+        const chromaRG = new Int16Array(width * height);
+        const chromaBG = new Int16Array(width * height);
         const { data } = imageData;
 
         for (let i = 0, p = 0; i < data.length; i += 4, p += 1) {
@@ -752,9 +960,11 @@
           const b = data[i + 2];
           gray[p] = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
           alpha[p] = data[i + 3];
+          chromaRG[p] = r - g;
+          chromaBG[p] = b - g;
         }
 
-        return { gray, alpha };
+        return { gray, alpha, chromaRG, chromaBG };
       }
 
       function buildSobelMagnitudes(gray, width, height, alphaMask) {
@@ -798,7 +1008,7 @@
       }
 
       function buildTemplateVariant(imageData, width, height) {
-        const { gray, alpha } = imageDataToGrayAlpha(imageData, width, height);
+        const { gray, alpha, chromaRG, chromaBG } = imageDataToGrayAlpha(imageData, width, height);
         const sobel = buildSobelMagnitudes(gray, width, height, alpha);
 
         const edgeThreshold = Math.max(120, Math.min(sobel.max * 0.92, sobel.average * 1.35 + 35));
@@ -846,7 +1056,13 @@
               continue;
             }
 
-            samples.push({ x, y, v: gray[idx] });
+            samples.push({
+              x,
+              y,
+              v: gray[idx],
+              c1: chromaRG[idx],
+              c2: chromaBG[idx],
+            });
           }
         }
 
@@ -876,10 +1092,14 @@
         const sampleX = new Int16Array(samples.length);
         const sampleY = new Int16Array(samples.length);
         const sampleV = new Uint8Array(samples.length);
+        const sampleC1 = new Int16Array(samples.length);
+        const sampleC2 = new Int16Array(samples.length);
         for (let i = 0; i < samples.length; i += 1) {
           sampleX[i] = samples[i].x;
           sampleY[i] = samples[i].y;
           sampleV[i] = samples[i].v;
+          sampleC1[i] = samples[i].c1;
+          sampleC2[i] = samples[i].c2;
         }
 
         const searchStep = Math.max(2, Math.round(Math.min(width, height) / 18));
@@ -893,6 +1113,8 @@
           sampleX,
           sampleY,
           sampleV,
+          sampleC1,
+          sampleC2,
           sampleCount: samples.length,
           searchStep,
         };
@@ -945,11 +1167,11 @@
         sourceCtx.drawImage(image, 0, 0);
 
         const sourceData = sourceCtx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
-        const bounds = getAlphaBounds(sourceData, sourceCanvas.width, sourceCanvas.height);
-
-        if (!bounds) {
+        const extraction = getTemplateBounds(sourceData, sourceCanvas.width, sourceCanvas.height);
+        if (!extraction) {
           throw new Error("Template appears empty/transparent");
         }
+        const { bounds, method } = extraction;
 
         const baseCanvas = document.createElement("canvas");
         baseCanvas.width = bounds.w;
@@ -966,6 +1188,14 @@
           bounds.w,
           bounds.h,
         );
+
+        if (
+          method === "alpha crop" &&
+          bounds.w > MAX_TEMPLATE_SIDE * 1.7 &&
+          bounds.h > MAX_TEMPLATE_SIDE * 1.7
+        ) {
+          throw new Error("Template looks like a full screenshot. Use 8.png or an isolated star image.");
+        }
 
         const variants = buildTemplateVariants(baseCanvas);
         if (!variants.length) {
@@ -984,6 +1214,8 @@
           bounds.w +
           "x" +
           bounds.h +
+          ", " +
+          method +
           ")";
       }
 
@@ -1117,10 +1349,17 @@
 
       function preprocessSearchImage(imageData, width, height) {
         const gray = new Uint8Array(width * height);
+        const chromaRG = new Int16Array(width * height);
+        const chromaBG = new Int16Array(width * height);
         const rgba = imageData.data;
 
         for (let i = 0, p = 0; i < rgba.length; i += 4, p += 1) {
-          gray[p] = Math.round(0.299 * rgba[i] + 0.587 * rgba[i + 1] + 0.114 * rgba[i + 2]);
+          const r = rgba[i];
+          const g = rgba[i + 1];
+          const b = rgba[i + 2];
+          gray[p] = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+          chromaRG[p] = r - g;
+          chromaBG[p] = b - g;
         }
 
         const sobel = buildSobelMagnitudes(gray, width, height, null);
@@ -1140,12 +1379,14 @@
 
         return {
           gray,
+          chromaRG,
+          chromaBG,
           edges,
           edgeDensity,
         };
       }
 
-      function scoreCandidate(gray, edges, searchWidth, templateVariant, offsetX, offsetY) {
+      function scoreCandidate(gray, chromaRG, chromaBG, edges, searchWidth, templateVariant, offsetX, offsetY) {
         const edgeCount = templateVariant.edgeCount;
         let edgeHits = 0;
 
@@ -1164,11 +1405,13 @@
             score: 0,
             edgeScore,
             toneScore: 0,
+            colorScore: 0,
           };
         }
 
         const sampleCount = templateVariant.sampleCount;
         let absDiff = 0;
+        let colorDiff = 0;
 
         for (let i = 0; i < sampleCount; i += 1) {
           const px = templateVariant.sampleX[i];
@@ -1176,19 +1419,24 @@
           const idx = (offsetY + py) * searchWidth + (offsetX + px);
           const observed = gray[idx];
           absDiff += Math.abs(observed - templateVariant.sampleV[i]);
+          colorDiff +=
+            Math.abs(chromaRG[idx] - templateVariant.sampleC1[i]) +
+            Math.abs(chromaBG[idx] - templateVariant.sampleC2[i]);
         }
 
-        const toneScore = 1 - absDiff / (sampleCount * 255);
-        const score = edgeScore * 0.72 + toneScore * 0.28;
+        const toneScore = clamp(1 - absDiff / (sampleCount * 255), 0, 1);
+        const colorScore = clamp(1 - colorDiff / (sampleCount * 510), 0, 1);
+        const score = edgeScore * 0.58 + toneScore * 0.22 + colorScore * 0.2;
 
         return {
           score,
           edgeScore,
           toneScore,
+          colorScore,
         };
       }
 
-      function refineCandidate(gray, edges, searchWidth, searchHeight, candidate) {
+      function refineCandidate(gray, chromaRG, chromaBG, edges, searchWidth, searchHeight, candidate) {
         const variant = candidate.variant;
         const maxX = searchWidth - variant.width;
         const maxY = searchHeight - variant.height;
@@ -1203,12 +1451,22 @@
 
         for (let y = startY; y <= endY; y += 1) {
           for (let x = startX; x <= endX; x += 1) {
-            const scored = scoreCandidate(gray, edges, searchWidth, variant, x, y);
+            const scored = scoreCandidate(
+              gray,
+              chromaRG,
+              chromaBG,
+              edges,
+              searchWidth,
+              variant,
+              x,
+              y,
+            );
             if (scored.score > best.score) {
               best = {
                 score: scored.score,
                 edgeScore: scored.edgeScore,
                 toneScore: scored.toneScore,
+                colorScore: scored.colorScore,
                 x,
                 y,
                 w: variant.width,
@@ -1222,11 +1480,12 @@
         return best;
       }
 
-      function findBestMatch(gray, edges, searchWidth, searchHeight) {
+      function findBestMatch(gray, chromaRG, chromaBG, edges, searchWidth, searchHeight) {
         let best = {
           score: 0,
           edgeScore: 0,
           toneScore: 0,
+          colorScore: 0,
           x: 0,
           y: 0,
           w: 0,
@@ -1247,13 +1506,23 @@
 
           for (let y = 0; y <= maxY; y += step) {
             for (let x = 0; x <= maxX; x += step) {
-              const scored = scoreCandidate(gray, edges, searchWidth, variant, x, y);
+              const scored = scoreCandidate(
+                gray,
+                chromaRG,
+                chromaBG,
+                edges,
+                searchWidth,
+                variant,
+                x,
+                y,
+              );
 
               if (scored.score > best.score) {
                 best = {
                   score: scored.score,
                   edgeScore: scored.edgeScore,
                   toneScore: scored.toneScore,
+                  colorScore: scored.colorScore,
                   x,
                   y,
                   w: variant.width,
@@ -1269,7 +1538,7 @@
           return null;
         }
 
-        return refineCandidate(gray, edges, searchWidth, searchHeight, best);
+        return refineCandidate(gray, chromaRG, chromaBG, edges, searchWidth, searchHeight, best);
       }
 
       function convertProcessRectToOverlayRect(rect) {
@@ -1332,13 +1601,20 @@
             state.candidateBox = null;
             state.detectionBox = null;
             drawOverlay();
-            updateStats(0, 0, 0);
+            updateStats(0, 0, 0, 0, 0);
             return;
           }
 
           const frameData = processCtx.getImageData(searchRect.x, searchRect.y, searchRect.w, searchRect.h);
           const prepared = preprocessSearchImage(frameData, searchRect.w, searchRect.h);
-          const best = findBestMatch(prepared.gray, prepared.edges, searchRect.w, searchRect.h);
+          const best = findBestMatch(
+            prepared.gray,
+            prepared.chromaRG,
+            prepared.chromaBG,
+            prepared.edges,
+            searchRect.w,
+            searchRect.h,
+          );
 
           state.frameCount += 1;
 
@@ -1348,7 +1624,13 @@
             state.candidateBox = null;
             state.detectionBox = null;
             statusDiv.innerText = "Status: Scanning";
-            updateStats(best ? best.score : 0, best ? best.edgeScore : 0, prepared.edgeDensity);
+            updateStats(
+              best ? best.score : 0,
+              best ? best.edgeScore : 0,
+              best ? best.toneScore : 0,
+              best ? best.colorScore : 0,
+              prepared.edgeDensity,
+            );
             drawOverlay();
             return;
           }
@@ -1387,7 +1669,7 @@
               ")";
           }
 
-          updateStats(best.score, best.edgeScore, prepared.edgeDensity);
+          updateStats(best.score, best.edgeScore, best.toneScore, best.colorScore, prepared.edgeDensity);
           drawOverlay();
         } catch (error) {
           statusDiv.innerText = "Status: Detection error";
