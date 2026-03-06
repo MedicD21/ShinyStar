@@ -625,6 +625,23 @@
         };
       }
 
+      function expandOverlayRect(rect, factor) {
+        const centerX = rect.x + rect.w * 0.5;
+        const centerY = rect.y + rect.h * 0.5;
+        const width = Math.max(1, Math.round(rect.w * factor));
+        const height = Math.max(1, Math.round(rect.h * factor));
+
+        const x = clamp(Math.round(centerX - width * 0.5), 0, overlay.width - 1);
+        const y = clamp(Math.round(centerY - height * 0.5), 0, overlay.height - 1);
+
+        return {
+          x,
+          y,
+          w: clamp(width, 1, overlay.width - x),
+          h: clamp(height, 1, overlay.height - y),
+        };
+      }
+
       function drawOverlay() {
         overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
 
@@ -1562,23 +1579,65 @@
           throw new Error("Camera or model is not ready");
         }
 
-        if (!state.roi) {
-          throw new Error("Draw an ROI around the star first");
+        prepareProcessFrame();
+        let overlaySourceRect = null;
+        let calibrationSource = "full frame";
+
+        if (state.roi) {
+          overlaySourceRect = state.roi;
+          calibrationSource = "ROI";
+        } else if (state.detectionBox) {
+          overlaySourceRect = expandOverlayRect(state.detectionBox, 2.2);
+          calibrationSource = "detected box";
+        } else if (state.candidateBox) {
+          overlaySourceRect = expandOverlayRect(state.candidateBox, 2.2);
+          calibrationSource = "candidate box";
         }
 
-        prepareProcessFrame();
-        const roiRect = overlayToProcessRect(state.roi);
+        const roiRect = overlaySourceRect
+          ? overlayToProcessRect(overlaySourceRect)
+          : { x: 0, y: 0, w: processCanvas.width, h: processCanvas.height };
         const roiImageData = processCtx.getImageData(roiRect.x, roiRect.y, roiRect.w, roiRect.h);
 
         const { mask } = buildGoldMask(roiImageData, roiRect.w, roiRect.h);
-        const components = findMaskComponents(mask, roiRect.w, roiRect.h, settings.minGoldPixels, roiRect.w * roiRect.h);
+        const maxPixels = Math.max(settings.minGoldPixels + 1, Math.round(roiRect.w * roiRect.h * 0.3));
+        const components = findMaskComponents(mask, roiRect.w, roiRect.h, settings.minGoldPixels, maxPixels).slice(0, 28);
 
         if (!components.length) {
-          throw new Error("No gold star candidate inside ROI");
+          throw new Error("No gold star candidate found. Keep the star visible and retry.");
         }
 
-        const best = components[0];
-        const sampleBox = componentToSampleBox(best, roiRect, roiRect.w, roiRect.h);
+        let bestResult = null;
+        for (const component of components) {
+          if (component.aspect < 0.35 || component.aspect > 2.1) {
+            continue;
+          }
+
+          const sampleBox = componentToSampleBox(component, roiRect, roiRect.w, roiRect.h);
+          const goldRatio = computeMaskRatio(mask, roiRect.w, sampleBox);
+          let similarity = 0;
+          if (state.templateEmbedding) {
+            similarity = evaluateCandidateEmbedding(sampleBox);
+          }
+
+          const shapeScore = 1 - Math.min(1, Math.abs(1 - component.aspect));
+          const fillScore = 1 - Math.min(1, Math.abs(component.fill - 0.34) / 0.34);
+
+          let score = goldRatio * 0.5 + shapeScore * 0.25 + fillScore * 0.15;
+          if (state.templateEmbedding) {
+            score += similarity * 0.1;
+          }
+
+          if (!bestResult || score > bestResult.score) {
+            bestResult = { score, sampleBox, goldRatio, similarity };
+          }
+        }
+
+        if (!bestResult) {
+          throw new Error("Could not isolate a clean star candidate. Try a tighter ROI.");
+        }
+
+        const sampleBox = bestResult.sampleBox;
 
         const calibratedCanvas = document.createElement("canvas");
         calibratedCanvas.width = sampleBox.w;
@@ -1594,6 +1653,8 @@
         if (previousEmbedding) {
           const similarity = cosineSimilarity(previousEmbedding, state.templateEmbedding);
           suggestion = clamp(similarity * 0.92, 0.58, 0.9);
+        } else {
+          suggestion = clamp(0.66 + bestResult.goldRatio * 0.35, 0.58, 0.9);
         }
 
         settings.matchThreshold = Number(suggestion.toFixed(2));
@@ -1604,9 +1665,21 @@
         stableValue.textContent = "2";
 
         calibrationReadoutDiv.textContent =
-          "Calibration: ROI " + roiRect.w + "x" + roiRect.h + " -> template " + sampleBox.w + "x" + sampleBox.h +
-          " | threshold " + settings.matchThreshold.toFixed(2);
-        setStatus("Status: ROI calibrated", "warn");
+          "Calibration: " +
+          calibrationSource +
+          " " +
+          roiRect.w +
+          "x" +
+          roiRect.h +
+          " -> template " +
+          sampleBox.w +
+          "x" +
+          sampleBox.h +
+          " | threshold " +
+          settings.matchThreshold.toFixed(2) +
+          " | gold " +
+          bestResult.goldRatio.toFixed(3);
+        setStatus("Status: Calibration complete", "warn");
       }
 
       async function startScan() {
@@ -1672,6 +1745,7 @@
       function handleCalibrationClick() {
         calibrateFromRoi().catch((error) => {
           console.error(error);
+          calibrationReadoutDiv.textContent = "Calibration: " + (error && error.message ? error.message : "failed");
           setStatus("Status: Calibration failed", "bad");
         });
       }
