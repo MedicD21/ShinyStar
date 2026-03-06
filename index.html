@@ -348,7 +348,7 @@
       <section class="panel">
         <div id="status" class="status">Status: Idle</div>
         <div id="stats" class="stats">
-          Frames: 0 | Best score: 0.000 | Stable hits: 0/2 | Edge: 0.000 | Tone: 0.000 | Color: 0.000 | Edge density: 0.0%
+          Frames: 0 | Best score: 0.000 | Stable hits: 0/2 | Edge: 0.000 | Tone: 0.000 | Color: 0.000 | Gold: 0.000 | Edge density: 0.0%
         </div>
         <div class="template-preview-row">
           <span class="template-preview-label">Template</span>
@@ -595,10 +595,10 @@
         state.lastCandidate = null;
         state.candidateBox = null;
         state.detectionBox = null;
-        updateStats(0, 0, 0, 0, 0);
+        updateStats(0, 0, 0, 0, 0, 0);
       }
 
-      function updateStats(bestScore, edgeScore, toneScore, colorScore, edgeDensity) {
+      function updateStats(bestScore, edgeScore, toneScore, colorScore, goldScore, edgeDensity) {
         statsDiv.innerText =
           "Frames: " +
           state.frameCount +
@@ -614,6 +614,8 @@
           toneScore.toFixed(3) +
           " | Color: " +
           colorScore.toFixed(3) +
+          " | Gold: " +
+          goldScore.toFixed(3) +
           " | Edge density: " +
           (edgeDensity * 100).toFixed(1) +
           "%";
@@ -1009,7 +1011,7 @@
           return null;
         }
 
-        const margin = Math.max(2, Math.round(Math.min(best.w, best.h) * 0.22));
+        const margin = Math.max(2, Math.round(Math.min(best.w, best.h) * 0.16));
         const x = clamp(best.x - margin, 0, width - 1);
         const y = clamp(best.y - margin, 0, height - 1);
         const right = clamp(best.x + best.w + margin, 0, width);
@@ -1020,6 +1022,81 @@
           y,
           w: Math.max(1, right - x),
           h: Math.max(1, bottom - y),
+        };
+      }
+
+      function getGoldBounds(imageData, width, height) {
+        const { data } = imageData;
+        let minX = width;
+        let minY = height;
+        let maxX = -1;
+        let maxY = -1;
+        let count = 0;
+
+        for (let i = 0, p = 0; i < data.length; i += 4, p += 1) {
+          const alpha = data[i + 3];
+          if (alpha < 24) {
+            continue;
+          }
+
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const max = Math.max(r, g, b);
+          const min = Math.min(r, g, b);
+          const diff = max - min;
+
+          if (max < 90 || diff < 14) {
+            continue;
+          }
+
+          let hue = 0;
+          if (diff !== 0) {
+            if (max === r) {
+              hue = ((g - b) / diff) % 6;
+            } else if (max === g) {
+              hue = (b - r) / diff + 2;
+            } else {
+              hue = (r - g) / diff + 4;
+            }
+          }
+
+          hue *= 60;
+          if (hue < 0) {
+            hue += 360;
+          }
+
+          const sat = diff / max;
+          if (hue < 30 || hue > 74 || sat < 0.24) {
+            continue;
+          }
+
+          const x = p % width;
+          const y = Math.floor(p / width);
+          count += 1;
+          if (x < minX) {
+            minX = x;
+          }
+          if (y < minY) {
+            minY = y;
+          }
+          if (x > maxX) {
+            maxX = x;
+          }
+          if (y > maxY) {
+            maxY = y;
+          }
+        }
+
+        if (count < 12 || maxX < minX || maxY < minY) {
+          return null;
+        }
+
+        return {
+          x: minX,
+          y: minY,
+          w: maxX - minX + 1,
+          h: maxY - minY + 1,
         };
       }
 
@@ -1050,19 +1127,50 @@
         const alpha = new Uint8Array(width * height);
         const chromaRG = new Int16Array(width * height);
         const chromaBG = new Int16Array(width * height);
+        const goldMask = new Uint8Array(width * height);
         const { data } = imageData;
 
         for (let i = 0, p = 0; i < data.length; i += 4, p += 1) {
           const r = data[i];
           const g = data[i + 1];
           const b = data[i + 2];
+          const a = data[i + 3];
           gray[p] = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
-          alpha[p] = data[i + 3];
+          alpha[p] = a;
           chromaRG[p] = r - g;
           chromaBG[p] = b - g;
+
+          if (a >= 24) {
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            const diff = max - min;
+
+            if (max >= 90 && diff >= 14) {
+              let hue = 0;
+              if (diff !== 0) {
+                if (max === r) {
+                  hue = ((g - b) / diff) % 6;
+                } else if (max === g) {
+                  hue = (b - r) / diff + 2;
+                } else {
+                  hue = (r - g) / diff + 4;
+                }
+              }
+
+              hue *= 60;
+              if (hue < 0) {
+                hue += 360;
+              }
+
+              const sat = diff / max;
+              if (hue >= 30 && hue <= 74 && sat >= 0.24) {
+                goldMask[p] = 1;
+              }
+            }
+          }
         }
 
-        return { gray, alpha, chromaRG, chromaBG };
+        return { gray, alpha, chromaRG, chromaBG, goldMask };
       }
 
       function buildSobelMagnitudes(gray, width, height, alphaMask) {
@@ -1106,7 +1214,7 @@
       }
 
       function buildTemplateVariant(imageData, width, height) {
-        const { gray, alpha, chromaRG, chromaBG } = imageDataToGrayAlpha(imageData, width, height);
+        const { gray, alpha, chromaRG, chromaBG, goldMask } = imageDataToGrayAlpha(imageData, width, height);
         const sobel = buildSobelMagnitudes(gray, width, height, alpha);
 
         const edgeThreshold = Math.max(120, Math.min(sobel.max * 0.92, sobel.average * 1.35 + 35));
@@ -1125,7 +1233,12 @@
               continue;
             }
 
-            edgePoints.push({ x, y });
+            edgePoints.push({
+              x,
+              y,
+              c1: chromaRG[idx],
+              c2: chromaBG[idx],
+            });
           }
         }
 
@@ -1160,6 +1273,7 @@
               v: gray[idx],
               c1: chromaRG[idx],
               c2: chromaBG[idx],
+              gold: goldMask[idx],
             });
           }
         }
@@ -1182,9 +1296,13 @@
 
         const edgeX = new Int16Array(edgePoints.length);
         const edgeY = new Int16Array(edgePoints.length);
+        const edgeC1 = new Int16Array(edgePoints.length);
+        const edgeC2 = new Int16Array(edgePoints.length);
         for (let i = 0; i < edgePoints.length; i += 1) {
           edgeX[i] = edgePoints[i].x;
           edgeY[i] = edgePoints[i].y;
+          edgeC1[i] = edgePoints[i].c1;
+          edgeC2[i] = edgePoints[i].c2;
         }
 
         const sampleX = new Int16Array(samples.length);
@@ -1192,12 +1310,16 @@
         const sampleV = new Uint8Array(samples.length);
         const sampleC1 = new Int16Array(samples.length);
         const sampleC2 = new Int16Array(samples.length);
+        const sampleGold = new Uint8Array(samples.length);
+        let goldSampleCount = 0;
         for (let i = 0; i < samples.length; i += 1) {
           sampleX[i] = samples[i].x;
           sampleY[i] = samples[i].y;
           sampleV[i] = samples[i].v;
           sampleC1[i] = samples[i].c1;
           sampleC2[i] = samples[i].c2;
+          sampleGold[i] = samples[i].gold;
+          goldSampleCount += samples[i].gold;
         }
 
         const searchStep = Math.max(2, Math.round(Math.min(width, height) / 18));
@@ -1207,13 +1329,17 @@
           height,
           edgeX,
           edgeY,
+          edgeC1,
+          edgeC2,
           edgeCount: edgePoints.length,
           sampleX,
           sampleY,
           sampleV,
           sampleC1,
           sampleC2,
+          sampleGold,
           sampleCount: samples.length,
+          goldSampleCount,
           searchStep,
         };
       }
@@ -1270,11 +1396,12 @@
           throw new Error("Template appears empty/transparent");
         }
         const { bounds, method } = extraction;
+        let activeMethod = method;
 
-        const baseCanvas = document.createElement("canvas");
+        let baseCanvas = document.createElement("canvas");
         baseCanvas.width = bounds.w;
         baseCanvas.height = bounds.h;
-        const baseCtx = baseCanvas.getContext("2d", { willReadFrequently: true });
+        let baseCtx = baseCanvas.getContext("2d", { willReadFrequently: true });
         baseCtx.drawImage(
           sourceCanvas,
           bounds.x,
@@ -1287,10 +1414,35 @@
           bounds.h,
         );
 
+        if (method === "gold-star auto-crop") {
+          const focused = baseCtx.getImageData(0, 0, baseCanvas.width, baseCanvas.height);
+          const goldBounds = getGoldBounds(focused, baseCanvas.width, baseCanvas.height);
+
+          if (goldBounds) {
+            const margin = 2;
+            const x = clamp(goldBounds.x - margin, 0, baseCanvas.width - 1);
+            const y = clamp(goldBounds.y - margin, 0, baseCanvas.height - 1);
+            const right = clamp(goldBounds.x + goldBounds.w + margin, 0, baseCanvas.width);
+            const bottom = clamp(goldBounds.y + goldBounds.h + margin, 0, baseCanvas.height);
+            const w = Math.max(1, right - x);
+            const h = Math.max(1, bottom - y);
+
+            const tightCanvas = document.createElement("canvas");
+            tightCanvas.width = w;
+            tightCanvas.height = h;
+            const tightCtx = tightCanvas.getContext("2d", { willReadFrequently: true });
+            tightCtx.drawImage(baseCanvas, x, y, w, h, 0, 0, w, h);
+
+            baseCanvas = tightCanvas;
+            baseCtx = tightCtx;
+            activeMethod = "gold-star tight crop";
+          }
+        }
+
         if (
-          method === "alpha crop" &&
-          bounds.w > MAX_TEMPLATE_SIDE * 1.7 &&
-          bounds.h > MAX_TEMPLATE_SIDE * 1.7
+          activeMethod === "alpha crop" &&
+          baseCanvas.width > MAX_TEMPLATE_SIDE * 1.7 &&
+          baseCanvas.height > MAX_TEMPLATE_SIDE * 1.7
         ) {
           throw new Error("Template looks like a full screenshot. Use 8.png or an isolated star image.");
         }
@@ -1302,7 +1454,7 @@
 
         state.templateName = templateName;
         state.templateVariants = variants;
-        renderTemplatePreview(baseCanvas, templateName, method);
+        renderTemplatePreview(baseCanvas, templateName, activeMethod);
 
         statusDiv.innerText =
           "Status: Template ready (" +
@@ -1310,11 +1462,11 @@
           ", " +
           variants.length +
           " scales, " +
-          bounds.w +
+          baseCanvas.width +
           "x" +
-          bounds.h +
+          baseCanvas.height +
           ", " +
-          method +
+          activeMethod +
           ")";
       }
 
@@ -1450,6 +1602,7 @@
         const gray = new Uint8Array(width * height);
         const chromaRG = new Int16Array(width * height);
         const chromaBG = new Int16Array(width * height);
+        const goldMask = new Uint8Array(width * height);
         const rgba = imageData.data;
 
         for (let i = 0, p = 0; i < rgba.length; i += 4, p += 1) {
@@ -1459,6 +1612,33 @@
           gray[p] = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
           chromaRG[p] = r - g;
           chromaBG[p] = b - g;
+
+          const max = Math.max(r, g, b);
+          const min = Math.min(r, g, b);
+          const diff = max - min;
+
+          if (max >= 90 && diff >= 14) {
+            let hue = 0;
+            if (diff !== 0) {
+              if (max === r) {
+                hue = ((g - b) / diff) % 6;
+              } else if (max === g) {
+                hue = (b - r) / diff + 2;
+              } else {
+                hue = (r - g) / diff + 4;
+              }
+            }
+
+            hue *= 60;
+            if (hue < 0) {
+              hue += 360;
+            }
+
+            const sat = diff / max;
+            if (hue >= 30 && hue <= 74 && sat >= 0.24) {
+              goldMask[p] = 1;
+            }
+          }
         }
 
         const sobel = buildSobelMagnitudes(gray, width, height, null);
@@ -1480,12 +1660,23 @@
           gray,
           chromaRG,
           chromaBG,
+          goldMask,
           edges,
           edgeDensity,
         };
       }
 
-      function scoreCandidate(gray, chromaRG, chromaBG, edges, searchWidth, templateVariant, offsetX, offsetY) {
+      function scoreCandidate(
+        gray,
+        chromaRG,
+        chromaBG,
+        goldMask,
+        edges,
+        searchWidth,
+        templateVariant,
+        offsetX,
+        offsetY,
+      ) {
         const edgeCount = templateVariant.edgeCount;
         let edgeHits = 0;
 
@@ -1493,7 +1684,15 @@
           const px = templateVariant.edgeX[i];
           const py = templateVariant.edgeY[i];
           const idx = (offsetY + py) * searchWidth + (offsetX + px);
-          edgeHits += edges[idx];
+          if (!edges[idx]) {
+            continue;
+          }
+
+          const edgeColorDiff =
+            Math.abs(chromaRG[idx] - templateVariant.edgeC1[i]) +
+            Math.abs(chromaBG[idx] - templateVariant.edgeC2[i]);
+          const edgeColorWeight = 1 - Math.min(1, edgeColorDiff / 240);
+          edgeHits += edgeColorWeight;
         }
 
         const edgeScore = edgeHits / edgeCount;
@@ -1505,12 +1704,14 @@
             edgeScore,
             toneScore: 0,
             colorScore: 0,
+            goldScore: 0,
           };
         }
 
         const sampleCount = templateVariant.sampleCount;
         let absDiff = 0;
         let colorDiff = 0;
+        let goldHits = 0;
 
         for (let i = 0; i < sampleCount; i += 1) {
           const px = templateVariant.sampleX[i];
@@ -1521,21 +1722,49 @@
           colorDiff +=
             Math.abs(chromaRG[idx] - templateVariant.sampleC1[i]) +
             Math.abs(chromaBG[idx] - templateVariant.sampleC2[i]);
+
+          if (templateVariant.sampleGold[i] && goldMask[idx]) {
+            goldHits += 1;
+          }
         }
 
         const toneScore = clamp(1 - absDiff / (sampleCount * 255), 0, 1);
         const colorScore = clamp(1 - colorDiff / (sampleCount * 510), 0, 1);
-        const score = edgeScore * 0.58 + toneScore * 0.22 + colorScore * 0.2;
+        const goldScore = templateVariant.goldSampleCount
+          ? goldHits / templateVariant.goldSampleCount
+          : 1;
+
+        if (colorScore < 0.34 || goldScore < 0.34) {
+          return {
+            score: 0,
+            edgeScore,
+            toneScore,
+            colorScore,
+            goldScore,
+          };
+        }
+
+        const score = edgeScore * 0.46 + toneScore * 0.16 + colorScore * 0.25 + goldScore * 0.13;
 
         return {
           score,
           edgeScore,
           toneScore,
           colorScore,
+          goldScore,
         };
       }
 
-      function refineCandidate(gray, chromaRG, chromaBG, edges, searchWidth, searchHeight, candidate) {
+      function refineCandidate(
+        gray,
+        chromaRG,
+        chromaBG,
+        goldMask,
+        edges,
+        searchWidth,
+        searchHeight,
+        candidate,
+      ) {
         const variant = candidate.variant;
         const maxX = searchWidth - variant.width;
         const maxY = searchHeight - variant.height;
@@ -1554,6 +1783,7 @@
               gray,
               chromaRG,
               chromaBG,
+              goldMask,
               edges,
               searchWidth,
               variant,
@@ -1566,6 +1796,7 @@
                 edgeScore: scored.edgeScore,
                 toneScore: scored.toneScore,
                 colorScore: scored.colorScore,
+                goldScore: scored.goldScore,
                 x,
                 y,
                 w: variant.width,
@@ -1579,12 +1810,13 @@
         return best;
       }
 
-      function findBestMatch(gray, chromaRG, chromaBG, edges, searchWidth, searchHeight) {
+      function findBestMatch(gray, chromaRG, chromaBG, goldMask, edges, searchWidth, searchHeight) {
         let best = {
           score: 0,
           edgeScore: 0,
           toneScore: 0,
           colorScore: 0,
+          goldScore: 0,
           x: 0,
           y: 0,
           w: 0,
@@ -1609,6 +1841,7 @@
                 gray,
                 chromaRG,
                 chromaBG,
+                goldMask,
                 edges,
                 searchWidth,
                 variant,
@@ -1622,6 +1855,7 @@
                   edgeScore: scored.edgeScore,
                   toneScore: scored.toneScore,
                   colorScore: scored.colorScore,
+                  goldScore: scored.goldScore,
                   x,
                   y,
                   w: variant.width,
@@ -1637,7 +1871,7 @@
           return null;
         }
 
-        return refineCandidate(gray, chromaRG, chromaBG, edges, searchWidth, searchHeight, best);
+        return refineCandidate(gray, chromaRG, chromaBG, goldMask, edges, searchWidth, searchHeight, best);
       }
 
       function convertProcessRectToOverlayRect(rect) {
@@ -1700,7 +1934,7 @@
             state.candidateBox = null;
             state.detectionBox = null;
             drawOverlay();
-            updateStats(0, 0, 0, 0, 0);
+            updateStats(0, 0, 0, 0, 0, 0);
             return;
           }
 
@@ -1710,6 +1944,7 @@
             prepared.gray,
             prepared.chromaRG,
             prepared.chromaBG,
+            prepared.goldMask,
             prepared.edges,
             searchRect.w,
             searchRect.h,
@@ -1728,6 +1963,7 @@
               best ? best.edgeScore : 0,
               best ? best.toneScore : 0,
               best ? best.colorScore : 0,
+              best ? best.goldScore : 0,
               prepared.edgeDensity,
             );
             drawOverlay();
@@ -1768,7 +2004,14 @@
               ")";
           }
 
-          updateStats(best.score, best.edgeScore, best.toneScore, best.colorScore, prepared.edgeDensity);
+          updateStats(
+            best.score,
+            best.edgeScore,
+            best.toneScore,
+            best.colorScore,
+            best.goldScore,
+            prepared.edgeDensity,
+          );
           drawOverlay();
         } catch (error) {
           statusDiv.innerText = "Status: Detection error";
