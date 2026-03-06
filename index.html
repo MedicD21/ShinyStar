@@ -1016,24 +1016,49 @@
         const max = Math.max(r, g, b);
         const min = Math.min(r, g, b);
         const chroma = max - min;
-        if (max < 65 || chroma < 15) {
+        if (max < 78 || chroma < 18) {
           return false;
         }
 
         const saturation = chroma / max;
-        if (saturation < 0.12) {
+        if (saturation < 0.16 || saturation > 0.9) {
           return false;
         }
 
-        if (r < 70 || g < 60) {
+        if (r < 115 || g < 84) {
           return false;
         }
 
-        if (r < g * 0.82) {
+        if (r < g * 0.9 || r > g * 1.36) {
           return false;
         }
 
-        if (r - b < 18 || g - b < 8) {
+        if (r - b < 42 || g - b < 24) {
+          return false;
+        }
+
+        const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        if (luma < 95) {
+          return false;
+        }
+
+        const delta = chroma;
+        let hue = 0;
+        if (delta > 0) {
+          if (max === r) {
+            hue = ((g - b) / delta) % 6;
+          } else if (max === g) {
+            hue = (b - r) / delta + 2;
+          } else {
+            hue = (r - g) / delta + 4;
+          }
+          hue *= 60;
+          if (hue < 0) {
+            hue += 360;
+          }
+        }
+
+        if (hue < 40 || hue > 72) {
           return false;
         }
 
@@ -1477,6 +1502,7 @@
         const components = findMaskComponents(mask, scanRect.w, scanRect.h, settings.minGoldPixels, maxPixels);
         const trimmed = components.slice(0, MAX_CANDIDATES);
         const candidates = [];
+        const minGoldGate = Math.max(0.075, settings.minGoldRatio * 0.9);
 
         for (const component of trimmed) {
           if (component.aspect < 0.4 || component.aspect > 1.95) {
@@ -1489,7 +1515,7 @@
 
           const sampleBox = componentToSampleBox(component, scanRect, scanRect.w, scanRect.h);
           const goldRatio = computeMaskRatio(mask, scanRect.w, sampleBox);
-          if (goldRatio < settings.minGoldRatio * 0.45) {
+          if (goldRatio < minGoldGate) {
             continue;
           }
 
@@ -1545,9 +1571,9 @@
             temporalBias = clamp(1 - distance / distanceRef, 0, 1) * 0.08;
           }
 
-          let score = bestSimilarity * 0.79 + candidate.goldScore * 0.13 + candidate.preScore * 0.08 + temporalBias;
-          if (candidate.goldRatio < settings.minGoldRatio) {
-            score *= 0.62;
+          let score = bestSimilarity * 0.7 + candidate.goldScore * 0.22 + candidate.preScore * 0.08 + temporalBias;
+          if (candidate.goldRatio < Math.max(settings.minGoldRatio, 0.085)) {
+            score *= 0.48;
           }
 
           if (!best || score > best.score) {
