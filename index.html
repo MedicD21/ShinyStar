@@ -290,8 +290,8 @@
           <div class="details-body slider-grid">
             <div class="row">
               <label for="scoreSlider">Match Threshold</label>
-              <input id="scoreSlider" type="range" min="0.25" max="0.93" step="0.01" value="0.58" />
-              <span id="scoreValue" class="pill">0.58</span>
+              <input id="scoreSlider" type="range" min="0.2" max="0.93" step="0.01" value="0.38" />
+              <span id="scoreValue" class="pill">0.38</span>
             </div>
 
             <div class="row">
@@ -409,7 +409,7 @@
       };
 
       const settings = {
-        scoreThreshold: 0.58,
+        scoreThreshold: 0.38,
         stableFrames: 2,
         edgeSensitivity: 38,
         scanInterval: 140,
@@ -1140,12 +1140,12 @@
           chromaRG[p] = r - g;
           chromaBG[p] = b - g;
 
-          if (a >= 24) {
+          if (a >= 14) {
             const max = Math.max(r, g, b);
             const min = Math.min(r, g, b);
             const diff = max - min;
 
-            if (max >= 90 && diff >= 14) {
+            if (max >= 70 && diff >= 8) {
               let hue = 0;
               if (diff !== 0) {
                 if (max === r) {
@@ -1163,7 +1163,7 @@
               }
 
               const sat = diff / max;
-              if (hue >= 30 && hue <= 74 && sat >= 0.24) {
+              if (hue >= 20 && hue <= 92 && sat >= 0.08) {
                 goldMask[p] = 1;
               }
             }
@@ -1617,7 +1617,7 @@
           const min = Math.min(r, g, b);
           const diff = max - min;
 
-          if (max >= 90 && diff >= 14) {
+          if (max >= 70 && diff >= 8) {
             let hue = 0;
             if (diff !== 0) {
               if (max === r) {
@@ -1635,7 +1635,7 @@
             }
 
             const sat = diff / max;
-            if (hue >= 30 && hue <= 74 && sat >= 0.24) {
+            if (hue >= 20 && hue <= 92 && sat >= 0.08) {
               goldMask[p] = 1;
             }
           }
@@ -1691,22 +1691,12 @@
           const edgeColorDiff =
             Math.abs(chromaRG[idx] - templateVariant.edgeC1[i]) +
             Math.abs(chromaBG[idx] - templateVariant.edgeC2[i]);
-          const edgeColorWeight = 1 - Math.min(1, edgeColorDiff / 360);
+          const edgeColorWeight = 1 - Math.min(1, edgeColorDiff / 420);
           edgeHits += edgeColorWeight;
         }
 
         const edgeScore = edgeHits / edgeCount;
-        const quickCutoff = Math.max(0.12, settings.scoreThreshold * 0.34);
-
-        if (edgeScore < quickCutoff) {
-          return {
-            score: 0,
-            edgeScore,
-            toneScore: 0,
-            colorScore: 0,
-            goldScore: 0,
-          };
-        }
+        const quickCutoff = Math.max(0.08, settings.scoreThreshold * 0.24);
 
         const sampleCount = templateVariant.sampleCount;
         let absDiff = 0;
@@ -1734,17 +1724,10 @@
           ? goldHits / templateVariant.goldSampleCount
           : 1;
 
-        if (colorScore < 0.18 || goldScore < 0.12) {
-          return {
-            score: 0,
-            edgeScore,
-            toneScore,
-            colorScore,
-            goldScore,
-          };
-        }
-
-        const score = edgeScore * 0.42 + toneScore * 0.2 + colorScore * 0.24 + goldScore * 0.14;
+        const edgePenalty = edgeScore < quickCutoff ? 0.52 + 0.48 * (edgeScore / quickCutoff) : 1;
+        const chromaPenalty = colorScore < 0.1 && goldScore < 0.05 ? 0.58 : 1;
+        const rawScore = edgeScore * 0.32 + toneScore * 0.24 + colorScore * 0.24 + goldScore * 0.2;
+        const score = rawScore * edgePenalty * chromaPenalty;
 
         return {
           score,
