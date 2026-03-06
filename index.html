@@ -290,8 +290,8 @@
           <div class="details-body slider-grid">
             <div class="row">
               <label for="scoreSlider">Match Threshold</label>
-              <input id="scoreSlider" type="range" min="0.35" max="0.93" step="0.01" value="0.67" />
-              <span id="scoreValue" class="pill">0.67</span>
+              <input id="scoreSlider" type="range" min="0.25" max="0.93" step="0.01" value="0.58" />
+              <span id="scoreValue" class="pill">0.58</span>
             </div>
 
             <div class="row">
@@ -376,7 +376,7 @@
 
     <script>
       const TEMPLATE_CANDIDATES = ["8.png", "start.png", "star.png"];
-      const TEMPLATE_SCALES = [0.62, 0.76, 0.9, 1, 1.14, 1.28, 1.46, 1.62];
+      const TEMPLATE_SCALES = [0.34, 0.42, 0.5, 0.62, 0.76, 0.9, 1, 1.14, 1.28, 1.46, 1.62];
       const MIN_ROI_SIZE = 20;
       const MAX_TEMPLATE_SIDE = 280;
       const MIN_AUTO_STAR_SEARCH_SIDE = 220;
@@ -409,7 +409,7 @@
       };
 
       const settings = {
-        scoreThreshold: 0.67,
+        scoreThreshold: 0.58,
         stableFrames: 2,
         edgeSensitivity: 38,
         scanInterval: 140,
@@ -1357,7 +1357,7 @@
           const width = Math.round(sourceWidth * scale);
           const height = Math.round(sourceHeight * scale);
 
-          if (width < 18 || height < 18) {
+          if (width < 12 || height < 12) {
             continue;
           }
 
@@ -1691,12 +1691,12 @@
           const edgeColorDiff =
             Math.abs(chromaRG[idx] - templateVariant.edgeC1[i]) +
             Math.abs(chromaBG[idx] - templateVariant.edgeC2[i]);
-          const edgeColorWeight = 1 - Math.min(1, edgeColorDiff / 240);
+          const edgeColorWeight = 1 - Math.min(1, edgeColorDiff / 360);
           edgeHits += edgeColorWeight;
         }
 
         const edgeScore = edgeHits / edgeCount;
-        const quickCutoff = Math.max(0.22, settings.scoreThreshold * 0.54);
+        const quickCutoff = Math.max(0.12, settings.scoreThreshold * 0.34);
 
         if (edgeScore < quickCutoff) {
           return {
@@ -1734,7 +1734,7 @@
           ? goldHits / templateVariant.goldSampleCount
           : 1;
 
-        if (colorScore < 0.34 || goldScore < 0.34) {
+        if (colorScore < 0.18 || goldScore < 0.12) {
           return {
             score: 0,
             edgeScore,
@@ -1744,7 +1744,7 @@
           };
         }
 
-        const score = edgeScore * 0.46 + toneScore * 0.16 + colorScore * 0.25 + goldScore * 0.13;
+        const score = edgeScore * 0.42 + toneScore * 0.2 + colorScore * 0.24 + goldScore * 0.14;
 
         return {
           score,
@@ -1849,7 +1849,10 @@
                 y,
               );
 
-              if (scored.score > best.score) {
+              if (
+                scored.score > best.score ||
+                (scored.score === best.score && scored.edgeScore > best.edgeScore)
+              ) {
                 best = {
                   score: scored.score,
                   edgeScore: scored.edgeScore,
