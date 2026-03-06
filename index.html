@@ -1009,6 +1009,25 @@
         };
       }
 
+      function componentToCalibrationBox(component, scanRect, scanWidth, scanHeight) {
+        const centerX = component.x + component.w * 0.5;
+        const centerY = component.y + component.h * 0.5;
+        const side = Math.round(
+          clamp(Math.max(component.w, component.h) * 2.2, 12, Math.min(scanWidth, scanHeight) * 0.42),
+        );
+        const localX = clamp(Math.round(centerX - side * 0.5), 0, scanWidth - side);
+        const localY = clamp(Math.round(centerY - side * 0.5), 0, scanHeight - side);
+
+        return {
+          x: scanRect.x + localX,
+          y: scanRect.y + localY,
+          w: side,
+          h: side,
+          localX,
+          localY,
+        };
+      }
+
       function computeMaskRatio(mask, maskWidth, box) {
         const xEnd = box.localX + box.w;
         const yEnd = box.localY + box.h;
@@ -1612,6 +1631,7 @@
         const roiCenterY = roiRect.h * 0.5;
         const roiDiag = Math.max(1, Math.hypot(roiRect.w, roiRect.h));
         const preferCenter = calibrationSource === "ROI";
+        const minCalibrationGoldRatio = Math.max(0.05, settings.minGoldRatio * 0.9);
 
         let bestResult = null;
         for (const component of components) {
@@ -1619,8 +1639,12 @@
             continue;
           }
 
-          const sampleBox = componentToSampleBox(component, roiRect, roiRect.w, roiRect.h);
+          const sampleBox = componentToCalibrationBox(component, roiRect, roiRect.w, roiRect.h);
           const goldRatio = computeMaskRatio(mask, roiRect.w, sampleBox);
+          if (goldRatio < minCalibrationGoldRatio) {
+            continue;
+          }
+
           let similarity = 0;
           if (state.templateEmbedding) {
             similarity = evaluateCandidateEmbedding(sampleBox);
@@ -1631,17 +1655,17 @@
           const compCenterX = component.x + component.w * 0.5;
           const compCenterY = component.y + component.h * 0.5;
           const centerDist = Math.hypot(compCenterX - roiCenterX, compCenterY - roiCenterY) / roiDiag;
-          const centerScore = clamp(1 - centerDist * 1.35, 0, 1);
+          const centerScore = clamp(1 - centerDist * 1.95, 0, 1);
 
-          if (preferCenter && centerDist > 0.58) {
+          if (preferCenter && centerDist > 0.42) {
             continue;
           }
 
-          let score = goldRatio * 0.42 + shapeScore * 0.2 + fillScore * 0.12 + centerScore * 0.2;
+          let score = goldRatio * 0.38 + shapeScore * 0.13 + fillScore * 0.06 + centerScore * 0.33;
           if (state.templateEmbedding) {
-            score += similarity * 0.06;
-            if (similarity < 0.45) {
-              score *= 0.72;
+            score += similarity * 0.1;
+            if (similarity < 0.5) {
+              score *= 0.64;
             }
           }
 
@@ -1703,8 +1727,14 @@
           settings.matchThreshold.toFixed(2) +
           " | gold " +
           bestResult.goldRatio.toFixed(3) +
+          " | min-gold " +
+          minCalibrationGoldRatio.toFixed(3) +
           " | center " +
-          (1 - Math.min(1, bestResult.centerDist)).toFixed(3);
+          (1 - Math.min(1, bestResult.centerDist)).toFixed(3) +
+          " | sample@" +
+          sampleBox.x +
+          "," +
+          sampleBox.y;
         setStatus("Status: Calibration complete", "warn");
       }
 
