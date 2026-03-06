@@ -279,6 +279,7 @@
           <button id="startCameraButton" type="button">Start Camera</button>
           <button id="autoTemplateButton" type="button">Load Auto Template</button>
           <button id="pickTemplateButton" type="button">Pick Template File</button>
+          <button id="calibrateButton" type="button" class="secondary">Calibrate ROI</button>
           <button id="startScanButton" type="button">Start Scan</button>
           <button id="stopScanButton" type="button" class="secondary">Stop Scan</button>
           <button id="resetButton" type="button" class="secondary">Reset</button>
@@ -350,6 +351,7 @@
         <div id="stats" class="stats">
           Frames: 0 | Best score: 0.000 | Stable hits: 0/2 | Edge: 0.000 | Tone: 0.000 | Color: 0.000 | Gold: 0.000 | Edge density: 0.0%
         </div>
+        <div id="calibrationReadout" class="stats">Calibration: not set</div>
         <div class="template-preview-row">
           <span class="template-preview-label">Template</span>
           <canvas
@@ -424,6 +426,7 @@
 
       const statusDiv = document.getElementById("status");
       const statsDiv = document.getElementById("stats");
+      const calibrationReadoutDiv = document.getElementById("calibrationReadout");
       const cameraControlStatusDiv = document.getElementById("cameraControlStatus");
       const templatePreviewCanvas = document.getElementById("templatePreview");
       const templatePreviewCtx = templatePreviewCanvas.getContext("2d");
@@ -432,6 +435,7 @@
       const startCameraButton = document.getElementById("startCameraButton");
       const autoTemplateButton = document.getElementById("autoTemplateButton");
       const pickTemplateButton = document.getElementById("pickTemplateButton");
+      const calibrateButton = document.getElementById("calibrateButton");
       const startScanButton = document.getElementById("startScanButton");
       const stopScanButton = document.getElementById("stopScanButton");
       const resetButton = document.getElementById("resetButton");
@@ -470,6 +474,14 @@
 
       pickTemplateButton.addEventListener("click", () => {
         templateFileInput.click();
+      });
+
+      calibrateButton.addEventListener("click", () => {
+        calibrateFromCurrentView().catch((error) => {
+          statusDiv.innerText = "Status: Calibration failed";
+          calibrationReadoutDiv.innerText = "Calibration: failed";
+          console.error(error);
+        });
       });
 
       templateFileInput.addEventListener("change", () => {
@@ -671,6 +683,19 @@
 
         templatePreviewMetaSpan.innerText =
           templateName + " \u00b7 " + sourceCanvas.width + "x" + sourceCanvas.height + " \u00b7 " + method;
+      }
+
+      function applyTemplateFromCanvas(templateCanvas, templateName, method) {
+        const variants = buildTemplateVariants(templateCanvas);
+        if (!variants.length) {
+          throw new Error("Template has too few useful edges");
+        }
+
+        state.templateName = templateName;
+        state.templateVariants = variants;
+        renderTemplatePreview(templateCanvas, templateName, method);
+
+        return variants;
       }
 
       function getCanvasPoint(clientX, clientY) {
@@ -1469,14 +1494,7 @@
           throw new Error("Template looks like a full screenshot. Use 8.png or an isolated star image.");
         }
 
-        const variants = buildTemplateVariants(baseCanvas);
-        if (!variants.length) {
-          throw new Error("Template has too few useful edges");
-        }
-
-        state.templateName = templateName;
-        state.templateVariants = variants;
-        renderTemplatePreview(baseCanvas, templateName, activeMethod);
+        const variants = applyTemplateFromCanvas(baseCanvas, templateName, activeMethod);
 
         statusDiv.innerText =
           "Status: Template ready (" +
@@ -1519,6 +1537,134 @@
         } finally {
           URL.revokeObjectURL(url);
           templateFileInput.value = "";
+        }
+      }
+
+      async function calibrateFromCurrentView() {
+        if (!video.srcObject || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+          statusDiv.innerText = "Status: Start camera first";
+          calibrationReadoutDiv.innerText = "Calibration: camera unavailable";
+          return;
+        }
+
+        if (!state.roi) {
+          statusDiv.innerText = "Status: Draw ROI around example star first";
+          calibrationReadoutDiv.innerText = "Calibration: requires ROI";
+          return;
+        }
+
+        const wasScanning = state.scanning;
+        clearScanLoop();
+
+        processCtx.drawImage(video, 0, 0, processCanvas.width, processCanvas.height);
+
+        const searchRect = getSearchRectInProcessSpace();
+        if (!searchRect) {
+          statusDiv.innerText = "Status: ROI too small for calibration";
+          calibrationReadoutDiv.innerText = "Calibration: ROI too small";
+          return;
+        }
+
+        const roiData = processCtx.getImageData(searchRect.x, searchRect.y, searchRect.w, searchRect.h);
+        const starBounds = getGoldBounds(roiData, searchRect.w, searchRect.h);
+        if (!starBounds) {
+          statusDiv.innerText = "Status: Could not isolate yellow star";
+          calibrationReadoutDiv.innerText = "Calibration: no yellow star detected in ROI";
+          if (wasScanning) {
+            restartScanLoop();
+          }
+          return;
+        }
+
+        const focusMargin = Math.max(1, Math.round(Math.min(starBounds.w, starBounds.h) * 0.18));
+        const x = clamp(starBounds.x - focusMargin, 0, searchRect.w - 1);
+        const y = clamp(starBounds.y - focusMargin, 0, searchRect.h - 1);
+        const right = clamp(starBounds.x + starBounds.w + focusMargin, 0, searchRect.w);
+        const bottom = clamp(starBounds.y + starBounds.h + focusMargin, 0, searchRect.h);
+        const w = Math.max(1, right - x);
+        const h = Math.max(1, bottom - y);
+
+        const roiCanvas = document.createElement("canvas");
+        roiCanvas.width = searchRect.w;
+        roiCanvas.height = searchRect.h;
+        const roiCtx = roiCanvas.getContext("2d", { willReadFrequently: true });
+        roiCtx.putImageData(roiData, 0, 0);
+
+        const calibratedCanvas = document.createElement("canvas");
+        calibratedCanvas.width = w;
+        calibratedCanvas.height = h;
+        const calibratedCtx = calibratedCanvas.getContext("2d", { willReadFrequently: true });
+        calibratedCtx.drawImage(roiCanvas, x, y, w, h, 0, 0, w, h);
+
+        applyTemplateFromCanvas(calibratedCanvas, "live-calibrated-star", "ROI calibration");
+
+        const prepared = preprocessSearchImage(roiData, searchRect.w, searchRect.h);
+        const best = findBestMatch(
+          prepared.gray,
+          prepared.chromaRG,
+          prepared.chromaBG,
+          prepared.goldMask,
+          prepared.neutralMask,
+          prepared.edges,
+          searchRect.w,
+          searchRect.h,
+        );
+
+        const score = best ? best.score : 0.32;
+        const goldScore = best ? best.goldScore : 0;
+        const edgeScore = best ? best.edgeScore : 0;
+        const toneScore = best ? best.toneScore : 0;
+        const colorScore = best ? best.colorScore : 0;
+        const edgeDensity = prepared.edgeDensity;
+
+        const calibratedThreshold = clamp(Number(Math.max(0.2, score * 0.74).toFixed(2)), 0.2, 0.88);
+        settings.scoreThreshold = calibratedThreshold;
+        scoreSlider.value = String(calibratedThreshold);
+        scoreValue.innerText = calibratedThreshold.toFixed(2);
+
+        const calibratedEdge = clamp(
+          Math.round(settings.edgeSensitivity + (edgeDensity - 0.18) * 110),
+          14,
+          82,
+        );
+        settings.edgeSensitivity = calibratedEdge;
+        edgeSlider.value = String(calibratedEdge);
+        edgeValue.innerText = String(calibratedEdge);
+
+        const calibratedStable = score < 0.5 ? 1 : 2;
+        settings.stableFrames = calibratedStable;
+        stableSlider.value = String(calibratedStable);
+        stableValue.innerText = String(calibratedStable);
+
+        calibrationReadoutDiv.innerText =
+          "Calibration: score " +
+          score.toFixed(3) +
+          " | gold " +
+          goldScore.toFixed(3) +
+          " | threshold " +
+          calibratedThreshold.toFixed(2) +
+          " | edge " +
+          calibratedEdge +
+          " | stable " +
+          calibratedStable +
+          " | crop " +
+          w +
+          "x" +
+          h;
+
+        updateStats(score, edgeScore, toneScore, colorScore, goldScore, edgeDensity);
+        drawOverlay();
+
+        statusDiv.innerText = "Status: Calibration complete";
+
+        if (wasScanning) {
+          state.scanning = true;
+          state.scanTimer = window.setInterval(() => {
+            detectFrame().catch((error) => {
+              statusDiv.innerText = "Status: Detection error";
+              console.error(error);
+            });
+          }, settings.scanInterval);
         }
       }
 
@@ -2149,6 +2295,7 @@
 
         state.roi = null;
         clearDetectionState();
+        calibrationReadoutDiv.innerText = "Calibration: not set";
 
         statusDiv.innerText = "Status: Reset complete";
         drawOverlay();
@@ -2313,6 +2460,7 @@
       });
 
       statusDiv.innerText = "Status: Idle";
+      calibrationReadoutDiv.innerText = "Calibration: not set";
       clearTemplatePreview();
       drawOverlay();
     </script>
