@@ -3,21 +3,27 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Charmander Start Hunter</title>
+    <title>Charmander Star Hunter · MediaPipe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@500;700;800&display=swap"
+      rel="stylesheet"
+    />
     <style>
       :root {
-        --bg-a: #120703;
-        --bg-b: #2f1207;
-        --bg-c: #4a1f0b;
-        --card: rgba(54, 21, 9, 0.78);
-        --card-strong: rgba(76, 30, 12, 0.92);
-        --text: #ffe6c7;
-        --muted: #ffca95;
-        --accent: #ff8a2d;
-        --accent-2: #ffd36b;
-        --good: #56ff88;
-        --warn: #ffb15d;
-        --outline: rgba(255, 186, 117, 0.28);
+        --bg-a: #170802;
+        --bg-b: #351307;
+        --bg-c: #5e2208;
+        --card: rgba(62, 22, 7, 0.84);
+        --card-strong: rgba(85, 31, 9, 0.92);
+        --text: #ffe7c4;
+        --muted: #ffd1a1;
+        --accent: #ff7f2b;
+        --accent-2: #ffd66c;
+        --good: #64ff9f;
+        --warn: #ffc166;
+        --line: rgba(255, 189, 116, 0.28);
       }
 
       * {
@@ -29,41 +35,44 @@
         min-height: 100vh;
         color: var(--text);
         background:
-          radial-gradient(circle at 15% 8%, rgba(255, 127, 49, 0.28), transparent 30%),
-          radial-gradient(circle at 82% 0%, rgba(255, 194, 92, 0.16), transparent 24%),
-          radial-gradient(circle at 72% 72%, rgba(255, 102, 36, 0.12), transparent 35%),
-          linear-gradient(160deg, var(--bg-a) 0%, var(--bg-b) 45%, var(--bg-c) 100%);
-        font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+          radial-gradient(circle at 15% 8%, rgba(255, 121, 45, 0.32), transparent 32%),
+          radial-gradient(circle at 78% 0%, rgba(255, 197, 98, 0.18), transparent 24%),
+          radial-gradient(circle at 66% 72%, rgba(255, 97, 28, 0.16), transparent 35%),
+          linear-gradient(160deg, var(--bg-a) 0%, var(--bg-b) 46%, var(--bg-c) 100%);
+        font-family: "Nunito", "Trebuchet MS", Tahoma, sans-serif;
         padding: 18px;
       }
 
       .app {
         margin: 0 auto;
-        width: min(1120px, 100%);
+        width: min(1140px, 100%);
       }
 
       h1 {
         margin: 0;
         text-align: center;
-        color: #ffd36b;
-        letter-spacing: 0.03em;
-        font-size: clamp(1.8rem, 4vw, 2.9rem);
+        color: var(--accent-2);
+        font-family: "Bangers", "Nunito", sans-serif;
+        letter-spacing: 0.06em;
+        font-size: clamp(2.1rem, 5vw, 3.5rem);
+        text-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
       }
 
       .subtitle {
-        margin: 8px auto 0;
-        max-width: 800px;
+        margin: 6px auto 0;
+        max-width: 840px;
         text-align: center;
-        color: #ffd9ad;
+        color: #ffdcb2;
       }
 
       .panel {
         margin-top: 14px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
         padding: 14px;
-        border-radius: 16px;
-        border: 1px solid var(--outline);
         background: var(--card);
-        box-shadow: 0 16px 30px rgba(0, 0, 0, 0.34);
+        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(3px);
       }
 
       .button-row {
@@ -74,19 +83,19 @@
       }
 
       button {
-        border: none;
-        border-radius: 11px;
-        min-width: 128px;
-        cursor: pointer;
+        border: 0;
+        border-radius: 12px;
+        min-width: 122px;
         padding: 10px 14px;
-        color: #2b1207;
+        color: #2a1307;
         font-weight: 800;
         font-size: 0.95rem;
-        background: linear-gradient(180deg, #ffd47f 0%, #ff8a2d 68%, #d9541e 100%);
+        cursor: pointer;
+        background: linear-gradient(180deg, #ffe190 0%, #ff8d31 70%, #d7521d 100%);
       }
 
       button.secondary {
-        background: linear-gradient(180deg, #ffecc6 0%, #ffc982 65%, #f0a05b 100%);
+        background: linear-gradient(180deg, #fff0ca 0%, #ffc785 68%, #e38e4b 100%);
       }
 
       button:disabled {
@@ -94,27 +103,11 @@
         cursor: not-allowed;
       }
 
-      .status {
-        padding: 10px;
-        text-align: center;
-        border-radius: 10px;
-        border: 1px solid rgba(255, 183, 110, 0.45);
-        background: linear-gradient(180deg, rgba(255, 190, 118, 0.22), rgba(255, 118, 43, 0.14));
-        font-weight: 700;
-      }
-
-      .stats {
-        margin-top: 8px;
-        text-align: center;
-        color: var(--muted);
-        font-size: 0.93rem;
-      }
-
       details {
         margin-top: 10px;
-        border-radius: 12px;
-        border: 1px solid rgba(255, 192, 124, 0.2);
-        background: rgba(0, 0, 0, 0.13);
+        border: 1px solid rgba(255, 194, 124, 0.22);
+        border-radius: 13px;
+        background: rgba(0, 0, 0, 0.16);
         overflow: hidden;
       }
 
@@ -123,8 +116,8 @@
         cursor: pointer;
         padding: 10px 12px;
         font-weight: 800;
-        color: #ffd6a4;
-        background: rgba(255, 141, 46, 0.08);
+        color: #ffd9ad;
+        background: rgba(255, 147, 49, 0.08);
       }
 
       summary::-webkit-details-marker {
@@ -142,22 +135,23 @@
 
       .row {
         display: grid;
-        gap: 10px;
+        grid-template-columns: 186px minmax(120px, 1fr) auto;
         align-items: center;
-        grid-template-columns: 184px minmax(120px, 1fr) auto;
+        gap: 10px;
       }
 
       .row label {
         text-align: right;
-        color: #ffd5a7;
         font-weight: 700;
+        color: #ffd8ab;
       }
 
       .row input[type="range"] {
         appearance: none;
+        width: 100%;
         height: 8px;
         border-radius: 999px;
-        background: linear-gradient(90deg, #ffcc75, #ff6b27);
+        background: linear-gradient(90deg, #ffcf76 0%, #ff6a28 100%);
       }
 
       .row input[type="range"]::-webkit-slider-thumb {
@@ -165,7 +159,7 @@
         width: 18px;
         height: 18px;
         border-radius: 50%;
-        border: 2px solid #df5a22;
+        border: 2px solid #de5a22;
         background: #fff2d8;
       }
 
@@ -174,8 +168,8 @@
         text-align: center;
         padding: 4px 10px;
         border-radius: 999px;
-        border: 1px solid rgba(255, 200, 145, 0.38);
-        background: rgba(255, 181, 108, 0.12);
+        border: 1px solid rgba(255, 202, 147, 0.4);
+        background: rgba(255, 184, 112, 0.12);
         font-variant-numeric: tabular-nums;
         font-weight: 800;
       }
@@ -192,20 +186,75 @@
       .camera-status {
         margin-top: 8px;
         text-align: center;
-        color: #ffca92;
+        color: #ffd1a2;
         font-size: 0.9rem;
+      }
+
+      .status {
+        padding: 10px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 193, 124, 0.45);
+        background: linear-gradient(180deg, rgba(255, 188, 118, 0.22), rgba(255, 113, 41, 0.15));
+        text-align: center;
+        font-weight: 800;
+      }
+
+      .status.good {
+        color: #f7ffe6;
+        border-color: rgba(101, 255, 158, 0.5);
+        background: linear-gradient(180deg, rgba(97, 255, 150, 0.22), rgba(58, 177, 95, 0.2));
+      }
+
+      .status.warn {
+        border-color: rgba(255, 208, 119, 0.5);
+      }
+
+      .status.bad {
+        border-color: rgba(255, 118, 97, 0.5);
+      }
+
+      .stats {
+        margin-top: 8px;
+        text-align: center;
+        color: var(--muted);
+      }
+
+      .template-row {
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      .template-label {
+        font-weight: 800;
+      }
+
+      .template-canvas {
+        width: 92px;
+        height: 92px;
+        border-radius: 11px;
+        border: 1px solid rgba(255, 195, 123, 0.44);
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.22);
+      }
+
+      .template-meta {
+        max-width: 420px;
+        font-size: 0.88rem;
+        color: #ffd0a0;
       }
 
       .viewer {
         position: relative;
         border-radius: 14px;
         overflow: hidden;
-        background: rgba(0, 0, 0, 0.38);
+        background: rgba(0, 0, 0, 0.4);
       }
 
       video {
-        width: 100%;
         display: block;
+        width: 100%;
       }
 
       #overlay {
@@ -221,34 +270,7 @@
         font-size: 0.9rem;
       }
 
-      .template-preview-row {
-        margin-top: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        color: #ffd6aa;
-      }
-
-      .template-preview-label {
-        font-weight: 800;
-      }
-
-      .template-preview-canvas {
-        width: 84px;
-        height: 84px;
-        border-radius: 10px;
-        border: 1px solid rgba(255, 194, 124, 0.42);
-        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
-      }
-
-      .template-preview-meta {
-        font-size: 0.86rem;
-        color: #ffcf9b;
-        max-width: 360px;
-      }
-
-      @media (max-width: 840px) {
+      @media (max-width: 860px) {
         .row {
           grid-template-columns: 1fr auto;
         }
@@ -258,27 +280,26 @@
           text-align: left;
         }
 
-        .template-preview-row {
+        .template-row {
           flex-direction: column;
           text-align: center;
         }
       }
     </style>
   </head>
-
   <body>
     <main class="app">
-      <h1>Charmander Start Hunter</h1>
+      <h1>Charmander Star Hunter</h1>
       <p class="subtitle">
-        Fresh build: pure Canvas edge matching. Load the new <code>start.png</code>, draw a search box,
-        and scan.
+        MediaPipe redo: gold-star candidates are generated from color, then verified with MediaPipe embeddings so
+        detection is locked to your star icon.
       </p>
 
       <section class="panel">
         <div class="button-row">
           <button id="startCameraButton" type="button">Start Camera</button>
-          <button id="autoTemplateButton" type="button">Load Auto Template</button>
-          <button id="pickTemplateButton" type="button">Pick Template File</button>
+          <button id="autoTemplateButton" type="button">Load Template</button>
+          <button id="pickTemplateButton" type="button" class="secondary">Pick File</button>
           <button id="calibrateButton" type="button" class="secondary">Calibrate ROI</button>
           <button id="startScanButton" type="button">Start Scan</button>
           <button id="stopScanButton" type="button" class="secondary">Stop Scan</button>
@@ -290,33 +311,34 @@
           <summary>Detection Settings</summary>
           <div class="details-body slider-grid">
             <div class="row">
-              <label for="scoreSlider">Match Threshold</label>
-              <input id="scoreSlider" type="range" min="0.2" max="0.93" step="0.01" value="0.38" />
-              <span id="scoreValue" class="pill">0.38</span>
+              <label for="matchSlider">Match Threshold</label>
+              <input id="matchSlider" type="range" min="0.45" max="0.96" step="0.01" value="0.74" />
+              <span id="matchValue" class="pill">0.74</span>
             </div>
-
             <div class="row">
               <label for="stableSlider">Stable Frames</label>
               <input id="stableSlider" type="range" min="1" max="6" step="1" value="2" />
               <span id="stableValue" class="pill">2</span>
             </div>
-
             <div class="row">
-              <label for="edgeSlider">Edge Sensitivity</label>
-              <input id="edgeSlider" type="range" min="14" max="82" step="1" value="38" />
-              <span id="edgeValue" class="pill">38</span>
+              <label for="goldSlider">Min Gold Ratio</label>
+              <input id="goldSlider" type="range" min="0.01" max="0.5" step="0.01" value="0.06" />
+              <span id="goldValue" class="pill">0.06</span>
             </div>
-
+            <div class="row">
+              <label for="pixelSlider">Min Gold Pixels</label>
+              <input id="pixelSlider" type="range" min="5" max="150" step="1" value="14" />
+              <span id="pixelValue" class="pill">14</span>
+            </div>
             <div class="row">
               <label for="intervalSlider">Scan Interval (ms)</label>
-              <input id="intervalSlider" type="range" min="90" max="320" step="10" value="140" />
-              <span id="intervalValue" class="pill">140</span>
+              <input id="intervalSlider" type="range" min="70" max="340" step="10" value="120" />
+              <span id="intervalValue" class="pill">120</span>
             </div>
-
             <div class="row">
               <label for="cooldownSlider">Beep Cooldown (ms)</label>
-              <input id="cooldownSlider" type="range" min="300" max="2600" step="100" value="1200" />
-              <span id="cooldownValue" class="pill">1200</span>
+              <input id="cooldownSlider" type="range" min="250" max="3000" step="50" value="1000" />
+              <span id="cooldownValue" class="pill">1000</span>
             </div>
           </div>
         </details>
@@ -329,39 +351,31 @@
               <input id="zoomSlider" type="range" min="1" max="1" step="0.01" value="1" disabled />
               <span id="zoomValue" class="pill">N/A</span>
             </div>
-
             <div class="row">
               <label for="focusSlider">Focus Distance</label>
               <input id="focusSlider" type="range" min="0" max="1" step="0.01" value="0" disabled />
               <span id="focusValue" class="pill">N/A</span>
             </div>
-
             <div class="toggle-row">
               <input id="manualFocusToggle" type="checkbox" disabled />
               <label for="manualFocusToggle">Enable Manual Focus</label>
             </div>
-
             <div id="cameraControlStatus" class="camera-status">Camera controls: unavailable</div>
           </div>
         </details>
       </section>
 
       <section class="panel">
-        <div id="status" class="status">Status: Idle</div>
+        <div id="status" class="status">Status: Initializing MediaPipe...</div>
         <div id="stats" class="stats">
-          Frames: 0 | Best score: 0.000 | Stable hits: 0/2 | Edge: 0.000 | Tone: 0.000 | Color: 0.000 | Gold: 0.000 | Edge density: 0.0%
+          Frames: 0 | Best: 0.000 | Stable hits: 0/2 | Similarity: 0.000 | Gold ratio: 0.000 | Candidates: 0
         </div>
         <div id="calibrationReadout" class="stats">Calibration: not set</div>
-        <div class="template-preview-row">
-          <span class="template-preview-label">Template</span>
-          <canvas
-            id="templatePreview"
-            class="template-preview-canvas"
-            width="84"
-            height="84"
-            aria-label="Template preview"
-          ></canvas>
-          <span id="templatePreviewMeta" class="template-preview-meta">No template loaded</span>
+        <div id="modelReadout" class="stats">Model: loading...</div>
+        <div class="template-row">
+          <span class="template-label">Template</span>
+          <canvas id="templatePreview" class="template-canvas" width="92" height="92"></canvas>
+          <span id="templateMeta" class="template-meta">No template loaded</span>
         </div>
       </section>
 
@@ -370,23 +384,31 @@
           <video id="video" autoplay playsinline muted></video>
           <canvas id="overlay"></canvas>
         </div>
-        <div class="hint">Drag on video to set a scan box. No box means full-frame scan.</div>
+        <div class="hint">Draw a box on the video for ROI scan. Calibrate ROI around a visible gold star for best lock.</div>
       </section>
 
       <canvas id="processCanvas" style="display: none"></canvas>
+      <canvas id="candidateCanvas" style="display: none" width="128" height="128"></canvas>
     </main>
 
-    <script>
-      const TEMPLATE_CANDIDATES = ["8.png", "start.png", "star.png"];
-      const TEMPLATE_SCALES = [0.34, 0.42, 0.5, 0.62, 0.76, 0.9, 1, 1.14, 1.28, 1.46, 1.62];
-      const MIN_ROI_SIZE = 20;
-      const MAX_TEMPLATE_SIDE = 280;
-      const MIN_AUTO_STAR_SEARCH_SIDE = 220;
-      const MAX_PROCESS_WIDTH = 780;
-      const POS_TOLERANCE = 26;
-      const SIZE_TOLERANCE_RATIO = 0.3;
+    <script type="module">
+      import { FilesetResolver, ImageEmbedder } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+
+      const MEDIAPIPE_WASM_ROOT = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
+      const EMBEDDER_MODEL_URL =
+        "https://storage.googleapis.com/mediapipe-models/image_embedder/mobilenet_v3_small/float32/latest/mobilenet_v3_small.tflite";
+
+      const TEMPLATE_CANDIDATES = ["star.png", "8.png", "start.png"];
+      const MAX_PROCESS_WIDTH = 900;
+      const MIN_ROI_SIZE = 24;
+      const MAX_CANDIDATES = 8;
+      const POSITION_TOLERANCE = 28;
+      const SIZE_TOLERANCE_RATIO = 0.45;
 
       const state = {
+        embedder: null,
+        modelReady: false,
+        modelError: null,
         stream: null,
         activeTrack: null,
         scanning: false,
@@ -401,9 +423,11 @@
         drawing: false,
         drawStartX: 0,
         drawStartY: 0,
+        templateCanvas: null,
+        templateEmbedding: null,
         templateName: "",
-        templateVariants: [],
-        processScale: 1,
+        templateMethod: "",
+        templateGoldRatio: 0,
         audioContext: null,
         lastBeepAt: 0,
         zoomDebounce: null,
@@ -411,11 +435,12 @@
       };
 
       const settings = {
-        scoreThreshold: 0.38,
+        matchThreshold: 0.74,
         stableFrames: 2,
-        edgeSensitivity: 38,
-        scanInterval: 140,
-        beepCooldown: 1200,
+        minGoldRatio: 0.06,
+        minGoldPixels: 14,
+        scanInterval: 120,
+        beepCooldown: 1000,
       };
 
       const video = document.getElementById("video");
@@ -423,14 +448,17 @@
       const overlayCtx = overlay.getContext("2d");
       const processCanvas = document.getElementById("processCanvas");
       const processCtx = processCanvas.getContext("2d", { willReadFrequently: true });
+      const candidateCanvas = document.getElementById("candidateCanvas");
+      const candidateCtx = candidateCanvas.getContext("2d", { willReadFrequently: true });
 
       const statusDiv = document.getElementById("status");
       const statsDiv = document.getElementById("stats");
       const calibrationReadoutDiv = document.getElementById("calibrationReadout");
-      const cameraControlStatusDiv = document.getElementById("cameraControlStatus");
+      const modelReadoutDiv = document.getElementById("modelReadout");
       const templatePreviewCanvas = document.getElementById("templatePreview");
       const templatePreviewCtx = templatePreviewCanvas.getContext("2d");
-      const templatePreviewMetaSpan = document.getElementById("templatePreviewMeta");
+      const templateMeta = document.getElementById("templateMeta");
+      const cameraControlStatusDiv = document.getElementById("cameraControlStatus");
 
       const startCameraButton = document.getElementById("startCameraButton");
       const autoTemplateButton = document.getElementById("autoTemplateButton");
@@ -441,12 +469,14 @@
       const resetButton = document.getElementById("resetButton");
       const templateFileInput = document.getElementById("templateFileInput");
 
-      const scoreSlider = document.getElementById("scoreSlider");
-      const scoreValue = document.getElementById("scoreValue");
+      const matchSlider = document.getElementById("matchSlider");
+      const matchValue = document.getElementById("matchValue");
       const stableSlider = document.getElementById("stableSlider");
       const stableValue = document.getElementById("stableValue");
-      const edgeSlider = document.getElementById("edgeSlider");
-      const edgeValue = document.getElementById("edgeValue");
+      const goldSlider = document.getElementById("goldSlider");
+      const goldValue = document.getElementById("goldValue");
+      const pixelSlider = document.getElementById("pixelSlider");
+      const pixelValue = document.getElementById("pixelValue");
       const intervalSlider = document.getElementById("intervalSlider");
       const intervalValue = document.getElementById("intervalValue");
       const cooldownSlider = document.getElementById("cooldownSlider");
@@ -454,259 +484,105 @@
 
       const zoomSlider = document.getElementById("zoomSlider");
       const zoomValue = document.getElementById("zoomValue");
-      const manualFocusToggle = document.getElementById("manualFocusToggle");
       const focusSlider = document.getElementById("focusSlider");
       const focusValue = document.getElementById("focusValue");
+      const manualFocusToggle = document.getElementById("manualFocusToggle");
 
-      startCameraButton.addEventListener("click", () => {
-        startCamera().catch((error) => {
-          statusDiv.innerText = "Status: Camera failed";
-          console.error(error);
-        });
-      });
-
-      autoTemplateButton.addEventListener("click", () => {
-        loadAutoTemplate().catch((error) => {
-          statusDiv.innerText = "Status: Auto template load failed";
-          console.error(error);
-        });
-      });
-
-      pickTemplateButton.addEventListener("click", () => {
-        templateFileInput.click();
-      });
-
-      calibrateButton.addEventListener("click", () => {
-        calibrateFromCurrentView().catch((error) => {
-          statusDiv.innerText = "Status: Calibration failed";
-          calibrationReadoutDiv.innerText = "Calibration: failed";
-          console.error(error);
-        });
-      });
-
-      templateFileInput.addEventListener("change", () => {
-        const file = templateFileInput.files && templateFileInput.files[0];
-        if (!file) {
-          return;
-        }
-
-        loadTemplateFromFile(file).catch((error) => {
-          statusDiv.innerText = "Status: Template file load failed";
-          console.error(error);
-        });
-      });
-
-      startScanButton.addEventListener("click", () => {
-        startScan().catch((error) => {
-          statusDiv.innerText = "Status: Scan failed to start";
-          console.error(error);
-        });
-      });
-
-      stopScanButton.addEventListener("click", () => {
-        stopScan();
-      });
-
-      resetButton.addEventListener("click", () => {
-        resetState();
-      });
-
-      scoreSlider.addEventListener("input", () => {
-        settings.scoreThreshold = parseFloat(scoreSlider.value);
-        scoreValue.innerText = settings.scoreThreshold.toFixed(2);
-      });
-
-      stableSlider.addEventListener("input", () => {
-        settings.stableFrames = parseInt(stableSlider.value, 10);
-        stableValue.innerText = String(settings.stableFrames);
-      });
-
-      edgeSlider.addEventListener("input", () => {
-        settings.edgeSensitivity = parseInt(edgeSlider.value, 10);
-        edgeValue.innerText = String(settings.edgeSensitivity);
-      });
-
-      intervalSlider.addEventListener("input", () => {
-        settings.scanInterval = parseInt(intervalSlider.value, 10);
-        intervalValue.innerText = String(settings.scanInterval);
-
-        if (state.scanning) {
-          restartScanLoop();
-        }
-      });
-
-      cooldownSlider.addEventListener("input", () => {
-        settings.beepCooldown = parseInt(cooldownSlider.value, 10);
-        cooldownValue.innerText = String(settings.beepCooldown);
-      });
-
-      zoomSlider.addEventListener("input", () => {
-        const value = parseFloat(zoomSlider.value);
-        zoomValue.innerText = value.toFixed(2);
-        scheduleZoomApply();
-      });
-
-      manualFocusToggle.addEventListener("change", () => {
-        setManualFocus(manualFocusToggle.checked).catch((error) => {
-          console.error(error);
-        });
-      });
-
-      focusSlider.addEventListener("input", () => {
-        const value = parseFloat(focusSlider.value);
-        focusValue.innerText = value.toFixed(2);
-        scheduleFocusApply();
-      });
+      let modelInitPromise = null;
 
       function clamp(value, min, max) {
         return Math.min(max, Math.max(min, value));
       }
 
-      function roundTo(value, digits) {
-        const factor = 10 ** digits;
-        return Math.round(value * factor) / factor;
-      }
-
-      function clearScanLoop() {
-        if (state.scanTimer !== null) {
-          window.clearInterval(state.scanTimer);
-          state.scanTimer = null;
+      function setStatus(text, mode) {
+        statusDiv.textContent = text;
+        statusDiv.className = "status";
+        if (mode) {
+          statusDiv.classList.add(mode);
         }
-
-        state.scanning = false;
-        state.scanInProgress = false;
       }
 
-      function restartScanLoop() {
-        if (!state.scanning) {
-          return;
-        }
-
-        clearScanLoop();
-        state.scanning = true;
-        state.scanTimer = window.setInterval(() => {
-          detectFrame().catch((error) => {
-            statusDiv.innerText = "Status: Detection error";
-            console.error(error);
-          });
-        }, settings.scanInterval);
-      }
-
-      function stopStream() {
-        if (state.stream) {
-          state.stream.getTracks().forEach((track) => track.stop());
-          state.stream = null;
-        }
-
-        state.activeTrack = null;
-      }
-
-      function clearDetectionState() {
-        state.frameCount = 0;
-        state.stableHits = 0;
-        state.lastCandidate = null;
-        state.candidateBox = null;
-        state.detectionBox = null;
-        updateStats(0, 0, 0, 0, 0, 0);
-      }
-
-      function updateStats(bestScore, edgeScore, toneScore, colorScore, goldScore, edgeDensity) {
-        statsDiv.innerText =
+      function updateStats(bestScore, similarity, goldRatio, candidateCount) {
+        statsDiv.textContent =
           "Frames: " +
           state.frameCount +
-          " | Best score: " +
+          " | Best: " +
           bestScore.toFixed(3) +
           " | Stable hits: " +
           state.stableHits +
           "/" +
           settings.stableFrames +
-          " | Edge: " +
-          edgeScore.toFixed(3) +
-          " | Tone: " +
-          toneScore.toFixed(3) +
-          " | Color: " +
-          colorScore.toFixed(3) +
-          " | Gold: " +
-          goldScore.toFixed(3) +
-          " | Edge density: " +
-          (edgeDensity * 100).toFixed(1) +
-          "%";
+          " | Similarity: " +
+          similarity.toFixed(3) +
+          " | Gold ratio: " +
+          goldRatio.toFixed(3) +
+          " | Candidates: " +
+          candidateCount;
       }
 
-      function drawTemplatePreviewBackdrop() {
+      function drawTemplateBackdrop() {
         const width = templatePreviewCanvas.width;
         const height = templatePreviewCanvas.height;
         const tile = 8;
 
         templatePreviewCtx.clearRect(0, 0, width, height);
-        templatePreviewCtx.fillStyle = "#2f1a11";
+        templatePreviewCtx.fillStyle = "#2e1a11";
         templatePreviewCtx.fillRect(0, 0, width, height);
 
         for (let y = 0; y < height; y += tile) {
           for (let x = 0; x < width; x += tile) {
             const dark = ((x / tile + y / tile) & 1) === 0;
-            templatePreviewCtx.fillStyle = dark ? "rgba(255, 197, 132, 0.18)" : "rgba(255, 197, 132, 0.08)";
+            templatePreviewCtx.fillStyle = dark ? "rgba(255, 196, 131, 0.18)" : "rgba(255, 196, 131, 0.08)";
             templatePreviewCtx.fillRect(x, y, tile, tile);
           }
         }
       }
 
       function clearTemplatePreview() {
-        drawTemplatePreviewBackdrop();
-
-        templatePreviewCtx.strokeStyle = "rgba(255, 179, 99, 0.45)";
+        drawTemplateBackdrop();
+        templatePreviewCtx.strokeStyle = "rgba(255, 181, 101, 0.42)";
         templatePreviewCtx.lineWidth = 2;
         templatePreviewCtx.beginPath();
-        templatePreviewCtx.moveTo(18, 18);
-        templatePreviewCtx.lineTo(templatePreviewCanvas.width - 18, templatePreviewCanvas.height - 18);
-        templatePreviewCtx.moveTo(templatePreviewCanvas.width - 18, 18);
-        templatePreviewCtx.lineTo(18, templatePreviewCanvas.height - 18);
+        templatePreviewCtx.moveTo(20, 20);
+        templatePreviewCtx.lineTo(templatePreviewCanvas.width - 20, templatePreviewCanvas.height - 20);
+        templatePreviewCtx.moveTo(templatePreviewCanvas.width - 20, 20);
+        templatePreviewCtx.lineTo(20, templatePreviewCanvas.height - 20);
         templatePreviewCtx.stroke();
-
-        templatePreviewMetaSpan.innerText = "No template loaded";
+        templateMeta.textContent = "No template loaded";
       }
 
-      function renderTemplatePreview(sourceCanvas, templateName, method) {
-        drawTemplatePreviewBackdrop();
+      function renderTemplatePreview(canvas, name, method) {
+        drawTemplateBackdrop();
 
         const padding = 8;
-        const availableWidth = templatePreviewCanvas.width - padding * 2;
-        const availableHeight = templatePreviewCanvas.height - padding * 2;
-        const scale = Math.min(availableWidth / sourceCanvas.width, availableHeight / sourceCanvas.height);
-        const drawWidth = Math.max(1, Math.round(sourceCanvas.width * scale));
-        const drawHeight = Math.max(1, Math.round(sourceCanvas.height * scale));
-        const drawX = Math.round((templatePreviewCanvas.width - drawWidth) / 2);
-        const drawY = Math.round((templatePreviewCanvas.height - drawHeight) / 2);
+        const maxW = templatePreviewCanvas.width - padding * 2;
+        const maxH = templatePreviewCanvas.height - padding * 2;
+        const scale = Math.min(maxW / canvas.width, maxH / canvas.height);
+        const drawW = Math.max(1, Math.round(canvas.width * scale));
+        const drawH = Math.max(1, Math.round(canvas.height * scale));
+        const drawX = Math.round((templatePreviewCanvas.width - drawW) / 2);
+        const drawY = Math.round((templatePreviewCanvas.height - drawH) / 2);
 
         templatePreviewCtx.imageSmoothingEnabled = true;
-        templatePreviewCtx.drawImage(sourceCanvas, 0, 0, sourceCanvas.width, sourceCanvas.height, drawX, drawY, drawWidth, drawHeight);
+        templatePreviewCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, drawX, drawY, drawW, drawH);
 
-        templatePreviewMetaSpan.innerText =
-          templateName + " \u00b7 " + sourceCanvas.width + "x" + sourceCanvas.height + " \u00b7 " + method;
-      }
-
-      function applyTemplateFromCanvas(templateCanvas, templateName, method) {
-        const variants = buildTemplateVariants(templateCanvas);
-        if (!variants.length) {
-          throw new Error("Template has too few useful edges");
-        }
-
-        state.templateName = templateName;
-        state.templateVariants = variants;
-        renderTemplatePreview(templateCanvas, templateName, method);
-
-        return variants;
+        templateMeta.textContent =
+          name +
+          " · " +
+          canvas.width +
+          "x" +
+          canvas.height +
+          " · " +
+          method +
+          " · gold " +
+          state.templateGoldRatio.toFixed(3);
       }
 
       function getCanvasPoint(clientX, clientY) {
         const rect = overlay.getBoundingClientRect();
-        const scaleX = overlay.width / rect.width;
-        const scaleY = overlay.height / rect.height;
-
-        return {
-          x: clamp(Math.round((clientX - rect.left) * scaleX), 0, overlay.width),
-          y: clamp(Math.round((clientY - rect.top) * scaleY), 0, overlay.height),
-        };
+        const x = clamp(Math.round(((clientX - rect.left) / rect.width) * overlay.width), 0, overlay.width);
+        const y = clamp(Math.round(((clientY - rect.top) / rect.height) * overlay.height), 0, overlay.height);
+        return { x, y };
       }
 
       function normalizeRect(x1, y1, x2, y2, width, height) {
@@ -714,7 +590,6 @@
         const top = clamp(Math.min(y1, y2), 0, height);
         const right = clamp(Math.max(x1, x2), 0, width);
         const bottom = clamp(Math.max(y1, y2), 0, height);
-
         return {
           x: Math.round(left),
           y: Math.round(top),
@@ -735,7 +610,7 @@
         if (state.candidateBox && state.stableHits < settings.stableFrames) {
           overlayCtx.strokeStyle = "#ffb15d";
           overlayCtx.lineWidth = 3;
-          overlayCtx.setLineDash([7, 6]);
+          overlayCtx.setLineDash([8, 6]);
           overlayCtx.strokeRect(
             state.candidateBox.x,
             state.candidateBox.y,
@@ -746,21 +621,15 @@
         }
 
         if (state.detectionBox) {
-          overlayCtx.strokeStyle = "#56ff88";
+          overlayCtx.strokeStyle = "#64ff9f";
           overlayCtx.lineWidth = 4;
-          overlayCtx.strokeRect(
-            state.detectionBox.x,
-            state.detectionBox.y,
-            state.detectionBox.w,
-            state.detectionBox.h,
-          );
+          overlayCtx.strokeRect(state.detectionBox.x, state.detectionBox.y, state.detectionBox.w, state.detectionBox.h);
         }
       }
 
       function drawSelectionPreview(x1, y1, x2, y2) {
         drawOverlay();
         const preview = normalizeRect(x1, y1, x2, y2, overlay.width, overlay.height);
-
         overlayCtx.strokeStyle = "#ffd666";
         overlayCtx.lineWidth = 3;
         overlayCtx.setLineDash([8, 6]);
@@ -768,22 +637,7 @@
         overlayCtx.setLineDash([]);
       }
 
-      function setRoi(x1, y1, x2, y2) {
-        const nextRoi = normalizeRect(x1, y1, x2, y2, overlay.width, overlay.height);
-
-        if (nextRoi.w < MIN_ROI_SIZE || nextRoi.h < MIN_ROI_SIZE) {
-          state.roi = null;
-          statusDiv.innerText = "Status: ROI cleared (scan full frame)";
-          drawOverlay();
-          return;
-        }
-
-        state.roi = nextRoi;
-        statusDiv.innerText = "Status: ROI selected";
-        drawOverlay();
-      }
-
-      overlay.addEventListener("pointerdown", (event) => {
+      function beginRoiSelection(event) {
         if (!overlay.width || !overlay.height) {
           return;
         }
@@ -792,243 +646,439 @@
         state.drawing = true;
         state.drawStartX = point.x;
         state.drawStartY = point.y;
-
         overlay.setPointerCapture(event.pointerId);
-      });
+        drawSelectionPreview(point.x, point.y, point.x, point.y);
+      }
 
-      overlay.addEventListener("pointermove", (event) => {
+      function moveRoiSelection(event) {
         if (!state.drawing) {
           return;
         }
 
         const point = getCanvasPoint(event.clientX, event.clientY);
         drawSelectionPreview(state.drawStartX, state.drawStartY, point.x, point.y);
-      });
+      }
 
-      overlay.addEventListener("pointerup", (event) => {
+      function finishRoiSelection(event) {
         if (!state.drawing) {
           return;
         }
 
+        state.drawing = false;
         const point = getCanvasPoint(event.clientX, event.clientY);
-        state.drawing = false;
-        setRoi(state.drawStartX, state.drawStartY, point.x, point.y);
-      });
+        const rect = normalizeRect(state.drawStartX, state.drawStartY, point.x, point.y, overlay.width, overlay.height);
 
-      overlay.addEventListener("pointercancel", () => {
-        state.drawing = false;
-        drawOverlay();
-      });
-
-      async function loadImage(source) {
-        return new Promise((resolve, reject) => {
-          const image = new Image();
-          image.onload = () => resolve(image);
-          image.onerror = () => reject(new Error("Failed to load image: " + source));
-          image.src = source;
-        });
-      }
-
-      function getAlphaBounds(imageData, width, height) {
-        const { data } = imageData;
-
-        let minX = width;
-        let minY = height;
-        let maxX = -1;
-        let maxY = -1;
-
-        for (let y = 0; y < height; y += 1) {
-          for (let x = 0; x < width; x += 1) {
-            const alpha = data[(y * width + x) * 4 + 3];
-            if (alpha < 18) {
-              continue;
-            }
-
-            if (x < minX) {
-              minX = x;
-            }
-            if (y < minY) {
-              minY = y;
-            }
-            if (x > maxX) {
-              maxX = x;
-            }
-            if (y > maxY) {
-              maxY = y;
-            }
-          }
+        if (rect.w < MIN_ROI_SIZE || rect.h < MIN_ROI_SIZE) {
+          state.roi = null;
+        } else {
+          state.roi = rect;
         }
 
-        if (maxX < minX || maxY < minY) {
+        drawOverlay();
+      }
+
+      function resizeCanvasesForVideo() {
+        if (!video.videoWidth || !video.videoHeight) {
+          return;
+        }
+
+        overlay.width = video.videoWidth;
+        overlay.height = video.videoHeight;
+
+        const processScale = Math.min(1, MAX_PROCESS_WIDTH / video.videoWidth);
+        processCanvas.width = Math.max(1, Math.round(video.videoWidth * processScale));
+        processCanvas.height = Math.max(1, Math.round(video.videoHeight * processScale));
+
+        drawOverlay();
+      }
+
+      function stopScanLoop() {
+        if (state.scanTimer !== null) {
+          window.clearInterval(state.scanTimer);
+          state.scanTimer = null;
+        }
+        state.scanInProgress = false;
+        state.scanning = false;
+      }
+
+      function restartScanLoop() {
+        if (!state.scanning) {
+          return;
+        }
+        stopScanLoop();
+        state.scanning = true;
+        state.scanTimer = window.setInterval(() => {
+          detectFrame().catch((error) => {
+            console.error(error);
+            setStatus("Status: Detection error", "bad");
+          });
+        }, settings.scanInterval);
+      }
+
+      function clearDetectionState() {
+        state.frameCount = 0;
+        state.stableHits = 0;
+        state.lastCandidate = null;
+        state.candidateBox = null;
+        state.detectionBox = null;
+        updateStats(0, 0, 0, 0);
+        drawOverlay();
+      }
+
+      async function initMediaPipe() {
+        if (state.modelReady) {
+          return state.embedder;
+        }
+
+        if (modelInitPromise) {
+          return modelInitPromise;
+        }
+
+        modelReadoutDiv.textContent = "Model: loading MediaPipe...";
+        setStatus("Status: Loading MediaPipe model...", "warn");
+
+        modelInitPromise = (async () => {
+          const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_ROOT);
+          const embedder = await ImageEmbedder.createFromOptions(vision, {
+            baseOptions: { modelAssetPath: EMBEDDER_MODEL_URL },
+            runningMode: "IMAGE",
+            l2Normalize: true,
+            quantize: false,
+          });
+          state.embedder = embedder;
+          state.modelReady = true;
+          state.modelError = null;
+          modelReadoutDiv.textContent = "Model: MobileNet v3 small image embedder (MediaPipe)";
+          setStatus("Status: MediaPipe ready", "warn");
+          return embedder;
+        })();
+
+        try {
+          return await modelInitPromise;
+        } catch (error) {
+          state.modelError = error;
+          state.modelReady = false;
+          modelReadoutDiv.textContent = "Model: failed to load";
+          setStatus("Status: MediaPipe load failed", "bad");
+          throw error;
+        }
+      }
+
+      function readEmbedding(result) {
+        if (!result || !result.embeddings || !result.embeddings.length) {
           return null;
         }
 
-        return {
-          x: minX,
-          y: minY,
-          w: maxX - minX + 1,
-          h: maxY - minY + 1,
-        };
+        const embedding = result.embeddings[0];
+        if (embedding.floatEmbedding && embedding.floatEmbedding.length) {
+          return Float32Array.from(embedding.floatEmbedding);
+        }
+
+        if (embedding.quantizedEmbedding && embedding.quantizedEmbedding.length) {
+          const output = new Float32Array(embedding.quantizedEmbedding.length);
+          for (let i = 0; i < embedding.quantizedEmbedding.length; i += 1) {
+            output[i] = (embedding.quantizedEmbedding[i] - 128) / 128;
+          }
+          return output;
+        }
+
+        return null;
       }
 
-      function findGoldStarBounds(imageData, width, height) {
-        const pixelCount = width * height;
-        const { data } = imageData;
-        const mask = new Uint8Array(pixelCount);
-        const saturation = new Uint8Array(pixelCount);
+      function cosineSimilarity(a, b) {
+        if (!a || !b || a.length !== b.length || !a.length) {
+          return 0;
+        }
+
+        let dot = 0;
+        let normA = 0;
+        let normB = 0;
+
+        for (let i = 0; i < a.length; i += 1) {
+          const va = a[i];
+          const vb = b[i];
+          dot += va * vb;
+          normA += va * va;
+          normB += vb * vb;
+        }
+
+        if (normA <= 1e-8 || normB <= 1e-8) {
+          return 0;
+        }
+
+        const cosine = dot / (Math.sqrt(normA) * Math.sqrt(normB));
+        return clamp((cosine + 1) * 0.5, 0, 1);
+      }
+
+      function classifyGoldPixel(r, g, b) {
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const chroma = max - min;
+        if (max < 65 || chroma < 15) {
+          return false;
+        }
+
+        const saturation = chroma / max;
+        if (saturation < 0.12) {
+          return false;
+        }
+
+        if (r < 70 || g < 60) {
+          return false;
+        }
+
+        if (r < g * 0.82) {
+          return false;
+        }
+
+        if (r - b < 18 || g - b < 8) {
+          return false;
+        }
+
+        return true;
+      }
+
+      function buildGoldMask(imageData, width, height) {
+        const data = imageData.data;
+        const mask = new Uint8Array(width * height);
+        let goldCount = 0;
 
         for (let i = 0, p = 0; i < data.length; i += 4, p += 1) {
-          const alpha = data[i + 3];
-          if (alpha < 24) {
-            continue;
-          }
-
           const r = data[i];
           const g = data[i + 1];
           const b = data[i + 2];
-          const max = Math.max(r, g, b);
-          const min = Math.min(r, g, b);
-          const diff = max - min;
-
-          if (max < 100 || diff < 16) {
-            continue;
+          if (classifyGoldPixel(r, g, b)) {
+            mask[p] = 1;
+            goldCount += 1;
           }
-
-          let hue = 0;
-          if (diff !== 0) {
-            if (max === r) {
-              hue = ((g - b) / diff) % 6;
-            } else if (max === g) {
-              hue = (b - r) / diff + 2;
-            } else {
-              hue = (r - g) / diff + 4;
-            }
-          }
-
-          hue *= 60;
-          if (hue < 0) {
-            hue += 360;
-          }
-
-          const sat = diff / max;
-          if (hue < 30 || hue > 74 || sat < 0.28) {
-            continue;
-          }
-
-          mask[p] = 1;
-          saturation[p] = Math.round(sat * 255);
         }
 
-        const visited = new Uint8Array(pixelCount);
-        const stack = [];
-        let best = null;
-        let bestScore = -1;
+        return { mask, goldCount };
+      }
 
-        for (let idx = 0; idx < pixelCount; idx += 1) {
-          if (!mask[idx] || visited[idx]) {
+      function findMaskComponents(mask, width, height, minPixels, maxPixels) {
+        const seen = new Uint8Array(mask.length);
+        const queue = new Int32Array(mask.length);
+        const components = [];
+
+        let queueHead = 0;
+        let queueTail = 0;
+        let minX = 0;
+        let minY = 0;
+        let maxX = 0;
+        let maxY = 0;
+
+        const visit = (index, x, y) => {
+          seen[index] = 1;
+          queue[queueTail] = index;
+          queueTail += 1;
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        };
+
+        for (let start = 0; start < mask.length; start += 1) {
+          if (!mask[start] || seen[start]) {
             continue;
           }
 
-          visited[idx] = 1;
-          stack.push(idx);
-
+          queueHead = 0;
+          queueTail = 0;
           let count = 0;
-          let satSum = 0;
-          let minX = width;
-          let minY = height;
-          let maxX = 0;
-          let maxY = 0;
 
-          while (stack.length) {
-            const current = stack.pop();
-            const x = current % width;
-            const y = Math.floor(current / width);
+          minX = width;
+          minY = height;
+          maxX = 0;
+          maxY = 0;
 
+          const startY = (start / width) | 0;
+          const startX = start - startY * width;
+          visit(start, startX, startY);
+
+          while (queueHead < queueTail) {
+            const index = queue[queueHead];
+            queueHead += 1;
             count += 1;
-            satSum += saturation[current];
 
-            if (x < minX) {
-              minX = x;
-            }
-            if (y < minY) {
-              minY = y;
-            }
-            if (x > maxX) {
-              maxX = x;
-            }
-            if (y > maxY) {
-              maxY = y;
-            }
+            const y = (index / width) | 0;
+            const x = index - y * width;
 
-            if (x > 0) {
-              const left = current - 1;
-              if (mask[left] && !visited[left]) {
-                visited[left] = 1;
-                stack.push(left);
+            for (let ny = y - 1; ny <= y + 1; ny += 1) {
+              if (ny < 0 || ny >= height) {
+                continue;
               }
-            }
 
-            if (x < width - 1) {
-              const right = current + 1;
-              if (mask[right] && !visited[right]) {
-                visited[right] = 1;
-                stack.push(right);
-              }
-            }
+              for (let nx = x - 1; nx <= x + 1; nx += 1) {
+                if (nx < 0 || nx >= width || (nx === x && ny === y)) {
+                  continue;
+                }
 
-            if (y > 0) {
-              const top = current - width;
-              if (mask[top] && !visited[top]) {
-                visited[top] = 1;
-                stack.push(top);
-              }
-            }
+                const nIndex = ny * width + nx;
+                if (!mask[nIndex] || seen[nIndex]) {
+                  continue;
+                }
 
-            if (y < height - 1) {
-              const bottom = current + width;
-              if (mask[bottom] && !visited[bottom]) {
-                visited[bottom] = 1;
-                stack.push(bottom);
+                visit(nIndex, nx, ny);
               }
             }
           }
 
-          if (count < 14 || count > 9000) {
+          if (count < minPixels || count > maxPixels) {
             continue;
           }
 
-          const boxWidth = maxX - minX + 1;
-          const boxHeight = maxY - minY + 1;
-          if (boxWidth < 6 || boxHeight < 6 || boxWidth > 220 || boxHeight > 220) {
+          const componentWidth = maxX - minX + 1;
+          const componentHeight = maxY - minY + 1;
+          const fill = count / (componentWidth * componentHeight);
+          const aspect = componentWidth / componentHeight;
+
+          components.push({
+            x: minX,
+            y: minY,
+            w: componentWidth,
+            h: componentHeight,
+            pixels: count,
+            fill,
+            aspect,
+          });
+        }
+
+        components.sort((a, b) => b.pixels - a.pixels);
+        return components;
+      }
+
+      function componentToSampleBox(component, scanRect, scanWidth, scanHeight) {
+        const centerX = component.x + component.w * 0.5;
+        const centerY = component.y + component.h * 0.5;
+        const side = Math.round(clamp(Math.max(component.w, component.h) * 3.2, 16, Math.min(scanWidth, scanHeight) * 0.75));
+        const localX = clamp(Math.round(centerX - side * 0.5), 0, scanWidth - side);
+        const localY = clamp(Math.round(centerY - side * 0.5), 0, scanHeight - side);
+
+        return {
+          x: scanRect.x + localX,
+          y: scanRect.y + localY,
+          w: side,
+          h: side,
+          localX,
+          localY,
+        };
+      }
+
+      function computeMaskRatio(mask, maskWidth, box) {
+        const xEnd = box.localX + box.w;
+        const yEnd = box.localY + box.h;
+        let count = 0;
+
+        for (let y = box.localY; y < yEnd; y += 1) {
+          let rowIndex = y * maskWidth + box.localX;
+          for (let x = box.localX; x < xEnd; x += 1) {
+            count += mask[rowIndex];
+            rowIndex += 1;
+          }
+        }
+
+        return count / (box.w * box.h);
+      }
+
+      function overlayToProcessRect(overlayRect) {
+        const scaleX = processCanvas.width / overlay.width;
+        const scaleY = processCanvas.height / overlay.height;
+
+        return {
+          x: clamp(Math.round(overlayRect.x * scaleX), 0, processCanvas.width - 1),
+          y: clamp(Math.round(overlayRect.y * scaleY), 0, processCanvas.height - 1),
+          w: clamp(Math.round(overlayRect.w * scaleX), 1, processCanvas.width),
+          h: clamp(Math.round(overlayRect.h * scaleY), 1, processCanvas.height),
+        };
+      }
+
+      function processToOverlayRect(processRect) {
+        const scaleX = overlay.width / processCanvas.width;
+        const scaleY = overlay.height / processCanvas.height;
+
+        return {
+          x: Math.round(processRect.x * scaleX),
+          y: Math.round(processRect.y * scaleY),
+          w: Math.round(processRect.w * scaleX),
+          h: Math.round(processRect.h * scaleY),
+        };
+      }
+
+      function boxDistance(a, b) {
+        const ax = a.x + a.w * 0.5;
+        const ay = a.y + a.h * 0.5;
+        const bx = b.x + b.w * 0.5;
+        const by = b.y + b.h * 0.5;
+        return Math.hypot(ax - bx, ay - by);
+      }
+
+      function boxSizeDifference(a, b) {
+        const aw = Math.max(1, a.w);
+        const bw = Math.max(1, b.w);
+        return Math.abs(aw - bw) / Math.max(aw, bw);
+      }
+
+      function isSameCandidate(a, b) {
+        if (!a || !b) {
+          return false;
+        }
+
+        if (boxDistance(a, b) > POSITION_TOLERANCE) {
+          return false;
+        }
+
+        if (boxSizeDifference(a, b) > SIZE_TOLERANCE_RATIO) {
+          return false;
+        }
+
+        return true;
+      }
+
+      function buildSourceCanvas(source) {
+        const canvas = document.createElement("canvas");
+        canvas.width = source.width || source.videoWidth;
+        canvas.height = source.height || source.videoHeight;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+        return canvas;
+      }
+
+      function findTemplateCropFromCanvas(sourceCanvas) {
+        const width = sourceCanvas.width;
+        const height = sourceCanvas.height;
+        const ctx = sourceCanvas.getContext("2d", { willReadFrequently: true });
+        const imageData = ctx.getImageData(0, 0, width, height);
+
+        const { mask } = buildGoldMask(imageData, width, height);
+        const components = findMaskComponents(mask, width, height, 8, Math.max(120, Math.round(width * height * 0.06)));
+
+        if (!components.length) {
+          return null;
+        }
+
+        let best = null;
+        let bestScore = -Infinity;
+
+        for (const component of components.slice(0, 40)) {
+          if (component.aspect < 0.45 || component.aspect > 1.8) {
             continue;
           }
 
-          if (minX <= 1 || minY <= 1 || maxX >= width - 2 || maxY >= height - 2) {
+          if (component.fill < 0.08 || component.fill > 0.8) {
             continue;
           }
 
-          const fill = count / (boxWidth * boxHeight);
-          if (fill < 0.16 || fill > 0.78) {
-            continue;
-          }
+          const areaRatio = component.pixels / (width * height);
+          const expected = width * height > 70000 ? 0.00025 : 0.02;
+          const areaScore = 1 - Math.min(1, Math.abs(Math.log((areaRatio + 1e-9) / expected)) / 8);
+          const squareScore = 1 - Math.min(1, Math.abs(1 - component.aspect));
+          const fillScore = 1 - Math.min(1, Math.abs(component.fill - 0.35) / 0.35);
 
-          const aspectScore =
-            1 - Math.min(1, Math.abs(boxWidth - boxHeight) / Math.max(boxWidth, boxHeight));
-          const fillScore = 1 - Math.min(1, Math.abs(fill - 0.42) / 0.42);
-          const satMean = satSum / (count * 255);
-          const satScore = clamp((satMean - 0.3) / 0.55, 0, 1);
-          const areaRatio = count / pixelCount;
-          const tinyScore = clamp(1 - areaRatio * 180, 0, 1);
-          const score = satScore * 0.38 + aspectScore * 0.23 + fillScore * 0.25 + tinyScore * 0.14;
-
+          const score = squareScore * 0.45 + fillScore * 0.35 + areaScore * 0.2;
           if (score > bestScore) {
             bestScore = score;
-            best = {
-              x: minX,
-              y: minY,
-              w: boxWidth,
-              h: boxHeight,
-            };
+            best = component;
           }
         }
 
@@ -1036,1063 +1086,195 @@
           return null;
         }
 
-        const margin = Math.max(2, Math.round(Math.min(best.w, best.h) * 0.16));
-        const x = clamp(best.x - margin, 0, width - 1);
-        const y = clamp(best.y - margin, 0, height - 1);
-        const right = clamp(best.x + best.w + margin, 0, width);
-        const bottom = clamp(best.y + best.h + margin, 0, height);
+        const centerX = best.x + best.w * 0.5;
+        const centerY = best.y + best.h * 0.5;
+        const side = Math.round(clamp(Math.max(best.w, best.h) * 3.25, 18, Math.min(width, height) * 0.85));
+        const x = clamp(Math.round(centerX - side * 0.5), 0, width - side);
+        const y = clamp(Math.round(centerY - side * 0.5), 0, height - side);
+
+        const output = document.createElement("canvas");
+        output.width = side;
+        output.height = side;
+        output.getContext("2d").drawImage(sourceCanvas, x, y, side, side, 0, 0, side, side);
 
         return {
-          x,
-          y,
-          w: Math.max(1, right - x),
-          h: Math.max(1, bottom - y),
+          canvas: output,
+          method: "gold-star tight crop",
+          box: { x, y, w: side, h: side },
         };
       }
 
-      function getGoldBounds(imageData, width, height) {
-        const { data } = imageData;
-        let minX = width;
-        let minY = height;
-        let maxX = -1;
-        let maxY = -1;
-        let count = 0;
-
-        for (let i = 0, p = 0; i < data.length; i += 4, p += 1) {
-          const alpha = data[i + 3];
-          if (alpha < 24) {
-            continue;
-          }
-
-          const r = data[i];
-          const g = data[i + 1];
-          const b = data[i + 2];
-          const max = Math.max(r, g, b);
-          const min = Math.min(r, g, b);
-          const diff = max - min;
-
-          if (max < 90 || diff < 14) {
-            continue;
-          }
-
-          let hue = 0;
-          if (diff !== 0) {
-            if (max === r) {
-              hue = ((g - b) / diff) % 6;
-            } else if (max === g) {
-              hue = (b - r) / diff + 2;
-            } else {
-              hue = (r - g) / diff + 4;
-            }
-          }
-
-          hue *= 60;
-          if (hue < 0) {
-            hue += 360;
-          }
-
-          const sat = diff / max;
-          if (hue < 30 || hue > 74 || sat < 0.24) {
-            continue;
-          }
-
-          const x = p % width;
-          const y = Math.floor(p / width);
-          count += 1;
-          if (x < minX) {
-            minX = x;
-          }
-          if (y < minY) {
-            minY = y;
-          }
-          if (x > maxX) {
-            maxX = x;
-          }
-          if (y > maxY) {
-            maxY = y;
-          }
-        }
-
-        if (count < 12 || maxX < minX || maxY < minY) {
-          return null;
-        }
-
-        return {
-          x: minX,
-          y: minY,
-          w: maxX - minX + 1,
-          h: maxY - minY + 1,
-        };
+      function computeCanvasGoldRatio(canvas) {
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const { goldCount } = buildGoldMask(imageData, canvas.width, canvas.height);
+        return goldCount / Math.max(1, canvas.width * canvas.height);
       }
 
-      function getTemplateBounds(imageData, width, height) {
-        if (Math.max(width, height) >= MIN_AUTO_STAR_SEARCH_SIDE) {
-          const goldBounds = findGoldStarBounds(imageData, width, height);
-          if (goldBounds) {
-            return {
-              bounds: goldBounds,
-              method: "gold-star auto-crop",
-            };
-          }
+      async function applyTemplateCanvas(templateCanvas, name, method) {
+        await initMediaPipe();
+
+        const result = state.embedder.embed(templateCanvas);
+        const embedding = readEmbedding(result);
+        if (!embedding) {
+          throw new Error("Template embedding failed");
         }
 
-        const alphaBounds = getAlphaBounds(imageData, width, height);
-        if (!alphaBounds) {
-          return null;
-        }
+        state.templateCanvas = templateCanvas;
+        state.templateEmbedding = embedding;
+        state.templateName = name;
+        state.templateMethod = method;
+        state.templateGoldRatio = computeCanvasGoldRatio(templateCanvas);
 
-        return {
-          bounds: alphaBounds,
-          method: "alpha crop",
-        };
+        renderTemplatePreview(templateCanvas, name, method);
       }
 
-      function imageDataToGrayAlpha(imageData, width, height) {
-        const gray = new Uint8Array(width * height);
-        const alpha = new Uint8Array(width * height);
-        const chromaRG = new Int16Array(width * height);
-        const chromaBG = new Int16Array(width * height);
-        const goldMask = new Uint8Array(width * height);
-        const neutralMask = new Uint8Array(width * height);
-        const { data } = imageData;
-
-        for (let i = 0, p = 0; i < data.length; i += 4, p += 1) {
-          const r = data[i];
-          const g = data[i + 1];
-          const b = data[i + 2];
-          const a = data[i + 3];
-          gray[p] = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
-          alpha[p] = a;
-          chromaRG[p] = r - g;
-          chromaBG[p] = b - g;
-
-          if (a >= 14) {
-            const max = Math.max(r, g, b);
-            const min = Math.min(r, g, b);
-            const diff = max - min;
-            const sat = max ? diff / max : 0;
-
-            if (max >= 84 && diff <= 24 && sat <= 0.18) {
-              neutralMask[p] = 1;
-            }
-
-            if (max >= 70 && diff >= 8) {
-              let hue = 0;
-              if (diff !== 0) {
-                if (max === r) {
-                  hue = ((g - b) / diff) % 6;
-                } else if (max === g) {
-                  hue = (b - r) / diff + 2;
-                } else {
-                  hue = (r - g) / diff + 4;
-                }
-              }
-
-              hue *= 60;
-              if (hue < 0) {
-                hue += 360;
-              }
-
-              if (hue >= 20 && hue <= 92 && sat >= 0.08) {
-                goldMask[p] = 1;
-              }
-            }
-          }
-        }
-
-        return { gray, alpha, chromaRG, chromaBG, goldMask, neutralMask };
+      function loadImage(url) {
+        return new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = () => reject(new Error("Failed to load image: " + url));
+          image.src = url;
+        });
       }
 
-      function buildSobelMagnitudes(gray, width, height, alphaMask) {
-        const magnitudes = new Uint16Array(width * height);
-        let sum = 0;
-        let count = 0;
-        let max = 0;
+      async function loadTemplateFromFile(file) {
+        const image = await new Promise((resolve, reject) => {
+          const objectUrl = URL.createObjectURL(file);
+          const img = new Image();
+          img.onload = () => {
+            URL.revokeObjectURL(objectUrl);
+            resolve(img);
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error("Could not read template file"));
+          };
+          img.src = objectUrl;
+        });
 
-        for (let y = 1; y < height - 1; y += 1) {
-          const row = y * width;
-          for (let x = 1; x < width - 1; x += 1) {
-            const idx = row + x;
+        const sourceCanvas = buildSourceCanvas(image);
+        const crop = sourceCanvas.width > 180 || sourceCanvas.height > 180 ? findTemplateCropFromCanvas(sourceCanvas) : null;
+        const templateCanvas = crop ? crop.canvas : sourceCanvas;
+        const method = crop ? crop.method : "full image";
 
-            if (alphaMask && alphaMask[idx] < 18) {
-              continue;
-            }
-
-            const a = gray[idx - width - 1];
-            const b = gray[idx - width];
-            const c = gray[idx - width + 1];
-            const d = gray[idx - 1];
-            const f = gray[idx + 1];
-            const g = gray[idx + width - 1];
-            const h = gray[idx + width];
-            const i = gray[idx + width + 1];
-
-            const gx = -a - 2 * d - g + c + 2 * f + i;
-            const gy = -a - 2 * b - c + g + 2 * h + i;
-            const mag = Math.abs(gx) + Math.abs(gy);
-
-            magnitudes[idx] = mag;
-            sum += mag;
-            count += 1;
-            if (mag > max) {
-              max = mag;
-            }
-          }
-        }
-
-        return { magnitudes, average: count ? sum / count : 0, max };
-      }
-
-      function buildTemplateVariant(imageData, width, height) {
-        const { gray, alpha, chromaRG, chromaBG, goldMask, neutralMask } = imageDataToGrayAlpha(
-          imageData,
-          width,
-          height,
-        );
-        const sobel = buildSobelMagnitudes(gray, width, height, alpha);
-
-        const edgeThreshold = Math.max(120, Math.min(sobel.max * 0.92, sobel.average * 1.35 + 35));
-        const edgePoints = [];
-
-        for (let y = 1; y < height - 1; y += 1) {
-          for (let x = 1; x < width - 1; x += 1) {
-            const idx = y * width + x;
-            if (alpha[idx] < 18) {
-              continue;
-            }
-            if (sobel.magnitudes[idx] < edgeThreshold) {
-              continue;
-            }
-            if ((x + y) % 2 !== 0) {
-              continue;
-            }
-
-            edgePoints.push({
-              x,
-              y,
-              c1: chromaRG[idx],
-              c2: chromaBG[idx],
-              w: goldMask[idx] ? 1 : neutralMask[idx] ? 0.12 : 0.65,
-            });
-          }
-        }
-
-        if (edgePoints.length < 16) {
-          return null;
-        }
-
-        if (edgePoints.length > 380) {
-          const stride = Math.ceil(edgePoints.length / 380);
-          const limited = [];
-          for (let i = 0; i < edgePoints.length; i += stride) {
-            limited.push(edgePoints[i]);
-          }
-          edgePoints.length = 0;
-          for (let i = 0; i < limited.length; i += 1) {
-            edgePoints.push(limited[i]);
-          }
-        }
-
-        const samples = [];
-        const grid = Math.max(2, Math.round(Math.min(width, height) / 8));
-        for (let y = Math.floor(grid / 2); y < height; y += grid) {
-          for (let x = Math.floor(grid / 2); x < width; x += grid) {
-            const idx = y * width + x;
-            if (alpha[idx] < 28) {
-              continue;
-            }
-
-            samples.push({
-              x,
-              y,
-              v: gray[idx],
-              c1: chromaRG[idx],
-              c2: chromaBG[idx],
-              gold: goldMask[idx],
-              w: goldMask[idx] ? 1 : neutralMask[idx] ? 0.08 : 0.62,
-            });
-          }
-        }
-
-        if (samples.length < 10) {
-          return null;
-        }
-
-        if (samples.length > 130) {
-          const stride = Math.ceil(samples.length / 130);
-          const limited = [];
-          for (let i = 0; i < samples.length; i += stride) {
-            limited.push(samples[i]);
-          }
-          samples.length = 0;
-          for (let i = 0; i < limited.length; i += 1) {
-            samples.push(limited[i]);
-          }
-        }
-
-        const edgeX = new Int16Array(edgePoints.length);
-        const edgeY = new Int16Array(edgePoints.length);
-        const edgeC1 = new Int16Array(edgePoints.length);
-        const edgeC2 = new Int16Array(edgePoints.length);
-        const edgeW = new Float32Array(edgePoints.length);
-        let edgeWeightTotal = 0;
-        for (let i = 0; i < edgePoints.length; i += 1) {
-          edgeX[i] = edgePoints[i].x;
-          edgeY[i] = edgePoints[i].y;
-          edgeC1[i] = edgePoints[i].c1;
-          edgeC2[i] = edgePoints[i].c2;
-          edgeW[i] = edgePoints[i].w;
-          edgeWeightTotal += edgePoints[i].w;
-        }
-
-        const sampleX = new Int16Array(samples.length);
-        const sampleY = new Int16Array(samples.length);
-        const sampleV = new Uint8Array(samples.length);
-        const sampleC1 = new Int16Array(samples.length);
-        const sampleC2 = new Int16Array(samples.length);
-        const sampleGold = new Uint8Array(samples.length);
-        const sampleW = new Float32Array(samples.length);
-        let goldWeightTotal = 0;
-        for (let i = 0; i < samples.length; i += 1) {
-          sampleX[i] = samples[i].x;
-          sampleY[i] = samples[i].y;
-          sampleV[i] = samples[i].v;
-          sampleC1[i] = samples[i].c1;
-          sampleC2[i] = samples[i].c2;
-          sampleGold[i] = samples[i].gold;
-          sampleW[i] = samples[i].w;
-          if (samples[i].gold) {
-            goldWeightTotal += samples[i].w;
-          }
-        }
-
-        const searchStep = Math.max(2, Math.round(Math.min(width, height) / 18));
-
-        return {
-          width,
-          height,
-          edgeX,
-          edgeY,
-          edgeC1,
-          edgeC2,
-          edgeW,
-          edgeCount: edgePoints.length,
-          edgeWeightTotal,
-          sampleX,
-          sampleY,
-          sampleV,
-          sampleC1,
-          sampleC2,
-          sampleGold,
-          sampleW,
-          sampleCount: samples.length,
-          goldWeightTotal,
-          searchStep,
-        };
-      }
-
-      function buildTemplateVariants(baseCanvas) {
-        const variants = [];
-        const sourceWidth = baseCanvas.width;
-        const sourceHeight = baseCanvas.height;
-
-        const variantCanvas = document.createElement("canvas");
-        const variantCtx = variantCanvas.getContext("2d", { willReadFrequently: true });
-
-        for (let i = 0; i < TEMPLATE_SCALES.length; i += 1) {
-          const scale = TEMPLATE_SCALES[i];
-          const width = Math.round(sourceWidth * scale);
-          const height = Math.round(sourceHeight * scale);
-
-          if (width < 12 || height < 12) {
-            continue;
-          }
-
-          if (width > MAX_TEMPLATE_SIDE || height > MAX_TEMPLATE_SIDE) {
-            continue;
-          }
-
-          variantCanvas.width = width;
-          variantCanvas.height = height;
-          variantCtx.clearRect(0, 0, width, height);
-          variantCtx.imageSmoothingEnabled = true;
-          variantCtx.drawImage(baseCanvas, 0, 0, width, height);
-
-          const imageData = variantCtx.getImageData(0, 0, width, height);
-          const variant = buildTemplateVariant(imageData, width, height);
-
-          if (variant) {
-            variants.push(variant);
-          }
-        }
-
-        return variants;
-      }
-
-      async function buildTemplateFromImage(image, templateName) {
-        const sourceCanvas = document.createElement("canvas");
-        sourceCanvas.width = image.naturalWidth;
-        sourceCanvas.height = image.naturalHeight;
-        const sourceCtx = sourceCanvas.getContext("2d", { willReadFrequently: true });
-        sourceCtx.clearRect(0, 0, sourceCanvas.width, sourceCanvas.height);
-        sourceCtx.drawImage(image, 0, 0);
-
-        const sourceData = sourceCtx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
-        const extraction = getTemplateBounds(sourceData, sourceCanvas.width, sourceCanvas.height);
-        if (!extraction) {
-          throw new Error("Template appears empty/transparent");
-        }
-        const { bounds, method } = extraction;
-        let activeMethod = method;
-
-        let baseCanvas = document.createElement("canvas");
-        baseCanvas.width = bounds.w;
-        baseCanvas.height = bounds.h;
-        let baseCtx = baseCanvas.getContext("2d", { willReadFrequently: true });
-        baseCtx.drawImage(
-          sourceCanvas,
-          bounds.x,
-          bounds.y,
-          bounds.w,
-          bounds.h,
-          0,
-          0,
-          bounds.w,
-          bounds.h,
-        );
-
-        if (method === "gold-star auto-crop") {
-          const focused = baseCtx.getImageData(0, 0, baseCanvas.width, baseCanvas.height);
-          const goldBounds = getGoldBounds(focused, baseCanvas.width, baseCanvas.height);
-
-          if (goldBounds) {
-            const margin = 2;
-            const x = clamp(goldBounds.x - margin, 0, baseCanvas.width - 1);
-            const y = clamp(goldBounds.y - margin, 0, baseCanvas.height - 1);
-            const right = clamp(goldBounds.x + goldBounds.w + margin, 0, baseCanvas.width);
-            const bottom = clamp(goldBounds.y + goldBounds.h + margin, 0, baseCanvas.height);
-            const w = Math.max(1, right - x);
-            const h = Math.max(1, bottom - y);
-
-            const tightCanvas = document.createElement("canvas");
-            tightCanvas.width = w;
-            tightCanvas.height = h;
-            const tightCtx = tightCanvas.getContext("2d", { willReadFrequently: true });
-            tightCtx.drawImage(baseCanvas, x, y, w, h, 0, 0, w, h);
-
-            baseCanvas = tightCanvas;
-            baseCtx = tightCtx;
-            activeMethod = "gold-star tight crop";
-          }
-        }
-
-        if (
-          activeMethod === "alpha crop" &&
-          baseCanvas.width > MAX_TEMPLATE_SIDE * 1.7 &&
-          baseCanvas.height > MAX_TEMPLATE_SIDE * 1.7
-        ) {
-          throw new Error("Template looks like a full screenshot. Use 8.png or an isolated star image.");
-        }
-
-        const variants = applyTemplateFromCanvas(baseCanvas, templateName, activeMethod);
-
-        statusDiv.innerText =
-          "Status: Template ready (" +
-          templateName +
-          ", " +
-          variants.length +
-          " scales, " +
-          baseCanvas.width +
-          "x" +
-          baseCanvas.height +
-          ", " +
-          activeMethod +
-          ")";
+        await applyTemplateCanvas(templateCanvas, file.name, method);
+        setStatus("Status: Template loaded", "warn");
       }
 
       async function loadAutoTemplate() {
         let lastError = null;
 
-        for (let i = 0; i < TEMPLATE_CANDIDATES.length; i += 1) {
-          const candidate = TEMPLATE_CANDIDATES[i];
-
+        for (const candidate of TEMPLATE_CANDIDATES) {
           try {
             const image = await loadImage(candidate);
-            await buildTemplateFromImage(image, candidate);
+            const sourceCanvas = buildSourceCanvas(image);
+            const crop = sourceCanvas.width > 180 || sourceCanvas.height > 180 ? findTemplateCropFromCanvas(sourceCanvas) : null;
+            const templateCanvas = crop ? crop.canvas : sourceCanvas;
+            const method = crop ? crop.method : "full image";
+            await applyTemplateCanvas(templateCanvas, candidate, method);
+            setStatus("Status: Template ready", "warn");
             return;
           } catch (error) {
             lastError = error;
           }
         }
 
-        throw lastError || new Error("No template image found");
+        throw lastError || new Error("No template candidate could be loaded");
       }
 
-      async function loadTemplateFromFile(file) {
-        const url = URL.createObjectURL(file);
-
-        try {
-          const image = await loadImage(url);
-          await buildTemplateFromImage(image, file.name);
-        } finally {
-          URL.revokeObjectURL(url);
-          templateFileInput.value = "";
-        }
-      }
-
-      async function calibrateFromCurrentView() {
-        if (!video.srcObject || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
-          statusDiv.innerText = "Status: Start camera first";
-          calibrationReadoutDiv.innerText = "Calibration: camera unavailable";
-          return;
-        }
-
-        if (!state.roi) {
-          statusDiv.innerText = "Status: Draw ROI around example star first";
-          calibrationReadoutDiv.innerText = "Calibration: requires ROI";
-          return;
-        }
-
-        const wasScanning = state.scanning;
-        clearScanLoop();
-
+      function prepareProcessFrame() {
         processCtx.drawImage(video, 0, 0, processCanvas.width, processCanvas.height);
-
-        const searchRect = getSearchRectInProcessSpace();
-        if (!searchRect) {
-          statusDiv.innerText = "Status: ROI too small for calibration";
-          calibrationReadoutDiv.innerText = "Calibration: ROI too small";
-          return;
-        }
-
-        const roiData = processCtx.getImageData(searchRect.x, searchRect.y, searchRect.w, searchRect.h);
-        const starBounds = getGoldBounds(roiData, searchRect.w, searchRect.h);
-        if (!starBounds) {
-          statusDiv.innerText = "Status: Could not isolate yellow star";
-          calibrationReadoutDiv.innerText = "Calibration: no yellow star detected in ROI";
-          if (wasScanning) {
-            restartScanLoop();
-          }
-          return;
-        }
-
-        const focusMargin = Math.max(1, Math.round(Math.min(starBounds.w, starBounds.h) * 0.18));
-        const x = clamp(starBounds.x - focusMargin, 0, searchRect.w - 1);
-        const y = clamp(starBounds.y - focusMargin, 0, searchRect.h - 1);
-        const right = clamp(starBounds.x + starBounds.w + focusMargin, 0, searchRect.w);
-        const bottom = clamp(starBounds.y + starBounds.h + focusMargin, 0, searchRect.h);
-        const w = Math.max(1, right - x);
-        const h = Math.max(1, bottom - y);
-
-        const roiCanvas = document.createElement("canvas");
-        roiCanvas.width = searchRect.w;
-        roiCanvas.height = searchRect.h;
-        const roiCtx = roiCanvas.getContext("2d", { willReadFrequently: true });
-        roiCtx.putImageData(roiData, 0, 0);
-
-        const calibratedCanvas = document.createElement("canvas");
-        calibratedCanvas.width = w;
-        calibratedCanvas.height = h;
-        const calibratedCtx = calibratedCanvas.getContext("2d", { willReadFrequently: true });
-        calibratedCtx.drawImage(roiCanvas, x, y, w, h, 0, 0, w, h);
-
-        applyTemplateFromCanvas(calibratedCanvas, "live-calibrated-star", "ROI calibration");
-
-        const prepared = preprocessSearchImage(roiData, searchRect.w, searchRect.h);
-        const best = findBestMatch(
-          prepared.gray,
-          prepared.chromaRG,
-          prepared.chromaBG,
-          prepared.goldMask,
-          prepared.neutralMask,
-          prepared.edges,
-          searchRect.w,
-          searchRect.h,
-        );
-
-        const score = best ? best.score : 0.32;
-        const goldScore = best ? best.goldScore : 0;
-        const edgeScore = best ? best.edgeScore : 0;
-        const toneScore = best ? best.toneScore : 0;
-        const colorScore = best ? best.colorScore : 0;
-        const edgeDensity = prepared.edgeDensity;
-
-        const calibratedThreshold = clamp(Number(Math.max(0.2, score * 0.74).toFixed(2)), 0.2, 0.88);
-        settings.scoreThreshold = calibratedThreshold;
-        scoreSlider.value = String(calibratedThreshold);
-        scoreValue.innerText = calibratedThreshold.toFixed(2);
-
-        const calibratedEdge = clamp(
-          Math.round(settings.edgeSensitivity + (edgeDensity - 0.18) * 110),
-          14,
-          82,
-        );
-        settings.edgeSensitivity = calibratedEdge;
-        edgeSlider.value = String(calibratedEdge);
-        edgeValue.innerText = String(calibratedEdge);
-
-        const calibratedStable = score < 0.5 ? 1 : 2;
-        settings.stableFrames = calibratedStable;
-        stableSlider.value = String(calibratedStable);
-        stableValue.innerText = String(calibratedStable);
-
-        calibrationReadoutDiv.innerText =
-          "Calibration: score " +
-          score.toFixed(3) +
-          " | gold " +
-          goldScore.toFixed(3) +
-          " | threshold " +
-          calibratedThreshold.toFixed(2) +
-          " | edge " +
-          calibratedEdge +
-          " | stable " +
-          calibratedStable +
-          " | crop " +
-          w +
-          "x" +
-          h;
-
-        updateStats(score, edgeScore, toneScore, colorScore, goldScore, edgeDensity);
-        drawOverlay();
-
-        statusDiv.innerText = "Status: Calibration complete";
-
-        if (wasScanning) {
-          state.scanning = true;
-          state.scanTimer = window.setInterval(() => {
-            detectFrame().catch((error) => {
-              statusDiv.innerText = "Status: Detection error";
-              console.error(error);
-            });
-          }, settings.scanInterval);
-        }
       }
 
-      async function ensureAudioReady() {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContextClass) {
-          return null;
-        }
-
-        if (!state.audioContext || state.audioContext.state === "closed") {
-          state.audioContext = new AudioContextClass();
-        }
-
-        if (state.audioContext.state === "suspended") {
-          await state.audioContext.resume();
-        }
-
-        return state.audioContext;
-      }
-
-      async function playBeep() {
-        const now = Date.now();
-        if (now - state.lastBeepAt < settings.beepCooldown) {
-          return;
-        }
-
-        state.lastBeepAt = now;
-
-        try {
-          const context = await ensureAudioReady();
-          if (!context) {
-            return;
-          }
-
-          const pulses = [
-            { freq: 1108, delay: 0, duration: 0.08 },
-            { freq: 1318, delay: 0.11, duration: 0.08 },
-            { freq: 1661, delay: 0.22, duration: 0.11 },
-          ];
-
-          const begin = context.currentTime + 0.01;
-
-          for (let i = 0; i < pulses.length; i += 1) {
-            const pulse = pulses[i];
-            const osc = context.createOscillator();
-            const gain = context.createGain();
-
-            const startTime = begin + pulse.delay;
-            const endTime = startTime + pulse.duration;
-
-            osc.type = "square";
-            osc.frequency.setValueAtTime(pulse.freq, startTime);
-
-            gain.gain.setValueAtTime(0.0001, startTime);
-            gain.gain.exponentialRampToValueAtTime(0.22, startTime + 0.008);
-            gain.gain.exponentialRampToValueAtTime(0.0001, endTime);
-
-            osc.connect(gain);
-            gain.connect(context.destination);
-
-            osc.start(startTime);
-            osc.stop(endTime);
-          }
-
-          if (navigator.vibrate) {
-            navigator.vibrate([110, 70, 110]);
-          }
-        } catch (error) {
-          console.error(error);
-        }
-      }
-
-      function getSearchRectInProcessSpace() {
-        if (!processCanvas.width || !processCanvas.height) {
-          return null;
-        }
-
+      function getScanRectProcess() {
         if (!state.roi) {
-          return {
-            x: 0,
-            y: 0,
-            w: processCanvas.width,
-            h: processCanvas.height,
-          };
+          return { x: 0, y: 0, w: processCanvas.width, h: processCanvas.height };
         }
 
-        const scaleX = processCanvas.width / overlay.width;
-        const scaleY = processCanvas.height / overlay.height;
-
-        const x = clamp(Math.round(state.roi.x * scaleX), 0, processCanvas.width - 1);
-        const y = clamp(Math.round(state.roi.y * scaleY), 0, processCanvas.height - 1);
-        const w = Math.min(processCanvas.width - x, Math.round(state.roi.w * scaleX));
-        const h = Math.min(processCanvas.height - y, Math.round(state.roi.h * scaleY));
-
-        if (w < MIN_ROI_SIZE || h < MIN_ROI_SIZE) {
-          return null;
-        }
+        const roi = overlayToProcessRect(state.roi);
+        const x = clamp(roi.x, 0, processCanvas.width - 1);
+        const y = clamp(roi.y, 0, processCanvas.height - 1);
+        const w = clamp(roi.w, 1, processCanvas.width - x);
+        const h = clamp(roi.h, 1, processCanvas.height - y);
 
         return { x, y, w, h };
       }
 
-      function preprocessSearchImage(imageData, width, height) {
-        const gray = new Uint8Array(width * height);
-        const chromaRG = new Int16Array(width * height);
-        const chromaBG = new Int16Array(width * height);
-        const goldMask = new Uint8Array(width * height);
-        const neutralMask = new Uint8Array(width * height);
-        const rgba = imageData.data;
-
-        for (let i = 0, p = 0; i < rgba.length; i += 4, p += 1) {
-          const r = rgba[i];
-          const g = rgba[i + 1];
-          const b = rgba[i + 2];
-          gray[p] = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
-          chromaRG[p] = r - g;
-          chromaBG[p] = b - g;
-
-          const max = Math.max(r, g, b);
-          const min = Math.min(r, g, b);
-          const diff = max - min;
-          const sat = max ? diff / max : 0;
-
-          if (max >= 84 && diff <= 24 && sat <= 0.18) {
-            neutralMask[p] = 1;
-          }
-
-          if (max >= 70 && diff >= 8) {
-            let hue = 0;
-            if (diff !== 0) {
-              if (max === r) {
-                hue = ((g - b) / diff) % 6;
-              } else if (max === g) {
-                hue = (b - r) / diff + 2;
-              } else {
-                hue = (r - g) / diff + 4;
-              }
-            }
-
-            hue *= 60;
-            if (hue < 0) {
-              hue += 360;
-            }
-
-            if (hue >= 20 && hue <= 92 && sat >= 0.08) {
-              goldMask[p] = 1;
-            }
-          }
-        }
-
-        const sobel = buildSobelMagnitudes(gray, width, height, null);
-        const threshold = Math.max(settings.edgeSensitivity * 8, sobel.average * 1.12);
-
-        const edges = new Uint8Array(width * height);
-        let edgePixels = 0;
-
-        for (let i = 0; i < edges.length; i += 1) {
-          if (sobel.magnitudes[i] >= threshold) {
-            edges[i] = 1;
-            edgePixels += 1;
-          }
-        }
-
-        const edgeDensity = edges.length ? edgePixels / edges.length : 0;
-
-        return {
-          gray,
-          chromaRG,
-          chromaBG,
-          goldMask,
-          neutralMask,
-          edges,
-          edgeDensity,
-        };
-      }
-
-      function scoreCandidate(
-        gray,
-        chromaRG,
-        chromaBG,
-        goldMask,
-        neutralMask,
-        edges,
-        searchWidth,
-        templateVariant,
-        offsetX,
-        offsetY,
-      ) {
-        const edgeCount = templateVariant.edgeCount;
-        let edgeHits = 0;
-
-        for (let i = 0; i < edgeCount; i += 1) {
-          const px = templateVariant.edgeX[i];
-          const py = templateVariant.edgeY[i];
-          const idx = (offsetY + py) * searchWidth + (offsetX + px);
-          if (!edges[idx]) {
-            continue;
-          }
-
-          const edgeColorDiff =
-            Math.abs(chromaRG[idx] - templateVariant.edgeC1[i]) +
-            Math.abs(chromaBG[idx] - templateVariant.edgeC2[i]);
-          const edgeColorWeight = 1 - Math.min(1, edgeColorDiff / 420);
-          const neutralWeight = neutralMask[idx] ? 0.35 : 1;
-          edgeHits += edgeColorWeight * templateVariant.edgeW[i] * neutralWeight;
-        }
-
-        const edgeScore = templateVariant.edgeWeightTotal
-          ? edgeHits / templateVariant.edgeWeightTotal
-          : 0;
-        const quickCutoff = Math.max(0.08, settings.scoreThreshold * 0.24);
-
-        let absDiff = 0;
-        let colorDiff = 0;
-        let goldHits = 0;
-        let weightedTotal = 0;
-
-        for (let i = 0; i < templateVariant.sampleCount; i += 1) {
-          const px = templateVariant.sampleX[i];
-          const py = templateVariant.sampleY[i];
-          const idx = (offsetY + py) * searchWidth + (offsetX + px);
-          const weight = templateVariant.sampleW[i];
-          const observed = gray[idx];
-          absDiff += weight * Math.abs(observed - templateVariant.sampleV[i]);
-          colorDiff +=
-            weight *
-            (Math.abs(chromaRG[idx] - templateVariant.sampleC1[i]) +
-              Math.abs(chromaBG[idx] - templateVariant.sampleC2[i]));
-          weightedTotal += weight;
-
-          if (templateVariant.sampleGold[i] && goldMask[idx]) {
-            goldHits += weight;
-          }
-        }
-
-        const toneScore = weightedTotal ? clamp(1 - absDiff / (weightedTotal * 255), 0, 1) : 0;
-        const colorScore = weightedTotal ? clamp(1 - colorDiff / (weightedTotal * 510), 0, 1) : 0;
-        const goldScore = templateVariant.goldWeightTotal
-          ? goldHits / templateVariant.goldWeightTotal
-          : 1;
-
-        const edgePenalty = edgeScore < quickCutoff ? 0.52 + 0.48 * (edgeScore / quickCutoff) : 1;
-        const chromaPenalty = colorScore < 0.1 && goldScore < 0.05 ? 0.58 : 1;
-        const rawScore = edgeScore * 0.32 + toneScore * 0.24 + colorScore * 0.24 + goldScore * 0.2;
-        const score = rawScore * edgePenalty * chromaPenalty;
-
-        return {
-          score,
-          edgeScore,
-          toneScore,
-          colorScore,
-          goldScore,
-        };
-      }
-
-      function refineCandidate(
-        gray,
-        chromaRG,
-        chromaBG,
-        goldMask,
-        neutralMask,
-        edges,
-        searchWidth,
-        searchHeight,
-        candidate,
-      ) {
-        const variant = candidate.variant;
-        const maxX = searchWidth - variant.width;
-        const maxY = searchHeight - variant.height;
-
-        const radius = Math.max(1, variant.searchStep - 1);
-        const startX = clamp(candidate.x - radius, 0, maxX);
-        const endX = clamp(candidate.x + radius, 0, maxX);
-        const startY = clamp(candidate.y - radius, 0, maxY);
-        const endY = clamp(candidate.y + radius, 0, maxY);
-
-        let best = candidate;
-
-        for (let y = startY; y <= endY; y += 1) {
-          for (let x = startX; x <= endX; x += 1) {
-            const scored = scoreCandidate(
-              gray,
-              chromaRG,
-              chromaBG,
-              goldMask,
-              neutralMask,
-              edges,
-              searchWidth,
-              variant,
-              x,
-              y,
-            );
-            if (scored.score > best.score) {
-              best = {
-                score: scored.score,
-                edgeScore: scored.edgeScore,
-                toneScore: scored.toneScore,
-                colorScore: scored.colorScore,
-                goldScore: scored.goldScore,
-                x,
-                y,
-                w: variant.width,
-                h: variant.height,
-                variant,
-              };
-            }
-          }
-        }
-
-        return best;
-      }
-
-      function findBestMatch(
-        gray,
-        chromaRG,
-        chromaBG,
-        goldMask,
-        neutralMask,
-        edges,
-        searchWidth,
-        searchHeight,
-      ) {
-        let best = {
-          score: 0,
-          edgeScore: 0,
-          toneScore: 0,
-          colorScore: 0,
-          goldScore: 0,
-          x: 0,
-          y: 0,
-          w: 0,
-          h: 0,
-          variant: null,
-        };
-
-        for (let v = 0; v < state.templateVariants.length; v += 1) {
-          const variant = state.templateVariants[v];
-          const maxX = searchWidth - variant.width;
-          const maxY = searchHeight - variant.height;
-
-          if (maxX < 0 || maxY < 0) {
-            continue;
-          }
-
-          const step = variant.searchStep;
-
-          for (let y = 0; y <= maxY; y += step) {
-            for (let x = 0; x <= maxX; x += step) {
-              const scored = scoreCandidate(
-                gray,
-                chromaRG,
-                chromaBG,
-                goldMask,
-                neutralMask,
-                edges,
-                searchWidth,
-                variant,
-                x,
-                y,
-              );
-
-              if (
-                scored.score > best.score ||
-                (scored.score === best.score && scored.edgeScore > best.edgeScore)
-              ) {
-                best = {
-                  score: scored.score,
-                  edgeScore: scored.edgeScore,
-                  toneScore: scored.toneScore,
-                  colorScore: scored.colorScore,
-                  goldScore: scored.goldScore,
-                  x,
-                  y,
-                  w: variant.width,
-                  h: variant.height,
-                  variant,
-                };
-              }
-            }
-          }
-        }
-
-        if (!best.variant) {
-          return null;
-        }
-
-        return refineCandidate(
-          gray,
-          chromaRG,
-          chromaBG,
-          goldMask,
-          neutralMask,
-          edges,
-          searchWidth,
-          searchHeight,
-          best,
+      function evaluateCandidateEmbedding(sampleBox) {
+        candidateCtx.clearRect(0, 0, candidateCanvas.width, candidateCanvas.height);
+        candidateCtx.drawImage(
+          processCanvas,
+          sampleBox.x,
+          sampleBox.y,
+          sampleBox.w,
+          sampleBox.h,
+          0,
+          0,
+          candidateCanvas.width,
+          candidateCanvas.height,
         );
+
+        const result = state.embedder.embed(candidateCanvas);
+        const embedding = readEmbedding(result);
+        if (!embedding) {
+          return 0;
+        }
+
+        return cosineSimilarity(state.templateEmbedding, embedding);
       }
 
-      function convertProcessRectToOverlayRect(rect) {
-        const scaleX = overlay.width / processCanvas.width;
-        const scaleY = overlay.height / processCanvas.height;
+      function pickBestCandidate(scanRect, scanImageData) {
+        const { mask, goldCount } = buildGoldMask(scanImageData, scanRect.w, scanRect.h);
+        if (!goldCount) {
+          return {
+            best: null,
+            candidateCount: 0,
+            similarity: 0,
+            goldRatio: 0,
+          };
+        }
+
+        const maxPixels = Math.max(settings.minGoldPixels + 1, Math.round(scanRect.w * scanRect.h * 0.25));
+        const components = findMaskComponents(mask, scanRect.w, scanRect.h, settings.minGoldPixels, maxPixels);
+        const trimmed = components.slice(0, MAX_CANDIDATES);
+
+        let best = null;
+
+        for (const component of trimmed) {
+          if (component.aspect < 0.4 || component.aspect > 1.95) {
+            continue;
+          }
+
+          if (component.fill < 0.05 || component.fill > 0.9) {
+            continue;
+          }
+
+          const sampleBox = componentToSampleBox(component, scanRect, scanRect.w, scanRect.h);
+          const goldRatio = computeMaskRatio(mask, scanRect.w, sampleBox);
+          const similarity = evaluateCandidateEmbedding(sampleBox);
+
+          let score = similarity * 0.86 + Math.min(1, goldRatio / Math.max(0.001, settings.minGoldRatio * 2.8)) * 0.14;
+          if (goldRatio < settings.minGoldRatio) {
+            score *= 0.55;
+          }
+
+          if (!best || score > best.score) {
+            best = {
+              score,
+              similarity,
+              goldRatio,
+              box: { x: sampleBox.x, y: sampleBox.y, w: sampleBox.w, h: sampleBox.h },
+            };
+          }
+        }
 
         return {
-          x: Math.round(rect.x * scaleX),
-          y: Math.round(rect.y * scaleY),
-          w: Math.round(rect.w * scaleX),
-          h: Math.round(rect.h * scaleY),
+          best,
+          candidateCount: trimmed.length,
+          similarity: best ? best.similarity : 0,
+          goldRatio: best ? best.goldRatio : 0,
         };
-      }
-
-      function areRectsSimilar(a, b) {
-        if (!a || !b) {
-          return false;
-        }
-
-        const dx = Math.abs(a.x - b.x);
-        const dy = Math.abs(a.y - b.y);
-        const dw = Math.abs(a.w - b.w);
-        const dh = Math.abs(a.h - b.h);
-
-        if (dx > POS_TOLERANCE || dy > POS_TOLERANCE) {
-          return false;
-        }
-
-        const widthRatio = a.w ? dw / a.w : 1;
-        const heightRatio = a.h ? dh / a.h : 1;
-
-        return widthRatio <= SIZE_TOLERANCE_RATIO && heightRatio <= SIZE_TOLERANCE_RATIO;
       }
 
       async function detectFrame() {
@@ -2100,369 +1282,488 @@
           return;
         }
 
-        if (!state.templateVariants.length) {
-          statusDiv.innerText = "Status: Load a template first";
-          return;
-        }
-
-        if (!processCanvas.width || !processCanvas.height) {
-          statusDiv.innerText = "Status: Camera frame unavailable";
+        if (!state.embedder || !state.templateEmbedding || !video.videoWidth) {
+          setStatus("Status: Waiting for model/template/camera", "warn");
           return;
         }
 
         state.scanInProgress = true;
-
         try {
-          processCtx.drawImage(video, 0, 0, processCanvas.width, processCanvas.height);
-
-          const searchRect = getSearchRectInProcessSpace();
-          if (!searchRect) {
-            statusDiv.innerText = "Status: Scan area too small";
-            state.stableHits = 0;
-            state.lastCandidate = null;
-            state.candidateBox = null;
-            state.detectionBox = null;
-            drawOverlay();
-            updateStats(0, 0, 0, 0, 0, 0);
-            return;
-          }
-
-          const frameData = processCtx.getImageData(searchRect.x, searchRect.y, searchRect.w, searchRect.h);
-          const prepared = preprocessSearchImage(frameData, searchRect.w, searchRect.h);
-          const best = findBestMatch(
-            prepared.gray,
-            prepared.chromaRG,
-            prepared.chromaBG,
-            prepared.goldMask,
-            prepared.neutralMask,
-            prepared.edges,
-            searchRect.w,
-            searchRect.h,
-          );
-
+          prepareProcessFrame();
           state.frameCount += 1;
 
-          if (!best || best.score < settings.scoreThreshold) {
+          const scanRect = getScanRectProcess();
+          const scanImageData = processCtx.getImageData(scanRect.x, scanRect.y, scanRect.w, scanRect.h);
+          const { best, candidateCount, similarity, goldRatio } = pickBestCandidate(scanRect, scanImageData);
+
+          let bestScore = 0;
+
+          if (best && best.score >= settings.matchThreshold) {
+            bestScore = best.score;
+            const overlayBox = processToOverlayRect(best.box);
+
+            if (state.lastCandidate && isSameCandidate(state.lastCandidate, overlayBox)) {
+              state.stableHits += 1;
+            } else {
+              state.stableHits = 1;
+            }
+
+            state.lastCandidate = overlayBox;
+            state.candidateBox = overlayBox;
+
+            if (state.stableHits >= settings.stableFrames) {
+              state.detectionBox = overlayBox;
+              setStatus(
+                "Status: Star detected (score " + best.score.toFixed(3) + ")",
+                "good",
+              );
+              await playBeep();
+            } else {
+              setStatus(
+                "Status: Candidate " +
+                  state.stableHits +
+                  "/" +
+                  settings.stableFrames +
+                  " (score " +
+                  best.score.toFixed(3) +
+                  ")",
+                "warn",
+              );
+              state.detectionBox = null;
+            }
+          } else {
             state.stableHits = 0;
             state.lastCandidate = null;
             state.candidateBox = null;
             state.detectionBox = null;
-            statusDiv.innerText = "Status: Scanning";
-            updateStats(
-              best ? best.score : 0,
-              best ? best.edgeScore : 0,
-              best ? best.toneScore : 0,
-              best ? best.colorScore : 0,
-              best ? best.goldScore : 0,
-              prepared.edgeDensity,
-            );
-            drawOverlay();
-            return;
+            setStatus("Status: Scanning", "warn");
           }
 
-          const candidateProcessRect = {
-            x: searchRect.x + best.x,
-            y: searchRect.y + best.y,
-            w: best.w,
-            h: best.h,
-          };
-
-          if (areRectsSimilar(candidateProcessRect, state.lastCandidate)) {
-            state.stableHits += 1;
-          } else {
-            state.stableHits = 1;
-          }
-
-          state.lastCandidate = candidateProcessRect;
-          state.candidateBox = convertProcessRectToOverlayRect(candidateProcessRect);
-
-          if (state.stableHits >= settings.stableFrames) {
-            state.detectionBox = state.candidateBox;
-            statusDiv.innerText =
-              "Status: Match found (score " + roundTo(best.score, 3).toFixed(3) + ", " + state.templateName + ")";
-            playBeep().catch((error) => {
-              console.error(error);
-            });
-          } else {
-            statusDiv.innerText =
-              "Status: Candidate " +
-              state.stableHits +
-              "/" +
-              settings.stableFrames +
-              " (score " +
-              roundTo(best.score, 3).toFixed(3) +
-              ")";
-          }
-
-          updateStats(
-            best.score,
-            best.edgeScore,
-            best.toneScore,
-            best.colorScore,
-            best.goldScore,
-            prepared.edgeDensity,
-          );
+          updateStats(bestScore, similarity, goldRatio, candidateCount);
           drawOverlay();
-        } catch (error) {
-          statusDiv.innerText = "Status: Detection error";
-          console.error(error);
         } finally {
           state.scanInProgress = false;
         }
       }
 
+      async function playBeep() {
+        const now = performance.now();
+        if (now - state.lastBeepAt < settings.beepCooldown) {
+          return;
+        }
+
+        state.lastBeepAt = now;
+        if (!state.audioContext) {
+          state.audioContext = new window.AudioContext();
+        }
+
+        if (state.audioContext.state === "suspended") {
+          await state.audioContext.resume();
+        }
+
+        const ctx = state.audioContext;
+        const start = ctx.currentTime + 0.01;
+
+        const tone = (freq, offset) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0, start + offset);
+          gain.gain.linearRampToValueAtTime(0.21, start + offset + 0.01);
+          gain.gain.exponentialRampToValueAtTime(0.001, start + offset + 0.14);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(start + offset);
+          osc.stop(start + offset + 0.16);
+        };
+
+        tone(1140, 0);
+        tone(1560, 0.08);
+      }
+
       async function startCamera() {
-        clearScanLoop();
-        stopStream();
+        if (state.stream) {
+          return;
+        }
 
-        statusDiv.innerText = "Status: Starting camera";
-
-        await ensureAudioReady().catch(() => {});
-
-        const mediaStream = await navigator.mediaDevices.getUserMedia({
+        const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: { ideal: "environment" },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
           },
           audio: false,
         });
 
-        state.stream = mediaStream;
-        video.srcObject = mediaStream;
+        state.stream = stream;
+        state.activeTrack = stream.getVideoTracks()[0] || null;
+        video.srcObject = stream;
 
         await new Promise((resolve) => {
-          video.onloadedmetadata = () => resolve();
+          if (video.readyState >= 2) {
+            resolve();
+            return;
+          }
+
+          video.onloadedmetadata = () => {
+            resolve();
+          };
         });
 
-        await video.play().catch(() => {});
-
-        overlay.width = video.videoWidth;
-        overlay.height = video.videoHeight;
-
-        state.processScale = Math.min(1, MAX_PROCESS_WIDTH / video.videoWidth);
-        processCanvas.width = Math.max(160, Math.round(video.videoWidth * state.processScale));
-        processCanvas.height = Math.max(120, Math.round(video.videoHeight * state.processScale));
-
-        state.activeTrack = mediaStream.getVideoTracks()[0] || null;
-        await configureCameraControls();
-
-        clearDetectionState();
-        statusDiv.innerText = "Status: Camera ready";
-        drawOverlay();
+        resizeCanvasesForVideo();
+        await updateCameraControls();
+        setStatus("Status: Camera ready", "warn");
       }
 
-      async function startScan() {
-        if (!video.srcObject || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
-          statusDiv.innerText = "Status: Start camera first";
+      async function updateCameraControls() {
+        const track = state.activeTrack;
+        if (!track) {
+          cameraControlStatusDiv.textContent = "Camera controls: unavailable";
           return;
         }
 
-        if (!state.templateVariants.length) {
-          statusDiv.innerText = "Status: Loading template";
-          try {
-            await loadAutoTemplate();
-          } catch (error) {
-            statusDiv.innerText = "Status: Template unavailable";
-            throw error;
-          }
-        }
-
-        await ensureAudioReady().catch(() => {});
-
-        clearDetectionState();
-        state.scanning = true;
-        statusDiv.innerText = "Status: Scanning";
-
-        state.scanTimer = window.setInterval(() => {
-          detectFrame().catch((error) => {
-            statusDiv.innerText = "Status: Detection error";
-            console.error(error);
-          });
-        }, settings.scanInterval);
-      }
-
-      function stopScan() {
-        clearScanLoop();
-
-        statusDiv.innerText = state.templateVariants.length
-          ? "Status: Scan stopped (template ready)"
-          : "Status: Scan stopped";
-      }
-
-      function resetState() {
-        clearScanLoop();
-
-        state.roi = null;
-        clearDetectionState();
-        calibrationReadoutDiv.innerText = "Calibration: not set";
-
-        statusDiv.innerText = "Status: Reset complete";
-        drawOverlay();
-      }
-
-      async function applyTrackConstraint(advancedConstraint) {
-        if (!state.activeTrack) {
+        const capabilities = track.getCapabilities ? track.getCapabilities() : null;
+        if (!capabilities) {
+          cameraControlStatusDiv.textContent = "Camera controls: not supported";
           return;
         }
 
-        try {
-          await state.activeTrack.applyConstraints({ advanced: [advancedConstraint] });
-        } catch (error) {
-          console.warn("Track constraint failed", advancedConstraint, error);
+        let available = [];
+
+        if (capabilities.zoom) {
+          const min = capabilities.zoom.min ?? 1;
+          const max = capabilities.zoom.max ?? 1;
+          const step = capabilities.zoom.step ?? 0.01;
+          zoomSlider.min = String(min);
+          zoomSlider.max = String(max);
+          zoomSlider.step = String(step);
+          zoomSlider.value = String(min);
+          zoomSlider.disabled = false;
+          zoomValue.textContent = Number(min).toFixed(2);
+          available.push("zoom");
+        } else {
+          zoomSlider.disabled = true;
+          zoomValue.textContent = "N/A";
         }
+
+        if (capabilities.focusDistance) {
+          const min = capabilities.focusDistance.min ?? 0;
+          const max = capabilities.focusDistance.max ?? 1;
+          const step = capabilities.focusDistance.step ?? 0.01;
+          focusSlider.min = String(min);
+          focusSlider.max = String(max);
+          focusSlider.step = String(step);
+          focusSlider.value = String(min);
+          focusSlider.disabled = false;
+          focusValue.textContent = Number(min).toFixed(2);
+          manualFocusToggle.disabled = false;
+          available.push("focus");
+        } else {
+          focusSlider.disabled = true;
+          focusValue.textContent = "N/A";
+          manualFocusToggle.checked = false;
+          manualFocusToggle.disabled = true;
+        }
+
+        cameraControlStatusDiv.textContent =
+          available.length > 0
+            ? "Camera controls: " + available.join(", ") + " available"
+            : "Camera controls: unavailable";
       }
 
       function scheduleZoomApply() {
         if (state.zoomDebounce) {
           window.clearTimeout(state.zoomDebounce);
         }
-
         state.zoomDebounce = window.setTimeout(() => {
-          const value = parseFloat(zoomSlider.value);
-          applyTrackConstraint({ zoom: value }).catch(() => {});
-        }, 80);
+          applyZoom().catch((error) => console.error(error));
+        }, 70);
       }
 
       function scheduleFocusApply() {
-        if (!manualFocusToggle.checked) {
-          return;
-        }
-
         if (state.focusDebounce) {
           window.clearTimeout(state.focusDebounce);
         }
-
         state.focusDebounce = window.setTimeout(() => {
-          const value = parseFloat(focusSlider.value);
-          applyTrackConstraint({ focusDistance: value }).catch(() => {});
-        }, 80);
+          applyFocus().catch((error) => console.error(error));
+        }, 70);
+      }
+
+      async function applyZoom() {
+        if (!state.activeTrack || zoomSlider.disabled) {
+          return;
+        }
+
+        const zoom = parseFloat(zoomSlider.value);
+        await state.activeTrack.applyConstraints({
+          advanced: [{ zoom }],
+        });
       }
 
       async function setManualFocus(enabled) {
-        if (!state.activeTrack) {
-          manualFocusToggle.checked = false;
+        if (!state.activeTrack || manualFocusToggle.disabled) {
           return;
         }
 
-        const capabilities = state.activeTrack.getCapabilities ? state.activeTrack.getCapabilities() : null;
-        if (!capabilities || !capabilities.focusDistance) {
-          manualFocusToggle.checked = false;
-          focusSlider.disabled = true;
-          cameraControlStatusDiv.innerText = "Camera controls: manual focus unavailable";
+        if (enabled) {
+          const focusDistance = parseFloat(focusSlider.value);
+          await state.activeTrack.applyConstraints({
+            advanced: [{ focusMode: "manual", focusDistance }],
+          });
+          await applyFocus();
+        } else {
+          await state.activeTrack.applyConstraints({
+            advanced: [{ focusMode: "continuous" }],
+          });
+        }
+      }
+
+      async function applyFocus() {
+        if (!state.activeTrack || focusSlider.disabled || !manualFocusToggle.checked) {
           return;
         }
 
-        try {
-          if (enabled) {
-            await applyTrackConstraint({ focusMode: "manual" });
-            focusSlider.disabled = false;
-            await applyTrackConstraint({ focusDistance: parseFloat(focusSlider.value) });
-            cameraControlStatusDiv.innerText = "Camera controls: manual focus enabled";
-          } else {
-            focusSlider.disabled = true;
-            await applyTrackConstraint({ focusMode: "continuous" });
-            cameraControlStatusDiv.innerText = "Camera controls: continuous focus";
-          }
-        } catch (error) {
-          console.warn(error);
-          manualFocusToggle.checked = false;
-          focusSlider.disabled = true;
-          cameraControlStatusDiv.innerText = "Camera controls: focus mode update failed";
-        }
+        const focusDistance = parseFloat(focusSlider.value);
+        await state.activeTrack.applyConstraints({
+          advanced: [{ focusMode: "manual", focusDistance }],
+        });
       }
 
-      async function configureCameraControls() {
-        const track = state.activeTrack;
+      async function calibrateFromRoi() {
+        if (!video.videoWidth || !state.embedder) {
+          throw new Error("Camera or model is not ready");
+        }
 
-        if (!track || typeof track.getCapabilities !== "function") {
-          zoomSlider.disabled = true;
-          focusSlider.disabled = true;
-          manualFocusToggle.disabled = true;
-          zoomValue.innerText = "N/A";
-          focusValue.innerText = "N/A";
-          cameraControlStatusDiv.innerText = "Camera controls: unavailable";
+        if (!state.roi) {
+          throw new Error("Draw an ROI around the star first");
+        }
+
+        prepareProcessFrame();
+        const roiRect = overlayToProcessRect(state.roi);
+        const roiImageData = processCtx.getImageData(roiRect.x, roiRect.y, roiRect.w, roiRect.h);
+
+        const { mask } = buildGoldMask(roiImageData, roiRect.w, roiRect.h);
+        const components = findMaskComponents(mask, roiRect.w, roiRect.h, settings.minGoldPixels, roiRect.w * roiRect.h);
+
+        if (!components.length) {
+          throw new Error("No gold star candidate inside ROI");
+        }
+
+        const best = components[0];
+        const sampleBox = componentToSampleBox(best, roiRect, roiRect.w, roiRect.h);
+
+        const calibratedCanvas = document.createElement("canvas");
+        calibratedCanvas.width = sampleBox.w;
+        calibratedCanvas.height = sampleBox.h;
+        calibratedCanvas
+          .getContext("2d")
+          .drawImage(processCanvas, sampleBox.x, sampleBox.y, sampleBox.w, sampleBox.h, 0, 0, sampleBox.w, sampleBox.h);
+
+        const previousEmbedding = state.templateEmbedding;
+        await applyTemplateCanvas(calibratedCanvas, "live-calibration", "ROI calibration");
+
+        let suggestion = 0.72;
+        if (previousEmbedding) {
+          const similarity = cosineSimilarity(previousEmbedding, state.templateEmbedding);
+          suggestion = clamp(similarity * 0.92, 0.58, 0.9);
+        }
+
+        settings.matchThreshold = Number(suggestion.toFixed(2));
+        matchSlider.value = settings.matchThreshold.toFixed(2);
+        matchValue.textContent = settings.matchThreshold.toFixed(2);
+        settings.stableFrames = 2;
+        stableSlider.value = "2";
+        stableValue.textContent = "2";
+
+        calibrationReadoutDiv.textContent =
+          "Calibration: ROI " + roiRect.w + "x" + roiRect.h + " -> template " + sampleBox.w + "x" + sampleBox.h +
+          " | threshold " + settings.matchThreshold.toFixed(2);
+        setStatus("Status: ROI calibrated", "warn");
+      }
+
+      async function startScan() {
+        await initMediaPipe();
+
+        if (!state.stream) {
+          throw new Error("Start camera first");
+        }
+
+        if (!state.templateEmbedding) {
+          throw new Error("Load a template first");
+        }
+
+        if (state.scanning) {
           return;
         }
 
-        const capabilities = track.getCapabilities();
-        const trackSettings = track.getSettings ? track.getSettings() : {};
+        clearDetectionState();
+        state.scanning = true;
+        state.scanTimer = window.setInterval(() => {
+          detectFrame().catch((error) => {
+            console.error(error);
+            setStatus("Status: Detection error", "bad");
+          });
+        }, settings.scanInterval);
 
-        if (capabilities.zoom) {
-          zoomSlider.disabled = false;
-          zoomSlider.min = String(capabilities.zoom.min);
-          zoomSlider.max = String(capabilities.zoom.max);
-          zoomSlider.step = String(capabilities.zoom.step || 0.01);
-
-          const zoomValueNumber = clamp(
-            trackSettings.zoom ?? capabilities.zoom.min,
-            capabilities.zoom.min,
-            capabilities.zoom.max,
-          );
-
-          zoomSlider.value = String(zoomValueNumber);
-          zoomValue.innerText = zoomValueNumber.toFixed(2);
-        } else {
-          zoomSlider.disabled = true;
-          zoomValue.innerText = "N/A";
-        }
-
-        if (capabilities.focusDistance) {
-          manualFocusToggle.disabled = false;
-          focusSlider.min = String(capabilities.focusDistance.min);
-          focusSlider.max = String(capabilities.focusDistance.max);
-          focusSlider.step = String(capabilities.focusDistance.step || 0.01);
-
-          const focusValueNumber = clamp(
-            trackSettings.focusDistance ?? capabilities.focusDistance.min,
-            capabilities.focusDistance.min,
-            capabilities.focusDistance.max,
-          );
-
-          focusSlider.value = String(focusValueNumber);
-          focusValue.innerText = focusValueNumber.toFixed(2);
-          focusSlider.disabled = !manualFocusToggle.checked;
-        } else {
-          manualFocusToggle.disabled = true;
-          manualFocusToggle.checked = false;
-          focusSlider.disabled = true;
-          focusValue.innerText = "N/A";
-        }
-
-        if (!capabilities.zoom && !capabilities.focusDistance) {
-          cameraControlStatusDiv.innerText = "Camera controls: unavailable";
-        } else if (capabilities.focusDistance) {
-          cameraControlStatusDiv.innerText = "Camera controls: zoom/focus ready";
-        } else {
-          cameraControlStatusDiv.innerText = "Camera controls: zoom ready, focus unavailable";
-        }
+        setStatus("Status: Scanning", "warn");
+        await detectFrame();
       }
 
-      function teardown() {
-        clearScanLoop();
-        stopStream();
-
-        if (state.zoomDebounce) {
-          window.clearTimeout(state.zoomDebounce);
-        }
-
-        if (state.focusDebounce) {
-          window.clearTimeout(state.focusDebounce);
-        }
-
-        if (state.audioContext && state.audioContext.state !== "closed") {
-          state.audioContext.close().catch(() => {});
-        }
+      function stopScan() {
+        stopScanLoop();
+        setStatus("Status: Scan stopped", "warn");
       }
 
-      window.addEventListener("beforeunload", () => {
-        teardown();
+      function stopCamera() {
+        if (state.stream) {
+          state.stream.getTracks().forEach((track) => track.stop());
+          state.stream = null;
+        }
+
+        state.activeTrack = null;
+        video.srcObject = null;
+      }
+
+      function resetAll() {
+        stopScanLoop();
+        stopCamera();
+        state.roi = null;
+        clearDetectionState();
+        calibrationReadoutDiv.textContent = "Calibration: not set";
+        setStatus("Status: Reset complete", "warn");
+
+        zoomSlider.disabled = true;
+        zoomValue.textContent = "N/A";
+        focusSlider.disabled = true;
+        focusValue.textContent = "N/A";
+        manualFocusToggle.checked = false;
+        manualFocusToggle.disabled = true;
+        cameraControlStatusDiv.textContent = "Camera controls: unavailable";
+      }
+
+      startCameraButton.addEventListener("click", () => {
+        startCamera().catch((error) => {
+          console.error(error);
+          setStatus("Status: Camera failed", "bad");
+        });
       });
 
-      statusDiv.innerText = "Status: Idle";
-      calibrationReadoutDiv.innerText = "Calibration: not set";
+      autoTemplateButton.addEventListener("click", () => {
+        loadAutoTemplate().catch((error) => {
+          console.error(error);
+          setStatus("Status: Auto template failed", "bad");
+        });
+      });
+
+      pickTemplateButton.addEventListener("click", () => {
+        templateFileInput.click();
+      });
+
+      templateFileInput.addEventListener("change", () => {
+        const file = templateFileInput.files && templateFileInput.files[0];
+        if (!file) {
+          return;
+        }
+
+        loadTemplateFromFile(file).catch((error) => {
+          console.error(error);
+          setStatus("Status: Template load failed", "bad");
+        });
+      });
+
+      calibrateButton.addEventListener("click", () => {
+        calibrateFromRoi().catch((error) => {
+          console.error(error);
+          setStatus("Status: Calibration failed", "bad");
+        });
+      });
+
+      startScanButton.addEventListener("click", () => {
+        startScan().catch((error) => {
+          console.error(error);
+          setStatus("Status: Detection could not start", "bad");
+        });
+      });
+
+      stopScanButton.addEventListener("click", () => {
+        stopScan();
+      });
+
+      resetButton.addEventListener("click", () => {
+        resetAll();
+      });
+
+      matchSlider.addEventListener("input", () => {
+        settings.matchThreshold = parseFloat(matchSlider.value);
+        matchValue.textContent = settings.matchThreshold.toFixed(2);
+      });
+
+      stableSlider.addEventListener("input", () => {
+        settings.stableFrames = parseInt(stableSlider.value, 10);
+        stableValue.textContent = String(settings.stableFrames);
+      });
+
+      goldSlider.addEventListener("input", () => {
+        settings.minGoldRatio = parseFloat(goldSlider.value);
+        goldValue.textContent = settings.minGoldRatio.toFixed(2);
+      });
+
+      pixelSlider.addEventListener("input", () => {
+        settings.minGoldPixels = parseInt(pixelSlider.value, 10);
+        pixelValue.textContent = String(settings.minGoldPixels);
+      });
+
+      intervalSlider.addEventListener("input", () => {
+        settings.scanInterval = parseInt(intervalSlider.value, 10);
+        intervalValue.textContent = String(settings.scanInterval);
+        if (state.scanning) {
+          restartScanLoop();
+        }
+      });
+
+      cooldownSlider.addEventListener("input", () => {
+        settings.beepCooldown = parseInt(cooldownSlider.value, 10);
+        cooldownValue.textContent = String(settings.beepCooldown);
+      });
+
+      zoomSlider.addEventListener("input", () => {
+        const value = parseFloat(zoomSlider.value);
+        zoomValue.textContent = value.toFixed(2);
+        scheduleZoomApply();
+      });
+
+      manualFocusToggle.addEventListener("change", () => {
+        setManualFocus(manualFocusToggle.checked).catch((error) => {
+          console.error(error);
+        });
+      });
+
+      focusSlider.addEventListener("input", () => {
+        const value = parseFloat(focusSlider.value);
+        focusValue.textContent = value.toFixed(2);
+        scheduleFocusApply();
+      });
+
+      overlay.addEventListener("pointerdown", beginRoiSelection);
+      overlay.addEventListener("pointermove", moveRoiSelection);
+      overlay.addEventListener("pointerup", finishRoiSelection);
+      overlay.addEventListener("pointercancel", finishRoiSelection);
+
+      window.addEventListener("resize", () => {
+        resizeCanvasesForVideo();
+      });
+
       clearTemplatePreview();
       drawOverlay();
+      updateStats(0, 0, 0, 0);
+
+      initMediaPipe()
+        .then(() => loadAutoTemplate())
+        .catch((error) => {
+          console.error(error);
+          setStatus("Status: Ready (load model/template manually)", "warn");
+        });
     </script>
   </body>
 </html>
