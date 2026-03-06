@@ -221,6 +221,33 @@
         font-size: 0.9rem;
       }
 
+      .template-preview-row {
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        color: #ffd6aa;
+      }
+
+      .template-preview-label {
+        font-weight: 800;
+      }
+
+      .template-preview-canvas {
+        width: 84px;
+        height: 84px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 194, 124, 0.42);
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+      }
+
+      .template-preview-meta {
+        font-size: 0.86rem;
+        color: #ffcf9b;
+        max-width: 360px;
+      }
+
       @media (max-width: 840px) {
         .row {
           grid-template-columns: 1fr auto;
@@ -229,6 +256,11 @@
         .row label {
           grid-column: 1 / -1;
           text-align: left;
+        }
+
+        .template-preview-row {
+          flex-direction: column;
+          text-align: center;
         }
       }
     </style>
@@ -318,6 +350,17 @@
         <div id="stats" class="stats">
           Frames: 0 | Best score: 0.000 | Stable hits: 0/2 | Edge: 0.000 | Tone: 0.000 | Color: 0.000 | Edge density: 0.0%
         </div>
+        <div class="template-preview-row">
+          <span class="template-preview-label">Template</span>
+          <canvas
+            id="templatePreview"
+            class="template-preview-canvas"
+            width="84"
+            height="84"
+            aria-label="Template preview"
+          ></canvas>
+          <span id="templatePreviewMeta" class="template-preview-meta">No template loaded</span>
+        </div>
       </section>
 
       <section class="panel">
@@ -382,6 +425,9 @@
       const statusDiv = document.getElementById("status");
       const statsDiv = document.getElementById("stats");
       const cameraControlStatusDiv = document.getElementById("cameraControlStatus");
+      const templatePreviewCanvas = document.getElementById("templatePreview");
+      const templatePreviewCtx = templatePreviewCanvas.getContext("2d");
+      const templatePreviewMetaSpan = document.getElementById("templatePreviewMeta");
 
       const startCameraButton = document.getElementById("startCameraButton");
       const autoTemplateButton = document.getElementById("autoTemplateButton");
@@ -571,6 +617,58 @@
           " | Edge density: " +
           (edgeDensity * 100).toFixed(1) +
           "%";
+      }
+
+      function drawTemplatePreviewBackdrop() {
+        const width = templatePreviewCanvas.width;
+        const height = templatePreviewCanvas.height;
+        const tile = 8;
+
+        templatePreviewCtx.clearRect(0, 0, width, height);
+        templatePreviewCtx.fillStyle = "#2f1a11";
+        templatePreviewCtx.fillRect(0, 0, width, height);
+
+        for (let y = 0; y < height; y += tile) {
+          for (let x = 0; x < width; x += tile) {
+            const dark = ((x / tile + y / tile) & 1) === 0;
+            templatePreviewCtx.fillStyle = dark ? "rgba(255, 197, 132, 0.18)" : "rgba(255, 197, 132, 0.08)";
+            templatePreviewCtx.fillRect(x, y, tile, tile);
+          }
+        }
+      }
+
+      function clearTemplatePreview() {
+        drawTemplatePreviewBackdrop();
+
+        templatePreviewCtx.strokeStyle = "rgba(255, 179, 99, 0.45)";
+        templatePreviewCtx.lineWidth = 2;
+        templatePreviewCtx.beginPath();
+        templatePreviewCtx.moveTo(18, 18);
+        templatePreviewCtx.lineTo(templatePreviewCanvas.width - 18, templatePreviewCanvas.height - 18);
+        templatePreviewCtx.moveTo(templatePreviewCanvas.width - 18, 18);
+        templatePreviewCtx.lineTo(18, templatePreviewCanvas.height - 18);
+        templatePreviewCtx.stroke();
+
+        templatePreviewMetaSpan.innerText = "No template loaded";
+      }
+
+      function renderTemplatePreview(sourceCanvas, templateName, method) {
+        drawTemplatePreviewBackdrop();
+
+        const padding = 8;
+        const availableWidth = templatePreviewCanvas.width - padding * 2;
+        const availableHeight = templatePreviewCanvas.height - padding * 2;
+        const scale = Math.min(availableWidth / sourceCanvas.width, availableHeight / sourceCanvas.height);
+        const drawWidth = Math.max(1, Math.round(sourceCanvas.width * scale));
+        const drawHeight = Math.max(1, Math.round(sourceCanvas.height * scale));
+        const drawX = Math.round((templatePreviewCanvas.width - drawWidth) / 2);
+        const drawY = Math.round((templatePreviewCanvas.height - drawHeight) / 2);
+
+        templatePreviewCtx.imageSmoothingEnabled = true;
+        templatePreviewCtx.drawImage(sourceCanvas, 0, 0, sourceCanvas.width, sourceCanvas.height, drawX, drawY, drawWidth, drawHeight);
+
+        templatePreviewMetaSpan.innerText =
+          templateName + " \u00b7 " + sourceCanvas.width + "x" + sourceCanvas.height + " \u00b7 " + method;
       }
 
       function getCanvasPoint(clientX, clientY) {
@@ -1204,6 +1302,7 @@
 
         state.templateName = templateName;
         state.templateVariants = variants;
+        renderTemplatePreview(baseCanvas, templateName, method);
 
         statusDiv.innerText =
           "Status: Template ready (" +
@@ -1927,6 +2026,7 @@
       });
 
       statusDiv.innerText = "Status: Idle";
+      clearTemplatePreview();
       drawOverlay();
     </script>
   </body>
