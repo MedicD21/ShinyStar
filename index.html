@@ -406,8 +406,8 @@
         <div class="easy-grid">
           <div class="row">
             <label for="matchSlider">Match</label>
-            <input id="matchSlider" type="range" min="0.45" max="0.96" step="0.01" value="0.74" />
-            <span id="matchValue" class="pill">0.74</span>
+            <input id="matchSlider" type="range" min="0.45" max="0.96" step="0.01" value="0.77" />
+            <span id="matchValue" class="pill">0.77</span>
           </div>
           <div class="row">
             <label for="goldSlider">Gold</label>
@@ -539,7 +539,7 @@
       };
 
       const settings = {
-        matchThreshold: 0.74,
+        matchThreshold: 0.77,
         stableFrames: 2,
         minGoldRatio: 0.06,
         minGoldPixels: 14,
@@ -1505,12 +1505,22 @@
         const minGoldGate = Math.max(0.075, settings.minGoldRatio * 0.9);
 
         for (const component of trimmed) {
-          if (component.aspect < 0.4 || component.aspect > 1.95) {
+          if (component.aspect < 0.5 || component.aspect > 1.75) {
             continue;
           }
 
-          if (component.fill < 0.05 || component.fill > 0.9) {
+          if (component.fill < 0.08 || component.fill > 0.88) {
             continue;
+          }
+
+          // Gate by fill vs. template gold ratio — both measure gold density
+          // within the star's own bounding box, so they are directly comparable.
+          if (state.templateGoldRatio > 0.02) {
+            const fillDiff = Math.abs(component.fill - state.templateGoldRatio);
+            const fillTolerance = Math.max(0.16, state.templateGoldRatio * 0.7);
+            if (fillDiff > fillTolerance) {
+              continue;
+            }
           }
 
           const sampleBox = componentToSampleBox(component, scanRect, scanRect.w, scanRect.h);
@@ -1522,6 +1532,13 @@
           const shapeScore = 1 - Math.min(1, Math.abs(1 - component.aspect));
           const fillScore = 1 - Math.min(1, Math.abs(component.fill - 0.32) / 0.32);
           const goldScore = Math.min(1, goldRatio / Math.max(0.001, settings.minGoldRatio * 2.8));
+
+          // Position score: candidate closer to center of scan area scores higher.
+          // This biases toward where the star is expected within the calibrated ROI.
+          const normDx = (component.x + component.w * 0.5 - scanRect.w * 0.5) / Math.max(1, scanRect.w * 0.5);
+          const normDy = (component.y + component.h * 0.5 - scanRect.h * 0.5) / Math.max(1, scanRect.h * 0.5);
+          const positionScore = clamp(1 - Math.hypot(normDx, normDy) * 0.55, 0, 1);
+
           const preScore = goldScore * 0.62 + shapeScore * 0.23 + fillScore * 0.15;
 
           candidates.push({
@@ -1530,6 +1547,7 @@
             goldRatio,
             goldScore,
             preScore,
+            positionScore,
           });
         }
 
@@ -1571,7 +1589,7 @@
             temporalBias = clamp(1 - distance / distanceRef, 0, 1) * 0.08;
           }
 
-          let score = bestSimilarity * 0.7 + candidate.goldScore * 0.22 + candidate.preScore * 0.08 + temporalBias;
+          let score = bestSimilarity * 0.70 + candidate.goldScore * 0.18 + candidate.preScore * 0.07 + candidate.positionScore * 0.05 + temporalBias;
           if (candidate.goldRatio < Math.max(settings.minGoldRatio, 0.085)) {
             score *= 0.48;
           }
