@@ -88,9 +88,9 @@
       min="0.55"
       max="0.95"
       step="0.01"
-      value="0.78"
+      value="0.72"
     />
-    <span id="thresholdValue">0.78</span>
+    <span id="thresholdValue">0.72</span>
 
     <div class="control-row">
       <label for="zoomSlider">Zoom</label>
@@ -126,7 +126,7 @@
       let startY = 0;
 
       let frameCount = 0;
-      let threshold = 0.78;
+      let threshold = 0.72;
       let stableMatchCount = 0;
       let previousCandidateMatch = null;
 
@@ -143,7 +143,9 @@
 
       let templateVariants = [];
 
-      const TEMPLATE_SCALES = [0.8, 0.9, 1, 1.1, 1.2];
+      const TEMPLATE_SCALES = [0.35, 0.45, 0.6, 0.75, 0.9, 1, 1.15, 1.3, 1.5];
+      const TEMPLATE_IMAGE_CANDIDATES = ["start.png", "star.png"];
+      const TEMPLATE_MAX_DIMENSION = 260;
       const MIN_ROI_SIZE = 20;
       const SCAN_INTERVAL_MS = 150;
       const REQUIRED_STABLE_MATCHES = 3;
@@ -749,6 +751,88 @@
         return { scale, mat: variantMat };
       }
 
+      function cropTemplateToSubject(templateMat) {
+        const rgb = new cv.Mat();
+        const hsv = new cv.Mat();
+        const mask = new cv.Mat();
+        const points = new cv.Mat();
+        const kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(3, 3));
+
+        try {
+          if (templateMat.channels() === 4) {
+            cv.cvtColor(templateMat, rgb, cv.COLOR_RGBA2RGB);
+          } else {
+            templateMat.copyTo(rgb);
+          }
+
+          cv.cvtColor(rgb, hsv, cv.COLOR_RGB2HSV);
+
+          cv.inRange(
+            hsv,
+            new cv.Scalar(0, 35, 35, 0),
+            new cv.Scalar(180, 255, 255, 255),
+            mask,
+          );
+
+          cv.morphologyEx(mask, mask, cv.MORPH_OPEN, kernel);
+          cv.morphologyEx(mask, mask, cv.MORPH_CLOSE, kernel);
+          cv.findNonZero(mask, points);
+
+          if (points.rows === 0) {
+            return templateMat.clone();
+          }
+
+          const rect = cv.boundingRect(points);
+          const padding = 8;
+          const x = Math.max(0, rect.x - padding);
+          const y = Math.max(0, rect.y - padding);
+          const maxWidth = templateMat.cols - x;
+          const maxHeight = templateMat.rows - y;
+          const w = Math.min(maxWidth, rect.width + padding * 2);
+          const h = Math.min(maxHeight, rect.height + padding * 2);
+
+          if (w < MIN_ROI_SIZE || h < MIN_ROI_SIZE) {
+            return templateMat.clone();
+          }
+
+          const roi = templateMat.roi(new cv.Rect(x, y, w, h));
+          const cropped = roi.clone();
+          roi.delete();
+
+          return cropped;
+        } finally {
+          rgb.delete();
+          hsv.delete();
+          mask.delete();
+          points.delete();
+          kernel.delete();
+        }
+      }
+
+      function normalizeTemplateSize(templateMat, maxDimension = TEMPLATE_MAX_DIMENSION) {
+        const maxDim = Math.max(templateMat.cols, templateMat.rows);
+
+        if (!maxDim || maxDim <= maxDimension) {
+          return templateMat.clone();
+        }
+
+        const scale = maxDimension / maxDim;
+        const width = Math.max(1, Math.round(templateMat.cols * scale));
+        const height = Math.max(1, Math.round(templateMat.rows * scale));
+        const normalized = new cv.Mat();
+
+        cv.resize(
+          templateMat,
+          normalized,
+          new cv.Size(width, height),
+          0,
+          0,
+          cv.INTER_AREA,
+        );
+
+        return normalized;
+      }
+
       function loadImage(src) {
         return new Promise((resolve, reject) => {
           const img = new Image();
@@ -764,10 +848,12 @@
 
         const img = await loadImage(src);
         const rawTemplate = cv.imread(img);
+        const croppedTemplate = cropTemplateToSubject(rawTemplate);
+        const normalizedTemplate = normalizeTemplateSize(croppedTemplate);
         const processedTemplate = new cv.Mat();
 
         try {
-          preprocessToGray(rawTemplate, processedTemplate);
+          preprocessToGray(normalizedTemplate, processedTemplate);
 
           TEMPLATE_SCALES.forEach((scale) => {
             const variant = createTemplateVariant(processedTemplate, scale);
@@ -778,12 +864,31 @@
           });
         } finally {
           rawTemplate.delete();
+          croppedTemplate.delete();
+          normalizedTemplate.delete();
           processedTemplate.delete();
         }
 
         if (templateVariants.length === 0) {
           throw new Error("Template sizes are invalid for matching.");
         }
+      }
+
+      async function loadTemplateFromCandidates() {
+        let latestError = null;
+
+        for (let i = 0; i < TEMPLATE_IMAGE_CANDIDATES.length; i += 1) {
+          const candidate = TEMPLATE_IMAGE_CANDIDATES[i];
+
+          try {
+            await loadTemplateVariants(candidate);
+            return candidate;
+          } catch (error) {
+            latestError = error;
+          }
+        }
+
+        throw latestError || new Error("Template image could not be loaded.");
       }
 
       function findBestMatch(searchMat) {
@@ -962,9 +1067,10 @@
           await waitForOpenCv();
 
           statusDiv.innerText = "Status: Loading template";
-          await loadTemplateVariants("star.png");
+          const templateName = await loadTemplateFromCandidates();
 
-          statusDiv.innerText = "Status: Detection Running";
+          statusDiv.innerText =
+            "Status: Detection Running (" + templateName + ")";
           detectionTimer = window.setInterval(detectFrame, SCAN_INTERVAL_MS);
         } catch (error) {
           statusDiv.innerText = "Status: Detection could not start";
