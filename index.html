@@ -1269,24 +1269,20 @@
         }
 
         const saturation = chroma / max;
-        if (saturation < 0.14 || saturation > 0.98) {
+        if (saturation < 0.12) {
           return false;
         }
 
-        if (r < 115 || g < 84) {
+        if (r < 100 || g < 70) {
           return false;
         }
 
-        if (r < g * 0.9 || r > g * 1.36) {
-          return false;
-        }
-
-        if (r - b < 42 || g - b < 24) {
+        if (r - b < 35 || g - b < 18) {
           return false;
         }
 
         const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-        if (luma < 95) {
+        if (luma < 80) {
           return false;
         }
 
@@ -1306,7 +1302,7 @@
           }
         }
 
-        if (hue < 40 || hue > 72) {
+        if (hue < 33 || hue > 78) {
           return false;
         }
 
