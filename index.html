@@ -679,6 +679,7 @@
         templateName: "",
         templateMethod: "",
         templateGoldRatio: 0,
+        calibratedCenter: null,
         audioContext: null,
         lastBeepAt: 0,
         zoomDebounce: null,
@@ -1713,6 +1714,7 @@
         state.templateName = name;
         state.templateMethod = method;
         state.templateGoldRatio = computeCanvasGoldRatio(templateCanvas);
+        state.calibratedCenter = null; // cleared here; calibrateFromRoi sets it after this call
 
         renderTemplatePreview(templateCanvas, name, method);
       }
@@ -1835,184 +1837,115 @@
         return cosineSimilarity(state.templateEmbedding, embedding);
       }
 
+      // Generate a 5-point cross of sample boxes anchored on the calibrated star
+      // position (or ROI center as fallback). No color detection gate — embedding
+      // similarity is the primary discriminator.
+      function generateScanPositions(scanRect) {
+        let cx, cy, side;
+
+        if (state.calibratedCenter) {
+          cx = state.calibratedCenter.nx * scanRect.w;
+          cy = state.calibratedCenter.ny * scanRect.h;
+          const nSide = Math.max(
+            state.calibratedCenter.nw,
+            state.calibratedCenter.nh,
+          );
+          side = Math.round(
+            clamp(
+              nSide * Math.min(scanRect.w, scanRect.h),
+              20,
+              Math.min(scanRect.w, scanRect.h) * 0.65,
+            ),
+          );
+        } else {
+          cx = scanRect.w * 0.5;
+          cy = scanRect.h * 0.5;
+          side = Math.round(
+            clamp(Math.min(scanRect.w, scanRect.h) * 0.30, 20, 90),
+          );
+        }
+
+        const step = Math.round(Math.min(scanRect.w, scanRect.h) * 0.12);
+        const offsets = [
+          [0, 0],
+          [-step, 0],
+          [step, 0],
+          [0, -step],
+          [0, step],
+        ];
+
+        return offsets.map(([dx, dy]) => {
+          const lx = clamp(
+            Math.round(cx + dx - side * 0.5),
+            0,
+            scanRect.w - side,
+          );
+          const ly = clamp(
+            Math.round(cy + dy - side * 0.5),
+            0,
+            scanRect.h - side,
+          );
+          return {
+            x: scanRect.x + lx,
+            y: scanRect.y + ly,
+            w: side,
+            h: side,
+            localX: lx,
+            localY: ly,
+          };
+        });
+      }
+
       function pickBestCandidate(scanRect, scanImageData) {
+        // Scan fixed positions anchored on calibrated star location.
+        // Color detection is informational only — not a gate.
+        const positions = generateScanPositions(scanRect);
+
+        let bestSimilarity = 0;
+        let bestBox = positions[0];
+        for (const box of positions) {
+          const sim = evaluateCandidateEmbedding(box);
+          if (sim > bestSimilarity) {
+            bestSimilarity = sim;
+            bestBox = box;
+          }
+        }
+
+        // Gold info: used for display and a small score bonus only.
         const { mask, goldCount } = buildGoldMask(
           scanImageData,
           scanRect.w,
           scanRect.h,
         );
-        if (!goldCount) {
-          return {
-            best: null,
-            candidateCount: 0,
-            similarity: 0,
-            goldRatio: 0,
-            goldCount: 0,
-          };
-        }
+        const goldRatio = computeMaskRatio(mask, scanRect.w, bestBox);
+        const goldBonus =
+          clamp(goldRatio / Math.max(0.001, settings.minGoldRatio * 3), 0, 1) *
+          0.04;
 
-        const maxPixels = Math.max(
-          settings.minGoldPixels + 1,
-          Math.round(scanRect.w * scanRect.h * 0.25),
-        );
-        const components = findMaskComponents(
-          mask,
-          scanRect.w,
-          scanRect.h,
-          settings.minGoldPixels,
-          maxPixels,
-        );
-        const trimmed = components.slice(0, MAX_CANDIDATES);
-        const candidates = [];
-        const minGoldGate = Math.max(0.075, settings.minGoldRatio * 0.9);
-
-        for (const component of trimmed) {
-          if (component.aspect < 0.5 || component.aspect > 1.75) {
-            continue;
-          }
-
-          if (component.fill < 0.08 || component.fill > 0.88) {
-            continue;
-          }
-
-          // Gate by fill vs. template gold ratio — both measure gold density
-          // within the star's own bounding box, so they are directly comparable.
-          if (state.templateGoldRatio > 0.02) {
-            const fillDiff = Math.abs(component.fill - state.templateGoldRatio);
-            const fillTolerance = Math.max(0.16, state.templateGoldRatio * 0.7);
-            if (fillDiff > fillTolerance) {
-              continue;
-            }
-          }
-
-          const sampleBox = componentToSampleBox(
-            component,
-            scanRect,
-            scanRect.w,
-            scanRect.h,
+        const overlayBox = processToOverlayRect(bestBox);
+        let temporalBias = 0;
+        if (state.lastCandidate) {
+          const dist = boxDistance(overlayBox, state.lastCandidate);
+          const ref = Math.max(
+            16,
+            Math.max(overlayBox.w, overlayBox.h) * 1.7,
           );
-          const goldRatio = computeMaskRatio(mask, scanRect.w, sampleBox);
-          if (goldRatio < minGoldGate) {
-            continue;
-          }
-
-          // Reject if the surrounding sample box is saturated with gold — indicates
-          // a logo/title screen full of gold graphics rather than an isolated star.
-          if (goldRatio > 0.32) {
-            continue;
-          }
-
-          const shapeScore = 1 - Math.min(1, Math.abs(1 - component.aspect));
-          const fillScore =
-            1 - Math.min(1, Math.abs(component.fill - 0.32) / 0.32);
-          const goldScore = Math.min(
-            1,
-            goldRatio / Math.max(0.001, settings.minGoldRatio * 2.8),
-          );
-
-          // Position score: candidate closer to center of scan area scores higher.
-          // This biases toward where the star is expected within the calibrated ROI.
-          const normDx =
-            (component.x + component.w * 0.5 - scanRect.w * 0.5) /
-            Math.max(1, scanRect.w * 0.5);
-          const normDy =
-            (component.y + component.h * 0.5 - scanRect.h * 0.5) /
-            Math.max(1, scanRect.h * 0.5);
-          const positionScore = clamp(
-            1 - Math.hypot(normDx, normDy) * 0.55,
-            0,
-            1,
-          );
-
-          const preScore =
-            goldScore * 0.62 + shapeScore * 0.23 + fillScore * 0.15;
-
-          candidates.push({
-            component,
-            sampleBox,
-            goldRatio,
-            goldScore,
-            preScore,
-            positionScore,
-          });
+          temporalBias = clamp(1 - dist / ref, 0, 1) * 0.06;
         }
 
-        if (!candidates.length) {
-          return {
-            best: null,
-            candidateCount: 0,
-            similarity: 0,
-            goldRatio: 0,
-          };
-        }
-
-        candidates.sort((a, b) => b.preScore - a.preScore);
-        const embeddingCandidates = candidates.slice(
-          0,
-          MAX_EMBEDDING_CANDIDATES,
-        );
-
-        let best = null;
-        for (const candidate of embeddingCandidates) {
-          let bestSimilarity = 0;
-          let bestBox = candidate.sampleBox;
-
-          for (const scale of EMBEDDING_SCALES) {
-            const scaledBox =
-              scale === 1
-                ? candidate.sampleBox
-                : scaleSampleBox(
-                    candidate.sampleBox,
-                    scale,
-                    scanRect,
-                    scanRect.w,
-                    scanRect.h,
-                  );
-            const similarity = evaluateCandidateEmbedding(scaledBox);
-
-            if (similarity > bestSimilarity) {
-              bestSimilarity = similarity;
-              bestBox = scaledBox;
-            }
-          }
-
-          const overlayBox = processToOverlayRect(bestBox);
-          let temporalBias = 0;
-          if (state.lastCandidate) {
-            const distance = boxDistance(overlayBox, state.lastCandidate);
-            const distanceRef = Math.max(
-              16,
-              Math.max(overlayBox.w, overlayBox.h) * 1.7,
-            );
-            temporalBias = clamp(1 - distance / distanceRef, 0, 1) * 0.08;
-          }
-
-          let score =
-            bestSimilarity * 0.7 +
-            candidate.goldScore * 0.18 +
-            candidate.preScore * 0.07 +
-            candidate.positionScore * 0.05 +
-            temporalBias;
-          if (candidate.goldRatio < Math.max(settings.minGoldRatio, 0.085)) {
-            score *= 0.48;
-          }
-
-          if (!best || score > best.score) {
-            best = {
-              score,
-              similarity: bestSimilarity,
-              goldRatio: candidate.goldRatio,
-              box: { x: bestBox.x, y: bestBox.y, w: bestBox.w, h: bestBox.h },
-              overlayBox,
-            };
-          }
-        }
+        const score = bestSimilarity * 0.90 + goldBonus + temporalBias;
 
         return {
-          best,
-          candidateCount: candidates.length,
-          similarity: best ? best.similarity : 0,
-          goldRatio: best ? best.goldRatio : 0,
+          best: {
+            score,
+            similarity: bestSimilarity,
+            goldRatio,
+            box: { x: bestBox.x, y: bestBox.y, w: bestBox.w, h: bestBox.h },
+            overlayBox,
+          },
+          candidateCount: positions.length,
+          similarity: bestSimilarity,
+          goldRatio,
           goldCount,
         };
       }
@@ -2524,6 +2457,14 @@
         stableSlider.value = "2";
         stableValue.textContent = "2";
 
+        // Store normalized calibrated position so scanning knows exactly where to look
+        state.calibratedCenter = {
+          nx: (sampleBox.localX + sampleBox.w * 0.5) / roiRect.w,
+          ny: (sampleBox.localY + sampleBox.h * 0.5) / roiRect.h,
+          nw: sampleBox.w / roiRect.w,
+          nh: sampleBox.h / roiRect.h,
+        };
+
         const pickedOverlayBox = processToOverlayRect(sampleBox);
         state.candidateBox = pickedOverlayBox;
         state.detectionBox = null;
@@ -2609,6 +2550,7 @@
         stopScanLoop();
         stopCamera();
         state.roi = null;
+        state.calibratedCenter = null;
         state.guideEnabled = false;
         clearDetectionState();
         calibrationReadoutDiv.textContent = "Calibration: not set";
